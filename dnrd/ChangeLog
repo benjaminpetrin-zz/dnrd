@@ -1,8 +1,10 @@
 version 2.11
 ------------
 Natanael Copa <n@tanael.org>
- - Fixed potensial overflows in queries. Might still exist in server replies.
- - Natanael is taking over the project.
+- New build using autoconf and automake
+- Fixed potensial overflows inqueries. Might still exist some,
+  specially in server replies.
+- Natanael is taking over the project.
 
 version  2.10
 -------------

@@ -18,13 +18,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "query.h"
-#include "relay.h"
-#include "cache.h"
-#include "common.h"
-#include "tcp.h"
-#include "udp.h"
-#include "master.h"
 #include <stdio.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -34,6 +27,15 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
+
+#include "query.h"
+#include "relay.h"
+#include "cache.h"
+#include "common.h"
+#include "tcp.h"
+#include "udp.h"
+#include "master.h"
+#include "dns.h"
 
 static time_t send_time  = 0;
 static int    send_count = 0;
@@ -76,14 +78,33 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
 		 unsigned *srvidx)
 {
     int       replylen;
+    short int * flagp = &((short int *)msg)[1]; /* pointer to flags */
 
     if (opt_debug) {
 	char      cname_buf[80];
-	sprintf_cname(&msg[12], cname_buf, 80);
+	log_debug("len=%i", *len);
+	sprintf_cname(&msg[12], *len-12, cname_buf, 80);
 	log_debug("Received DNS query for \"%s\"", cname_buf);
-	dump_dnspacket("query", msg, *len);
+	if ((dump_dnspacket("query", msg, *len) < 0) < 0) {
+	  log_debug("Format error");
+	  /* actually we just answer with here and now */
+	  //	  msg[2] |= 0x80; /*set QR flag */
+	  //msg[3] = 0x81; /* set RA and RCODE =1 */
+	  //return (0);
+	}
     }
 
+    /* First flags check. If Z flag, QR or RCODE is set, jut ignore
+     * the request. According to rfc1035 4.1.1 Z flag must be zero in
+     * all queries and responses. We should also not have any RCODE
+     */
+   
+    if ( ntohs(*flagp) & (MASK_Z + MASK_QR + MASK_RCODE) ) {
+      log_debug("QR, Z or RCODE was set. Ignoring query");
+      return(-1);
+    }
+
+   
     /* First, check to see if we are master server */
     if ((replylen = master_lookup(msg, *len)) > 0) {
 	log_debug("Replying to query as master");
@@ -101,7 +122,9 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
     /* If there are no servers, reply with "entry not found" */
     if (serv_cnt == 0) {
 	log_debug("Replying to query with \"entry not found\"");
+	/* Set flags QR and AA */
 	msg[2] |= 0x84;
+	/* Set flags RA and RCODE=3 */
 	msg[3] = 0x83;
 	return 0;
     }

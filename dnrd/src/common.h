@@ -67,7 +67,7 @@ void cleanexit(int status);
 /* Reads in the domain name as a string, allocates space for the CNAME
    version of it */
 char* make_cname(const char *text);
-void sprintf_cname(const char *cname, char *buf, int bufsize);
+void sprintf_cname(const char *cname, int namesize, char *buf, int bufsize);
 
 /* Dumping DNS packets */
 int dump_dnspacket(char *type, unsigned char *packet, int len);
