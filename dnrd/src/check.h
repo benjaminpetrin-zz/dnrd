@@ -23,11 +23,13 @@
 #ifndef _DNRD_CHECK_H_
 #define _DNRD_CHECK_H_
 
+#include "srvnode.h"
+
  /* According to RFC 1035 (2.3.4) */
 #define UDP_MAXSIZE 512
 
-int check_query(int len, void *msg);
-int check_reply(int len, void *msg);
+int check_query(void *msg, int len);
+int check_reply(srvnode_t *s, void *msg, int len);
 
 
 

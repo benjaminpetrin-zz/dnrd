@@ -101,18 +101,6 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
 	if (dump_dnspacket("query", msg, *len) < 0)
 	  log_debug("Format error");
     }
-
-    /* First flags check. If Z flag or QR is set, just ignore
-     * the request. According to rfc1035 4.1.1 Z flag must be zero in
-     * all queries and responses. 
-     * BIND set the RCODE on recursive lookups. 
-     */
-   
-    if ( ntohs(*flagp) & (MASK_Z + MASK_QR) ) {
-      log_debug("QR or Z was set. Ignoring query");
-      return(-1);
-    }
-
    
 #ifndef EXCLUDE_MASTER
     /* First, check to see if we are master server */

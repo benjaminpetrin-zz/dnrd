@@ -27,6 +27,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include <syslog.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -34,6 +35,7 @@
 
 #include "check.h"
 #include "dns.h"
+#include "srvnode.h"
 
 /*
  * check_query()
@@ -45,7 +47,7 @@
  *          1 if the query is not ok and a format error should be sent
  */
 
-int check_query(int len, void *msg) {
+int check_query(void *msg, int len) {
   short int flags = ntohs(((short int *)msg)[1]); /* flags */
 
   /* first check the size */
@@ -58,6 +60,12 @@ int check_query(int len, void *msg) {
     log_debug("Query packet is too big. Ignoring");
     return -1;
   }
+
+  /* Flags check. If Z flag or QR is set, just ignore
+   * the request. According to rfc1035 4.1.1 Z flag must be zero in
+   * all queries and responses. 
+   * BIND set the RCODE on recursive lookups so we dont check that.
+   */
 
   /* check if Z is set. It should never been set */
   if (flags & MASK_Z) {
@@ -84,23 +92,28 @@ int check_query(int len, void *msg) {
  *          0 if the query is ok and should be processed
  */
 
-int check_reply(int len, void *msg) {
+int check_reply(srvnode_t *s, void *msg, int len) {
   short int flags = ntohs(((short int *)msg)[1]); /* flags */
 
+  /* bad server replies are pretty bad. Lets log them to syslog */
   if (len <12) {
-    log_debug("Reply packet was to small. Ignoring");
+    log_msg(LOG_WARNING, "Reply packet was to small. Ignoring reply from %s",
+	    inet_ntoa(s->addr.sin_addr));
     return -1;
   }
+  /* we have already checkd for oversized packets */
 
   /* check if Z is set. It should never been set */
   if (flags & MASK_Z) {
-    log_debug("Z was set. Ignoring reply");
+    log_msg(LOG_WARNING, "Z was set. Ignoring reply from %s",
+		inet_ntoa(s->addr.sin_addr));
     return -1;
   }
 
   /* Check if it is a query, if QR is set */
   if (! (flags & MASK_QR)) {
-    log_debug("QR was not set. Ignoring reply");
+    log_msg(LOG_WARNING, "QR was not set. Ignoring reply from %s",
+	    inet_ntoa(s->addr.sin_addr));
     return -1;
   }
 
