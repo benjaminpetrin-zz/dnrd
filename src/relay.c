@@ -137,6 +137,28 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
     return 1;
 }
 
+static void reactivate_servers(int interval) {
+  time_t now=time(NULL);
+  static int last_try = 0;
+  domnode_t *d = domain_list;
+  
+  /* check for reactivate servers */
+  if (interval + last_try > now ) {
+    last_try = now;
+    
+    if (!no_srvlist(d->srvlist)) return;
+    do {
+      if (!next_active(d)) {
+	log_debug("Reactivating all servers for %s", cname2asc(d->domain));
+	reactivate_srvlist(d);
+      } else {
+	retry_srvlist(d, 30);
+      }
+    } while ((d = d->next) != domain_list);
+  }
+  
+}
+
 /*
  * run()
  *
@@ -187,6 +209,9 @@ void run()
 
 	/* Remove old unanswered queries */
 	dnsquery_timeout(60);
+
+	/* reactivate servers */
+	reactivate_servers(10);
 
 	/* Handle errors */
 	if (retn < 0) {
