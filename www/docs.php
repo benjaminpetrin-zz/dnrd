@@ -10,7 +10,6 @@ require("menu.php");
 
 <H2>DNRD</H2>
 
-
 dnrd - proxy name server
 <A NAME="lbAC">&nbsp;</A>
 <h3>SYNOPSIS</h3>
@@ -176,7 +175,7 @@ Send all messages to syslog. dnrd uses the deamon facility.
 <DD>
 dnrd can act as the primary name server for a number of hosts.  By default, it
 will read in
-<I>/etc/dnrd/master</I>
+<I>/usr/local/etc/dnrd/master</I>
 
 to determine how this is done.  If that file
 doesn't exist, it will act as the primary server for the hosts found in
@@ -192,8 +191,12 @@ causes dnrd to act as the primary server for hosts in
 <I>/etc/hosts</I>
 
 regardless of whether it could find
-<I>/etc/dnrd/master</I>.
+<I>/usr/local/etc/dnrd/master</I>.
 
+<P>
+Note that future versions of dnrd will not use /etc/hosts at all.
+<P>
+<P>
 <P>
 <DT><B>-M&nbsp;</B><I>N</I>
 
@@ -306,12 +309,16 @@ Prints out the version number
 
 It is not possible to run more than one dnrd process on the same host.
 <P>
+Sending -SIGHUP will not reread the /etc/hosts file since dnrd is
+chrooted to /usr/local/etc/dnrd. Use /usr/local/etc/dnrd/master instead and avoid
+using /etc/hosts at all.
+<P>
 <A NAME="lbAG">&nbsp;</A>
 <h3>FILES</h3>
 
 <P>
 
-<B>/etc/dnrd/master</B>
+<B>/usr/local/etc/dnrd/master</B>
 
 <P>
 
@@ -326,7 +333,7 @@ as a primary nameserver.
 <P>
 
 By default, dnrd will act as a primary nameserver for hosts found in
-this file.
+this file. Note that this file will not be used at all in future versions.
 <P>
 
 <B>/var/run/dnrd.pid</B>
@@ -347,7 +354,6 @@ The original version of dnrd was written by Brad Garcia
 
 Other contributors are listed in the HISTORY
 file included with the source code.
-<P>
 
 
 </div>

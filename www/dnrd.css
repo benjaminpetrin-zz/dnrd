@@ -71,4 +71,4 @@ h1, h2, h3, h4, h5, h6
  }
 
 a { color: #336; }
-a:followed { color: #669; }
+a:visited { color: #669; }
