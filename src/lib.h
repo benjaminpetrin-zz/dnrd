@@ -23,6 +23,7 @@
 #ifndef	_LIB_INCLUDED
 #define	_LIB_INCLUDED
 
+#include "config.h"
 
 extern char *program;
 extern int verbose;
@@ -44,6 +45,10 @@ unsigned int get_stringcode(char *string);
 
 #ifndef HAVE_STRNLEN
 size_t strnlen(const char *s, size_t maxlen);
+#endif
+
+#ifndef HAVE_USLEEP
+int usleep(long usec);
 #endif
 
 #endif
