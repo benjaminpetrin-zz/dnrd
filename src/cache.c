@@ -39,7 +39,7 @@
 	 * debugging.
 	 */
 
-#define	CACHE_TIMEUNIT		1
+#define	CACHE_TIMEUNIT		60
 
 	/*
 	 * DNS queries that have been answered positively are stored for
