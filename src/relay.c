@@ -177,6 +177,24 @@ static void reactivate_servers(int interval) {
   } while ((d = d->next) != domain_list);  
 }
 
+void srv_stats(time_t interval) {
+  srvnode_t *s;
+  domnode_t *d=domain_list;
+  time_t now = time(NULL);
+  static time_t last=0;
+  
+  if (last + interval > now) {
+    last = now;
+    do {
+      if ((s=d->srvlist)) 
+	while ((s=s->next) != d->srvlist)
+	  log_debug(1, "stats for %s: send count=%i",
+		    inet_ntoa(s->addr.sin_addr), s->send_count);
+    } while ((d=d->next) != domain_list);
+  }
+}
+
+
 /*
  * run()
  *
@@ -200,20 +218,6 @@ void run()
 #else
   maxsock = isock;
 #endif
-
-  /*
-    do {
-    if ((s=d->srvlist)) {
-    while ((s=s->next) != d->srvlist) {
-    if (maxsock < s->sock) maxsock = s->sock;
-	  FD_SET(s->sock, &fdmask);
-	  s->send_time = 0;
-	  s->send_count = 0;
-	}
-      }
-    } while ((d=d->next) != domain_list);
-    */
-
 
   while(1) {
     query_t *q;
@@ -267,7 +271,7 @@ void run()
     query_timeout(20);
     
     /* create new query/socket for next incomming request */
-
+    /* this did not make the program run any faster
     d=domain_list;
     do {
       if ((s=d->srvlist)) 
@@ -275,7 +279,10 @@ void run()
 	  if (s->newquery == NULL) 
 	    s->newquery = query_get_new(d, s);
     } while ((d=d->next) != domain_list);
+    */
+
     /* print som query statestics */
     query_stats(10);
+    srv_stats(10);
   }
 }
