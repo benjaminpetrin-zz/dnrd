@@ -206,8 +206,10 @@ void run()
   struct timeval     tout;
   fd_set             fdread;
   int                retn;
+  /*
   domnode_t          *d = domain_list;
   srvnode_t          *s;
+  */
     /*    int                i, j;*/
 
   FD_ZERO(&fdmaster);
