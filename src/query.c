@@ -49,7 +49,6 @@ struct dnsq_t {
     struct sockaddr_in client;
     time_t             recvtime;
   unsigned short retries; /* number of tries */
-  domnode_t *dom; /* the domain list the query belongs to */
 };
 typedef struct dnsq_t dnsquery;
 
@@ -76,8 +75,7 @@ static unsigned short qidcount = 0;
  *           in our list (a retransmission), then we'll act as if we're
  *           adding it, but we won't actually add it again.
  */
-int dnsquery_add(domnode_t *d, const struct sockaddr_in* client, 
-		 char* msg, unsigned len)
+int dnsquery_add(const struct sockaddr_in* client, char* msg, unsigned len)
 {
     unsigned short client_qid;
     dnsquery *ptr;
@@ -89,6 +87,8 @@ int dnsquery_add(domnode_t *d, const struct sockaddr_in* client,
     for (ptr = head; ptr != 0; ptr = ptr->next) {
 	if (ptr->client_qid == client_qid) {
 	    memcpy(msg, &(ptr->local_qid), 2);
+	    ptr->retries++;
+	    log_debug("query %i from client already in list", client_qid);
 	    return 1;
 	}
     }
@@ -100,7 +100,7 @@ int dnsquery_add(domnode_t *d, const struct sockaddr_in* client,
     query->next = 0;
     memcpy(&(query->client), client, sizeof(struct sockaddr_in));
     query->recvtime = time(0);
-    query->dom = d;
+    query->retries = 0;
 
     /* Update the query number in msg */
     memcpy(msg, &(query->local_qid), 2);
@@ -108,6 +108,9 @@ int dnsquery_add(domnode_t *d, const struct sockaddr_in* client,
     /* Update our dnsquery list */
     tail ? (tail->next = query) : (head = query);
     tail = query;
+    log_debug("Query local=%i, client=%i  added", 
+	      query->local_qid,
+	      query->client_qid);
     return 1;
 }
 
@@ -212,10 +215,10 @@ void dnsquery_dump()
 
     printf("Current queue:\n");
     printf("  head = %p, tail = %p\n", head, tail);
-    printf("  my_qid   h_qid  from_addr\n");
-    printf("  ------  ------  ---------------\n");
+    printf("  my_qid   h_qid  retr   from_addr\n");
+    printf("  ------  ------  -----  ---------------\n");
     for (ptr = head; ptr != 0; ptr = ptr->next) {
-	printf("  %-6d  %-6d  %s\n", ntohs(ptr->local_qid), ptr->client_qid,
+	printf("  %-6d  %-6d  %-6d  %s\n", ntohs(ptr->local_qid), ptr->client_qid,
 	       inet_ntoa(ptr->client.sin_addr));
     }
     printf("\n");

@@ -73,7 +73,7 @@ int send2current(domnode_t *d, void *msg, const int len) {
 	    (dnssend(d->current, msg, len) != len)) {
       deactivate_current(d);
     }
-    if (d->current) {
+    if (d->current != NULL) {
       return len;
     } else return 0;
 }
@@ -123,9 +123,9 @@ void handle_udprequest()
 	return;
     }
 
-    if (send2current(dptr, msg, len))
-      dnsquery_add(dptr, &from_addr, msg, len);
-    else {
+    dnsquery_add(&from_addr, msg, len);
+    if (!send2current(dptr, msg, len)) {
+      /* we couldn't send the query */
 #ifndef EXCLUDE_MASTER
       int	packetlen;
       char	packet[maxsize+4];
@@ -143,14 +143,10 @@ void handle_udprequest()
        */
       
       if ((packetlen = master_dontknow(msg, len, packet)) > 0) {
-	/* we never added the query to the list if the sendto was
-	   unsuccessful
 	   if (!dnsquery_find(msg, &from_addr)) {
 	   log_debug("ERROR: couldn't find the original query");
 	   return;
 	   }
-	*/
-
 	if (sendto(isock, msg, len, 0, (const struct sockaddr *)&from_addr,
 		   addr_len) != len) {
 	  log_debug("sendto error %s", strerror(errno));
@@ -225,8 +221,12 @@ void handle_udpreply(srvnode_t *srv)
       dump_dnspacket("reply", msg, len);
       addr_len = sizeof(struct sockaddr_in);
       if (!dnsquery_find(msg, &from_addr)) {
-	if (!srv->inactive)
+	if (!srv->inactive) {
 	  log_debug("ERROR: couldn't find the original query");
+#ifdef DEBUG
+	  dnsquery_dump();
+#endif
+	}
       }
       else {
 	cache_dnspacket(msg, len, srv);
