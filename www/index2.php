@@ -12,30 +12,22 @@ require("menu.php");
 <div id="content">
 <h2><a name="about">What DNRD is</a></h2>
 <p>
-DNRD is a proxy name server.  To clients on your home network, it looks
-just like a name server.  In reality, it forwards every DNS query to the
-"real" DNS server, and forwards responses back to the client.
-</p>
-<p>
-So, why would you want to use it?  DNRD was originally designed for
-home networks where you might want to dial into more than one ISP (ie,
-your home ISP and a dialup connection to your office).  The problem
-with multiple dialups is that you need to change /etc/resolv.conf for
-each one.  With DNRD, this is no longer necessary.
-</p>
-<p>
-Your dialup machine will run DNRD (with appropriate options for forwarding
-messages to the desired DNS servers).  All other machines on the home network,
-including the dialup machine itself, will use the dialup machine as its DNS
-server.  Configuring DNRD is a simple matter of passing the correct
-command-line parameters.
-</p>
-<p>
-Brad originally wrote DNRD to work with
-<a href="http://cpwright.villagenet.com/mserver">masqdialer</a>.
-It works very well with masqdialer, but should also work with other
-dial-up systems.
-</p>
+Domain Name Relay Daemon is a caching, forwarding DNS proxy
+server. Most useful on vpn or dialup firewalls but is a nice DNS cache
+for minor networks and workstations.
+<h3>Features</h3>
+<ul>
+<li>Caching of DNS requests</li>
+<li>Support for backup DNS servers</li>
+<li>Support for simple routing - specify different forward DNS servers
+  for different domains. This great for private networks, vpn's and
+  offline sites.</li>
+<li>Force authorative or unauthorative answers for specified
+domains. Can be used as a very simple dns server for home
+networks</li>
+<li>share the /etc/hosts over the network.</li>
+<li>support for openbsd, freebsd and linux</li>
+</ul>
 
 </div>
 
