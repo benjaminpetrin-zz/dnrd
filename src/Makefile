@@ -72,7 +72,7 @@ PROGRAMS =  $(sbin_PROGRAMS)
 
 
 DEFS = -DHAVE_CONFIG_H -I. -I$(srcdir) -I..
-CPPFLAGS = 
+CPPFLAGS = -ggdb
 LDFLAGS = 
 LIBS = 
 dnrd_OBJECTS =  args.o cache.o check.o common.o dns.o lib.o main.o \

@@ -35,9 +35,18 @@
 #include "lib.h"
 #include "common.h"
 
+/*
 static int get_objectname(unsigned char *msg, unsigned const char *limit, 
 			  unsigned char **here, char *string, int strlen,
 			  int k);
+*/
+
+static int get_objname(unsigned char buf[], const int bufsize, int *here,
+		      char name[], const int namelen) {
+  int count=1000;
+  if (*here > bufsize) return 0;
+  
+}
 
 int free_packet(dnsheader_t *x)
 {
@@ -108,6 +117,21 @@ static int raw_dump(dnsheader_t *x)
     return (0);
 }
 
+/*
+static int get_objname(unsigned char buf[], const int bufsize, int *here,
+		      char name[], const int namelen) {
+  int i,p=*here, count=1000;
+  unsigned int len, offs;
+  if (p > bufsize) return 0;
+  while (len = buf[p]) {
+    
+    while (len & 0x0c) {
+      if (++p > bufsize) return 0;
+      offs = lenbuf[p] 
+
+}
+*/
+
 
 static int get_objectname(unsigned char *msg, unsigned const char *limit, 
 			  unsigned char **here, char *string, int strlen,
@@ -127,8 +151,11 @@ static int get_objectname(unsigned char *msg, unsigned const char *limit,
 	    unsigned char *p;
 
 	    offset = ((len & ~0xc0) << 8) + **here;
-	    p = &msg[offset];
-	    if (p>=limit) return(-1);
+	    if ((p = &msg[offset]) >= limit) return(-1);
+	    if (p == *here-1) {
+	      log_debug("looping ptr");
+	      return(-2);
+	    }
 
 	    if ((k = get_objectname(msg, limit, &p, string, RR_NAMESIZE, k))<0)
 	      return(-1); /* if we cross the limit, bail out */
@@ -152,6 +179,7 @@ static int get_objectname(unsigned char *msg, unsigned const char *limit,
     
     return (k);
 }
+
 
 static unsigned char *read_record(dnsheader_t *x, rr_t *y,
 				  unsigned char *here, int question,
@@ -241,8 +269,7 @@ int dump_dnspacket(char *type, unsigned char *packet, int len)
   }
   limit = x->packet + len;
 
-  if (x->u & (MASK_Z + MASK_RCODE))
-    log_debug("Z or RCODE is set");
+  if (x->u & MASK_Z) log_debug("Z is set");
 
   fprintf(stderr, "\n");
   fprintf(stderr, "- -- %s\n", type);
