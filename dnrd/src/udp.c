@@ -298,10 +298,14 @@ int udp_send_dummy(srvnode_t *s) {
     0x00, 0x00, /* ANCOUNT */
     0x00, 0x00, /* NSCOUNT */
     0x00, 0x00, /* ARCOUNT */
+
+    9, 'l','o','c','a','l','h','o','s','t',0,  /* QNAME */
+    0x00,0x01,   /* QTYPE A record */
+    0x00,0x01   /* QCLASS: IN */
       
-    0x00,       /* QNAME:  empty */
-    0x00, 0x02, /* QTYPE:  a authorative name server */
-    0x00, 0x01  /* QCLASS: IN */
+    /*    0x00,       /* QNAME:  empty */
+    /*    0x00, 0x02, /* QTYPE:  a authorative name server */
+    /*    0x00, 0x01  /* QCLASS: IN */
   };
   query_t *q;
   struct sockaddr_in srcaddr;
