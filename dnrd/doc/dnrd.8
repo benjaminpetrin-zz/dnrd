@@ -139,8 +139,9 @@ localhost every
 .I N
 seconds. As soon there are a respose from a deactivated server, it
 is reactivated. The default value is
-.I 5
-seconds.
+.I 10
+seconds. Setting this to zero will make dnrd to never deactivate a
+server.
 
 .TP
 .BI \-s\  ipaddr \fR(: domain \fR)
@@ -177,7 +178,12 @@ Set the timeout value for forward DNS servers. If a server don't
 respond to a query within
 .I N
 seconds it is deactivated. The default value is
-.I 3
+.I 20
+.
+.sp
+Setting this to zero will make dnrd to never deactivate a server
+because of timeouts. However, a server might be deactivated if sendto
+fails.
 
 .TP
 .BI \-u\  userid

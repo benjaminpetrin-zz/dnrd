@@ -235,7 +235,7 @@ void retry_srvlist(domnode_t *d, const int delay) {
   assert(d!=NULL); /* should never happen */
   s = d->srvlist;
   while ((s = s->next) && (s != d->srvlist))
-    if (s->inactive && (now - s->inactive) > delay ) {
+    if (s->inactive && (now - s->inactive) >= delay ) {
       s->inactive=now;
       send_dummy(s);
     }
