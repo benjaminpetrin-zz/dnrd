@@ -48,17 +48,34 @@
 static int dnssend(srvnode_t *s, void *msg, int len)
 {
     int	rc;
+    time_t now = time(NULL);
 
     rc = sendto(s->sock, msg, len, 0,
 		(const struct sockaddr *) &s->addr,
 		sizeof(struct sockaddr_in));
+
     if (rc != len) {
 	log_msg(LOG_ERR, "sendto error: %s: %m",
 		inet_ntoa(s->addr.sin_addr));
 	return (rc);
     }
-
+    if ((s->send_time == 0)) s->send_time = now;
     return (rc);
+}
+
+/* send a query to current server. Returns len on success and 0 on
+   failure */
+
+int send2current(domnode_t *d, void *msg, const int len) {
+    /* If we have domains associated with our servers, send it to the
+       appropriate server as determined by srvr */
+    while ( (d->current != NULL) &&
+	    (dnssend(d->current, msg, len) != len)) {
+      deactivate_current(d);
+    }
+    if (d->current) {
+      return len;
+    } else return 0;
 }
 
 /*
@@ -105,46 +122,43 @@ void handle_udprequest()
 	}
 	return;
     }
-    dnsquery_add(&from_addr, msg, len);
 
-    /* If we have domains associated with our servers, send it to the
-       appropriate server as determined by srvr */
-    while ( (dptr->current != NULL) &&
-	    (dnssend(dptr->current, msg, len) != len)) {
-      deactivate_current(dptr);
-    }
-
+    if (send2current(dptr, msg, len))
+      dnsquery_add(dptr, &from_addr, msg, len);
+    else {
 #ifndef EXCLUDE_MASTER
-    if (dptr->current == NULL) {
-	int	packetlen;
-	char	packet[maxsize+4];
+      int	packetlen;
+      char	packet[maxsize+4];
 
-	/*
-	 * If we couldn't send the packet to our DNS servers,
-	 * perhaps the `network is unreachable', we tell the
-	 * client that we are unable to process his request
-	 * now.  This will show a `No address (etc.) records
-	 * available for host' in nslookup.  With this the
-	 * client won't wait hang around till he gets his
-	 * timeout.
-	 * For this feature dnrd has to run on the gateway
-	 * machine.
-	 */
+      /*
+       * If we couldn't send the packet to our DNS servers,
+       * perhaps the `network is unreachable', we tell the
+       * client that we are unable to process his request
+       * now.  This will show a `No address (etc.) records
+       * available for host' in nslookup.  With this the
+       * client won't wait hang around till he gets his
+       * timeout.
+       * For this feature dnrd has to run on the gateway
+       * machine.
+       */
+      
+      if ((packetlen = master_dontknow(msg, len, packet)) > 0) {
+	/* we never added the query to the list if the sendto was
+	   unsuccessful
+	   if (!dnsquery_find(msg, &from_addr)) {
+	   log_debug("ERROR: couldn't find the original query");
+	   return;
+	   }
+	*/
 
-	if ((packetlen = master_dontknow(msg, len, packet)) > 0) {
-	    if (!dnsquery_find(msg, &from_addr)) {
-		log_debug("ERROR: couldn't find the original query");
-		return;
-	    }
-	    if (sendto(isock, msg, len, 0, (const struct sockaddr *)&from_addr,
-		       addr_len) != len) {
-		log_debug("sendto error %s", strerror(errno));
-		return;
-	    }
+	if (sendto(isock, msg, len, 0, (const struct sockaddr *)&from_addr,
+		   addr_len) != len) {
+	  log_debug("sendto error %s", strerror(errno));
+	  return;
 	}
-    }
+      }
 #endif
-
+    }
 }
 
 /*
