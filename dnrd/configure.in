@@ -25,7 +25,7 @@ dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(select socket strdup strerror strtoul strnlen)
+AC_CHECK_FUNCS(select socket strdup strerror strtoul strnlen usleep)
 
 AC_CONFIG_FILES([Makefile
 		src/Makefile
