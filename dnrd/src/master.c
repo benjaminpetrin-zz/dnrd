@@ -1025,7 +1025,9 @@ int master_init(void)
     }
     else {
 	_master_init();
+	/* This does not work at all. I turn it off...
 	signal(SIGHUP, master_sighup);
+	*/
     }
 
     /*

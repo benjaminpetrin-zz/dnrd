@@ -42,7 +42,6 @@ static query_t *qlist_tail;
 static unsigned long total_queries=0;
 static unsigned long total_timeouts=0;
 
-int max_sockets = 200;
 int upstream_sockets = 0; /* number of upstream sockets */
 
 static int dropping = 0; /* dropping new packets */

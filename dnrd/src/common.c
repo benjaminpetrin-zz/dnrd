@@ -81,6 +81,10 @@ int                 ignore_inactive_cache_hits = 0;
 /* highest socket number */
 int                 maxsock;
 
+/* maximum number of open sockets. If we have this amount of
+   concurrent queries, we start dropping new ones */
+int max_sockets = 200;
+
 /* the fd set. query modifies this so we make it global */
 fd_set              fdmaster;
 

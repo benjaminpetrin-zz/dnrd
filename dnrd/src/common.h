@@ -50,8 +50,9 @@
  * forward timeout *might* increase to select_timeout. This value
  * should be >= SELECT_TIMEOUT
  */
+/* 12 seems to be a good value under heavy load... */
 #ifndef FORWARD_TIMEOUT
-#define FORWARD_TIMEOUT 20
+#define FORWARD_TIMEOUT 12
 #endif
 
 /* not used yet */
@@ -95,6 +96,7 @@ extern domnode_t           *domain_list;
 extern int                 reactivate_interval;
 extern int                 ignore_inactive_cache_hits; 
 
+extern int max_sockets;
 extern int maxsock;
 extern fd_set fdmaster;
 
