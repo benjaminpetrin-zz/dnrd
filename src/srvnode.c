@@ -29,6 +29,7 @@
 
 srvnode_t *alloc_srvnode(void) {
   srvnode_t *p = allocate(sizeof(srvnode_t));
+  p->inactive = -1;
   /* actually we return a new emty list... */
   return p->next=p;
 }
@@ -57,7 +58,7 @@ srvnode_t *ins_srvnode (srvnode_t *list, srvnode_t *p) {
 /* removes a node from the list.
  * returns the deleted node 
  */
-srvnode_t *del_srvnode(srvnode_t *list) {
+srvnode_t *del_srvnode_after(srvnode_t *list) {
   srvnode_t *p = list->next;
   list->next = p->next;
   return p;
@@ -74,16 +75,16 @@ srvnode_t *destroy_srvnode(srvnode_t *p) {
 }
 
 /* emties a linked server list. returns the head */
-srvnode_t *empty_srvlist(srvnode_t *head) {
+srvnode_t *clear_srvlist(srvnode_t *head) {
   srvnode_t *p;
   while (p->next != head) {
-    destroy_srvnode(del_srvnode(p));
+    destroy_srvnode(del_srvnode_after(p));
   }
 }
 
 /* destroys the server list, including the head */
 srvnode_t *destroy_srvlist(srvnode_t *head) {
-  empty_srvlist(head);
+  clear_srvlist(head);
   free(head);
   return NULL;
 }
@@ -99,7 +100,7 @@ srvnode_t *add_srv(srvnode_t *head, char *ipaddr) {
   }
   p = alloc_srvnode();
   memcpy(&p->addr.sin_addr, &addr.sin_addr, sizeof(p->addr.sin_addr));
-  p->active = 1;
+  p->inactive = 0;
   if (head) {
     ins_srvnode(head, p);
   }
@@ -112,4 +113,13 @@ srvnode_t *last_srvnode(srvnode_t *head) {
   if (p)
     while (p->next != head) p = p->next;
   return p;
+}
+
+/* check if there are a list or not 
+   retruns 1 if its empty or NULL
+   returns 0 if there are servers in the list
+*/
+int no_srvlist(srvnode_t *head) {
+  if (!head) return 1;
+  return (head->next == head);
 }

@@ -45,7 +45,7 @@ static int    send_count = 0;
 /*
  * server_switch()
  *
- * Abstract: Switch to the next DNS server
+ * Abstract: Switch to the next active DNS server
  */
 static srvnode_t *server_switch(domnode_t *p) {
   char ip[20];
@@ -56,6 +56,16 @@ static srvnode_t *server_switch(domnode_t *p) {
 	    inet_ntoa(p->current->addr.sin_addr),
 	    p->domain ? p->domain : "default" );
   p->current->send_count = 0;
+}
+
+/* prepare the dns packet for a not foud reply */
+char *set_notfound(char *msg, const int len) {
+  if (len < 3) return NULL;
+  /* Set flags QR and AA */
+  msg[2] |= 0x84;
+  /* Set flags RA and RCODE=3 */
+  msg[3] = 0x83;
+  return msg;
 }
 
 /*
@@ -127,28 +137,27 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
     /* get the server list for this domain */
     d=search_subdomnode(domain_list, &msg[12], *len);
 
-    if (d->current->next == d->current) {
+    if (no_srvlist(d->srvlist)) {
       /* there is no servers for this domain, reply with "entry not found" */
 	log_debug("Replying to query with \"entry not found\"");
-	/* Set flags QR and AA */
-	msg[2] |= 0x84;
-	/* Set flags RA and RCODE=3 */
-	msg[3] = 0x83;
+	if (!set_notfound(msg, *len)) return -1;
 	return 0;
     }
 
     /* Send to a server until it "times out". */
     {
-	time_t t = time(NULL);
-	if (d->current->send_time != t) {
-	    d->current->send_time = t;
-	    if (++d->current->send_count > 5) server_switch(d);
+      time_t now = time(NULL);
+      if (d->current && (d->current->send_time != now)) {
+	d->current->send_time = now;
+	if (++d->current->send_count > 5) {
+	  deactivate_current(d);
 	}
-	*dptr = d;
-
-	dnsquery_add(fromaddrp, msg, *len);
-	log_debug("Forwarding the query to DNS server %s",
-		  inet_ntoa(d->current->addr.sin_addr));
+      }
+      *dptr = d;
+      
+      dnsquery_add(fromaddrp, msg, *len);
+      if (d->current) log_debug("Forwarding the query to DNS server %s",
+				inet_ntoa(d->current->addr.sin_addr));
     }
     return 1;
 }
@@ -217,12 +226,8 @@ void run()
 	d=domain_list;
 	do {
 	  if (s=d->srvlist) {
-	    while ((s=s->next) != d->srvlist) {
-	      if (FD_ISSET(s->sock, &fds)) {
-		handle_udpreply(s);
-		if (s == d->current) s->send_count = 0;
-	      }
-	    }
+	    while ((s=s->next) != d->srvlist)
+	      if (FD_ISSET(s->sock, &fds)) handle_udpreply(s);
 	  }
 	} while ((d=d->next) != domain_list);
 

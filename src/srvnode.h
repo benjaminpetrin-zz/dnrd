@@ -29,9 +29,8 @@
 
 typedef struct _srvnode {
   int                 sock; /* the communication socket */
-  struct sockaddr_in     addr;      /* IP address of server */
-  int                 active; /* is this server active? */
-  int                 nexttry; /* next time to retry */
+  struct sockaddr_in  addr;      /* IP address of server */
+  time_t              inactive; /* is this server active? */
   int                 send_count;
   int                 send_time;
   int                 tcp;
@@ -43,12 +42,13 @@ typedef struct _srvnode {
 srvnode_t *alloc_srvnode(void);
 srvnode_t *init_srvlist(void);
 srvnode_t *ins_srvnode (srvnode_t *list, srvnode_t *p);
-srvnode_t *del_srvnode(srvnode_t *list);
+srvnode_t *del_srvnode_after(srvnode_t *list);
 srvnode_t *destroy_srvnode(srvnode_t *p);
-srvnode_t *empty_srvlist(srvnode_t *head);
+srvnode_t *clear_srvlist(srvnode_t *head);
 srvnode_t *destroy_srvlist(srvnode_t *head);
 srvnode_t *add_srv(srvnode_t *head, char *ipaddr);
 srvnode_t *last_srvnode(srvnode_t *head);
+int no_srvlist(srvnode_t *head);
 
 
 

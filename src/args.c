@@ -171,19 +171,24 @@ int parse_args(int argc, char **argv)
 	  }
 	  case 's': {
 	    domnode_t *p;
-	    char *s, *sep = strchr(optarg, (int)':');
+	    char *s,*sep = strchr(optarg, (int)':');
 	    
 	    if (sep) { /* is a domain specified? */
-	      s=make_cname(strnlwr(sep+1,200),200);
+	      s = make_cname(strnlwr(sep+1,200),200);
 	      *sep = 0;
-	      if (!(p=search_domnode(domain_list, s)))
+	      if (!(p=search_domnode(domain_list, s))) {
 		p=add_domain(domain_list, s, 200);
+		log_debug("Added domain %s", sep+1);
+	      }
 	    } else p=domain_list;
 
 	    if (!add_srv(last_srvnode(p->srvlist), optarg)) {
 	      log_msg(LOG_ERR, "%s: Bad ip address \"%s\"\n",
 		      progname, optarg);
 	      exit(-1);
+	    } else {
+	      log_debug("Server %s added to domain %s", optarg, 
+			sep ? sep+1:"(default)");
 	    }
 	    if (sep) *sep = ':';
 	    break;

@@ -88,25 +88,23 @@ domnode_t *destroy_domlist(domnode_t *head) {
 
 
 /* add a domain */
-domnode_t *add_domain(domnode_t *list, const char *name, const int maxlen) {
+domnode_t *add_domain(domnode_t *list, char *name, const int maxlen) {
   domnode_t *p;
-
+  char *cname;
   p = alloc_domnode();
-
   /* in case the domain is NULL */ 
   if (name) {
     /* allocate strnlen +1 incase there is no ending \0 */
-    p->domain = allocate(strnlen(name, maxlen)+1);
+    p->domain = allocate(strnlen(name, maxlen)+2);
     strncpy(p->domain, name, maxlen);
   } else {
     p->domain = NULL;
   }
-
   ins_domnode(list, p);
   return p;
 }
 
-/* search for a domain. returns the node if found or then head if not */
+/* search for a domain. returns the node if found or NULL if not */
 domnode_t *search_domnode(domnode_t *head, const char *name) {
   domnode_t *d=head;
   /* the list head is pointing to the default domain */
@@ -114,7 +112,7 @@ domnode_t *search_domnode(domnode_t *head, const char *name) {
   while ((d=d->next) != head) {
     if (strcmp(d->domain, name) == 0) return d;
   }
-  return head;
+  return NULL;
 }
 
 /* search for the domnode that has the domain. Returns domnode if
@@ -134,4 +132,51 @@ domnode_t *search_subdomnode(domnode_t *head, const char *name,
     if (strncmp(d->domain, p, maxlen - (p - name)) == 0) return d;
   }
   return head;
+}
+
+/* switch to next active server
+   Returns: NULL - if there are no active servers in list
+            the next active server otherwise
+*/
+srvnode_t *next_active(domnode_t *d) {
+  srvnode_t *s, *start;
+#ifdef DEBUG
+  char domain[200];
+#endif
+
+  if (d->current) {
+    start=d->current;
+  } else { /* previously deactivated everything, lets check from start */
+    start=d->srvlist;
+  }
+  for (s=start->next; s->inactive && s != start; s = s->next);
+  if (s->inactive) s=NULL;
+
+#ifdef DEBUG
+  if (d->domain)
+    sprintf_cname(d->domain, 200, domain, 200);
+  else
+    strncpy(domain, "(default)",200);
+    
+  if (s) {
+    log_debug("Setting server %s for domain %s",
+	      inet_ntoa(s->addr.sin_addr, domain));
+  } else 
+    log_debug("No active servers for domain %s", domain);
+
+#endif
+  
+  return (d->current = s);
+}
+
+/* deactivate current server
+   Returns: next active server, NULL if there are none 
+*/
+srvnode_t *deactivate_current(domnode_t *d) {
+  if (d->current) {
+    d->current->inactive = time(NULL);
+    log_msg("Deactivating DNS server %s",
+	      inet_ntoa(d->current->addr.sin_addr));
+  }
+  return next_active(d);
 }
