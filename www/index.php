@@ -3,7 +3,6 @@ require("header.php");
 require("menu.php");
 ?>
 
-<body>
 <h1>Domain Name Relay Daemon</h1>
 
 <? menu("Home"); ?>

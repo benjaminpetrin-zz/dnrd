@@ -8,7 +8,7 @@ require("menu.php");
 
 <div id="content">
 
-<h2>DNRD</H2>
+<H2>DNRD</H2>
 
 dnrd - proxy name server
 <A NAME="lbAC">&nbsp;</A>
@@ -208,9 +208,10 @@ localhost every
 
 seconds. As soon there are a respose from a deactivated server, it
 is reactivated. The default value is
-<I>5</I>
+<I>10</I>
 
-seconds.
+seconds. Setting this to zero will make dnrd to never deactivate a
+server.
 <P>
 <DT><B>-s&nbsp;</B><I>ipaddr</I><B></B>(:<I>domain</I><B></B>)
 
@@ -258,8 +259,12 @@ respond to a query within
 <I>N</I>
 
 seconds it is deactivated. The default value is
-<I>3</I>
+<I>20</I>
 
+<P>
+Setting this to zero will make dnrd to never deactivate a server
+because of timeouts. However, a server might be deactivated if sendto
+fails.
 <P>
 <DT><B>-u&nbsp;</B><I>userid</I>
 
@@ -332,6 +337,7 @@ The original version of dnrd was written by Brad Garcia
 Other contributors are listed in the HISTORY
 file included with the source code.
 <P>
+
 
 
 </div>

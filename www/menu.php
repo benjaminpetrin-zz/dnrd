@@ -17,7 +17,7 @@ function menu($entry) {
   foreach ($urls as $i => $u) {
     print ( "<dt>");
     print( ($entry == $i) ?
-	   "<h4>$i</h4>" : "<a href=\"$u\">$i</a>");
+	   "<b>$i</b>" : "<a href=\"$u\">$i</a>");
     print("</dt>\n");
   }
   print ("</dl>\n");
