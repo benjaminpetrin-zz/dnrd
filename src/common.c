@@ -55,7 +55,7 @@ const char*         pid_file = "/var/tmp/dnrd.pid";
 const char*         pid_file = "/var/run/dnrd.pid";
 #endif
 int                 isock = -1;
-#ifndef EXCLUDE_TCP
+#ifdef ENABLE_TCP
 int                 tcpsock = -1;
 #endif
 int                 select_timeout = SELECT_TIMEOUT;
@@ -244,7 +244,7 @@ void cleanexit(int status)
 
     log_debug("Shutting down...\n");
     if (isock >= 0) close(isock);
-#ifndef EXCLUDE_TCP
+#ifdef ENABLE_TCP
     if (tcpsock >= 0) close(tcpsock);
 #endif
     /*
