@@ -69,7 +69,7 @@ static struct option long_options[] =
 #endif /* __GNU_LIBRARY__ */
 
 #ifndef EXCLUDE_MASTER
-#define MASTERPARM "m"
+#define MASTERPARM "m:"
 #else
 #define MASTERPARM
 #endif
@@ -80,7 +80,7 @@ static struct option long_options[] =
 #define PIDPARM 
 #endif
  
-const char short_options[] = "a:bc:dhi" PIDPARM "l" MASTERPARM "M:rR:s:t:u:v";
+const char short_options[] = "a:bc:dhi" PIDPARM "l" MASTERPARM "M:r:R:s:t:u:v";
 
 /*
  * give_help()
@@ -92,46 +92,76 @@ static void give_help()
     printf("dnrd version %s\n", version);
     printf("\nusage: %s [options]\n", progname);
     printf("  Valid options are\n");
-    printf("    -a, --address=LOCALADDRESS\n"
-	   "                              "
-	   "Only bind to the port on the given address,\n"
-	   "                              rather than all local addresses\n");
-    printf("    -b, --load-balance        Round-Robin load balance forwarding servers\n");
-    printf("    -c, --cache=off|[LOW:]HIGH\n");
-    printf("    -d, --debug               "
-	   "Turn on debugging - run in foreground.\n");
-    printf("    -h, --help                Print this message, then exit.\n");
-    printf("    -i, --ignore              Ignore cache for disabled servers\n");
+    printf(
+#ifdef __GNU_LIBRARY__
+"    -a, --address=LOCALADDRESS\n"
+"                            Only bind to the port on the given address,\n"
+"                            rather than all local addresses\n"
+"    -b, --load-balance      Round-Robin load balance forwarding servers\n"
+"    -c, --cache=off|[LOW:]HIGH\n"
+"                            Turn off cache or tune the low/high water marks\n"
+"    -d, --debug             Turn on debugging - run in foreground.\n"
+"    -h, --help              Print this message, then exit.\n"
+"    -i, --ignore            Ignore cache for disabled servers\n"
 #ifdef ENABLE_PIDFILE
-    printf("    -k, --kill                Kill a running daemon.\n");
+"    -k, --kill              Kill a running daemon.\n"
 #endif
-    printf("    -l, --log                 Send all messages to syslog.\n");
+"    -l, --log               Send all messages to syslog.\n"
 #ifndef EXCLUDE_MASTER
-    printf("    -m, --master=MASTERMODE\n");
+"    -m, --master=off|hosts  Turn off master or use /etc/hosts file\n"
 #endif
-    printf("    -M, --max-sock=N          Set maximum number of open sockets to N\n");
-    printf("    -r, --retry=N             Set retry interval to N seconds\n");
-    printf("    -s, --server=IPADDR(:domain)\n"
-	   "                              "
-	   "Set the DNS server.  You can specify an\n"
-	   "                              "
-	   "optional domain name, in which case a DNS\n"
-	   "                              "
-	   "request will only be sent to that server for\n"
-	   "                              names in that domain.\n"
-	   "                              "
-	   "(Can be used more than once for multiple or\n"
-	   "                              backup servers)\n");
-    printf("    -t, --timeout=N           Set forward DNS server timeout to N\n");
-    printf("    -u, --uid=ID              "
-	   "Username or numeric id to switch to\n");
+"    -M, --max-sock=N        Set maximum number of open sockets to N\n"
+"    -r, --retry=N           Set retry interval to N seconds\n"
+"    -s, --server=IPADDR(:domain)\n"
+"                            Set the DNS server.  You can specify an\n"
+"                            optional domain name, in which case a DNS\n"
+"                            request will only be sent to that server for\n"
+"                            names in that domain.\n"
+"                            (Can be used more than once for multiple or\n"
+"                            backup servers)\n"
+"    -t, --timeout=N         Set forward DNS server timeout to N\n"
+"    -u, --uid=ID            Username or numeric id to switch to\n"
+"    -R, --dnrd-root=DIR     The dnrd root directory. dnrd will chroot to\n"
+"                            this dir.\n"
+"    -v, --version           Print out the version number and exit.\n"
 
-    printf("    -R, --dnrd-root=DIR       The dnrd root directory. dnrd will chroot to\n"
-           "                              this dir.\n");
+#else /* __GNU_LIBRARY__ */
 
-    printf("    -v, --version             "
-	   "Print out the version number and exit.\n");
-    printf("\n");
+"    -a IPADDR Only bind to the port on the given address, rather than all\n"
+"              local addresses\n"
+"    -b        Round-Robin load balance forwarding servers\n"
+"    -c off|[LOW:]HIGH\n"
+"              Turn off caching or tune the low/high water marks"
+"    -d        Turn on debugging - run in foreground.\n"
+"    -h        Print this message, then exit.\n"
+"    -i        Ignore cache for disabled servers\n"
+#ifdef ENABLE_PIDFILE
+"    -k        Kill a running daemon.\n"
+#endif
+"    -l        Send all messages to syslog.\n"
+#ifndef EXCLUDE_MASTER
+"    -m off|hosts\n"
+"              Turn off master or use /etc/hosts file\n"
+#endif
+"    -M N      Set maximum number of open sockets to N\n"
+"    -r N      Set retry interval to N seconds\n"
+"    -s IPADDR(:domain)\n"
+"              Set the DNS server.  You can specify an optional domain name,\n"
+"              in which case a DNS request will only be sent to that server\n"
+"              for names in that domain. (Can be used more than once for\n"
+"              multiple or backup servers)\n"
+"    -t N      Set forward DNS server timeout to N\n"
+"    -u ID     Username or numeric id to switch to\n"
+"    -R DIR    The dnrd root directory. dnrd will chroot to this dir.\n"
+"    -v        Print out the version number and exit.\n"
+
+#endif /* __GNU_LIBRARY__ */
+
+
+"\n");
+
+
+
 }
 
 
