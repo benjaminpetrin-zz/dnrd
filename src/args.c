@@ -21,6 +21,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #if defined(__GNU_LIBRARY__)
 #   include <getopt.h>
 #endif
