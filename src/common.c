@@ -57,14 +57,8 @@ const char*         pid_file = "/var/run/dnrd.pid";
 int                 isock = -1;
 int                 tcpsock = -1;
 int                 select_timeout = SELECT_TIMEOUT;
-
 int                 forward_timeout = FORWARD_TIMEOUT;
-
-/*
-struct dnssrv_t     dns_srv[MAX_SERV];
-int                 serv_act = 0;
-int                 serv_cnt = 0;
-*/
+int                 load_balance = 0;
 uid_t               daemonuid = 0;
 gid_t               daemongid = 0;
 const char*         version = PACKAGE_VERSION;

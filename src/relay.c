@@ -37,29 +37,6 @@
 #include "master.h"
 #include "dns.h"
 
-/*
-static time_t send_time  = 0;
-static int    send_count = 0;
-*/
-
-/*
- * server_switch()
- *
- * Abstract: Switch to the next active DNS server
- */
-/*
-static srvnode_t *server_switch(domnode_t *p) {
-  char ip[20];
-  p->current = p->current->next;
-  if (p->current == p->srvlist) p->current = p->current->next;
-
-  log_debug("Switching to DNS Server #%s for %s", 
-	    inet_ntoa(p->current->addr.sin_addr),
-	    p->domain ? p->domain : "default" );
-  p->current->send_count = 0;
-}
-*/
-
 /* prepare the dns packet for a not foud reply */
 char *set_notfound(char *msg, const int len) {
   if (len < 3) return NULL;
@@ -99,15 +76,10 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
 
     if (opt_debug) {
 	char      cname_buf[80];
-	log_debug("len=%i", *len);
 	sprintf_cname(&msg[12], *len-12, cname_buf, 80);
 	log_debug("Received DNS query for \"%s\"", cname_buf);
 	if ((dump_dnspacket("query", msg, *len) < 0) < 0) {
 	  log_debug("Format error");
-	  /* actually we just answer with here and now */
-	  //	  msg[2] |= 0x80; /*set QR flag */
-	  //msg[3] = 0x81; /* set RA and RCODE =1 */
-	  //return (0);
 	}
     }
 
@@ -146,23 +118,20 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
 	return 0;
     }
 
+    if (load_balance) next_active(d);
     /* Send to a server until it "times out". */
     if (d->current) {
       time_t now = time(NULL);
       if ((d->current->send_time == 0)) {
-	log_debug("Setting sent_time=%i for %s",
-		  now, cname2asc(d->domain));
 	d->current->send_time = now;
       } 
       else if (now - d->current->send_time > forward_timeout) {
-	log_debug("send_time=%i, now=%i, timeout=%i",
-		  d->current->send_time, now, forward_timeout);
 	deactivate_current(d);
       }
       
       dnsquery_add(fromaddrp, msg, *len);
-      if (d->current) log_debug("Forwarding the query to DNS server %s",
-				inet_ntoa(d->current->addr.sin_addr));
+      log_debug("Forwarding the query to DNS server %s",
+		inet_ntoa(d->current->addr.sin_addr));
     }
     *dptr = d;
     return 1;

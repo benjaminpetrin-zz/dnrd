@@ -42,6 +42,7 @@
 static struct option long_options[] =
 {
     {"address",      1, 0, 'a'},
+    {"load-balance", 0, 0, 'b'},
     {"cache",        1, 0, 'c'},
     {"debug",        0, 0, 'd'},
     {"help",         0, 0, 'h'},
@@ -56,7 +57,7 @@ static struct option long_options[] =
 };
 #endif /* __GNU_LIBRARY__ */
 
-const char short_options[] = "a:c:dhklm:s:u:vp:";
+const char short_options[] = "a:bc:dhklm:s:u:v";
 
 /*
  * give_help()
@@ -72,6 +73,7 @@ static void give_help()
 	   "                              "
 	   "Only bind to the port on the given address,\n"
 	   "                              rather than all local addresses\n");
+    printf("    -b, --load-balance        Round-Robin load balance forwarding servers\n");
     printf("    -c, --cache=off|[LOW:]HIGH\n");
     printf("    -d, --debug               "
 	   "Turn on debugging - run in foreground.\n");
@@ -92,8 +94,11 @@ static void give_help()
 	   "                              backup servers)\n");
     printf("    -u, --uid=ID              "
 	   "Username or numeric id to switch to\n");
-    printf("    -p, --chroot-path=CHROOTPATH              "
+    /*
+    printf("    -p, --chroot-path=CHROOTPATH\n"
+	   "                              "
 	   "The chroot path. dnrd will chroot to this dir\n");
+    */
     printf("    -v, --version             "
 	   "Print out the version number and exit.\n");
     printf("\n");
@@ -141,6 +146,10 @@ int parse_args(int argc, char **argv)
 	      }
 	      break;
 	  }
+	case 'b': {
+	  load_balance = 1;
+	  break;
+	}
 	  case 'c': {
 	      copy_string(cache_param, optarg, sizeof(cache_param));
 	      break;

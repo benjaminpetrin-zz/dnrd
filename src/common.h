@@ -72,13 +72,10 @@ extern int                 opt_debug; /* debugging option */
 extern const char*         pid_file; /* File containing current daemon's PID */
 extern int                 isock;     /* for communication with clients */
 extern int                 tcpsock;   /* same as isock, but for tcp requests */
-
-//extern struct dnssrv_t     dns_srv[]; /* DNS server information struct */
-//extern int               serv_act; /* index into dns_srv for active server */
-//extern int                 serv_cnt;  /* number of DNS servers */
-
 extern int                 select_timeout; /* select timeout in seconds */
 extern int                 forward_timeout; /* timeout for forward DNS */
+extern int                 load_balance; /* load balance servers */
+
 extern struct sockaddr_in  recv_addr; /* address on which we receive queries */
 extern uid_t               daemonuid; /* to switch to once daemonised */
 extern gid_t               daemongid; /* to switch to once daemonised */
