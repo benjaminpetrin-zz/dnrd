@@ -72,7 +72,7 @@ char chroot_path[512] = CHROOT_PATH;
 
 domnode_t *domain_list;
 /* turn this on to skip cache hits from responses of inactive dns servers */
-int                 ignore_inactive_cache_hits = 1; 
+int                 ignore_inactive_cache_hits = 0; 
 
 /*
  * This is the address we listen on.  It gets initialized to INADDR_ANY,
