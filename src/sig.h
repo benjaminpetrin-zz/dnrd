@@ -24,5 +24,6 @@
 #include <signal.h>
 
 void sig_handler(int signo);
+void init_sig_handler(sigset_t *orig_sigmask);
 
 #endif  /* _DNRD_SIG_H_ */

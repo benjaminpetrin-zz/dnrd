@@ -90,7 +90,10 @@ extern struct sockaddr_in  recv_addr; /* address on which we receive queries */
 extern uid_t               daemonuid; /* to switch to once daemonised */
 extern gid_t               daemongid; /* to switch to once daemonised */
 extern int                 gotterminal;
+#ifndef EXCLUDE_MASTER
 extern char		   master_param[200];
+extern unsigned char       master_reload;
+#endif
 extern sem_t               dnrd_sem;  /* Used for all thread synchronization */
 
 extern char                dnrd_root[512];

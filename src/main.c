@@ -38,7 +38,6 @@
 #include "cache.h"
 #include "common.h"
 #include "args.h"
-#include "sig.h"
 #include "master.h"
 #include "domnode.h"
 #include "lib.h"
@@ -74,21 +73,6 @@ int main(int argc, char *argv[])
     srvnode_t *s;
 
 
-
-    /*
-     * Setup signal handlers.
-     */
-    signal(SIGINT,  sig_handler);
-    signal(SIGQUIT, sig_handler);
-    signal(SIGTERM, sig_handler);
-    signal(SIGUSR1, sig_handler);
-    /*
-     * Handling TCP requests is done by forking a child.  When they terminate
-     * they send SIGCHLDs to the parent.  This will eventually interrupt
-     * some system calls.  Because I don't know if this is handled it's better
-     * to ignore them -- 14OCT99wzk
-     */
-    signal(SIGCHLD, SIG_IGN);
 
     /*
      * Initialization in common.h of recv_addr is broken, causing at

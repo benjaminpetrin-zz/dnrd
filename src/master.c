@@ -33,7 +33,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#include <signal.h>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -42,15 +41,10 @@
 #include "common.h"
 #include "dns.h"
 #include "lib.h"
-
-#ifndef EXCLUDE_MASTER
 #include "master.h"
+
 #define	MASTER_CONFIG		DNRD_ROOT "/master"
-#endif
-
 #define	PACKET_ASSEMBLYSIZE	600
-
-
 #define	ARPADOMAIN		".in-addr.arpa"
 
 #define	DNS_TYPE_A		1
@@ -58,9 +52,7 @@
 #define	DNS_TYPE_PTR		12
 #define	DNS_TYPE_MX		15
 
-
 #define	DEFAULT_TTL		(60 * 60)
-
 
 typedef struct _string {
     unsigned int code;
@@ -97,13 +89,13 @@ typedef struct _dnsrec {
 } dnsrec_t;
 
 char master_param[200]		= "";
+unsigned char master_reload	= 0;
 
 static int master_onoff		= 1;
 static int master_initialised	= 0;
 static char config[200]		= MASTER_CONFIG;
 
 static int auto_authority	= 1;
-static unsigned char master_reload	= 0;
 
 	/*
 	 * The DNS database is stored in an array of dbmax length.  The
@@ -987,27 +979,20 @@ int master_dontknow(unsigned char *msg, int len, unsigned char *answer)
 
 
 /*
- * master_sighup(), master_reinit()
+ * master_reinit()
  *
  * master_reinit() erases the whole master DNS database and makes a
- * complete reread of the database definition.  master_sighup()
- * is the correponding signal handler that sets the reload flag.
- * The actual reload is done from run() in relay.c after return
- * from the select() function.
+ * complete reread of the database definition. The actual reload is
+ * done from run() in relay.c after return from the pselect()
+ * function.
  */
-static void master_sighup(int sig)
-{
-    if (master_onoff != 0) {
-        master_reload = 1;
-    }
-
-    signal(sig, master_sighup);
-    return;
-}
 
 int master_reinit(void)
 {
-    if (master_onoff == 0) return (0);
+    if (master_onoff == 0) {
+      master_reload = 0;
+      return (0);
+    }
 
     if (master_reload != 0) {
         reset_master();
@@ -1034,9 +1019,6 @@ int master_init(void)
     }
     else {
 	_master_init();
-	/* This does not work at all. I turn it off...
-	signal(SIGHUP, master_sighup);
-	*/
     }
 
     /*
