@@ -330,8 +330,10 @@ int read_hosts(char *filename, char *domain)
 	return (1);
     }
 
-    log_msg(LOG_WARNING, "Using hosts from /etc/hosts. Use master instead");
-    log_msg(LOG_WARNING, "SIGHUP will not work as expected");
+    log_msg(LOG_WARNING,
+	    "Using /etc/hosts will be removed in a future version."
+	    " Please use only the %s/master file or use --master=off.", 
+	    dnrd_root);
     log_debug(1, "initialising from /etc/hosts, domain= %s",
 	      *domain == 0? "<none>": domain);
 
