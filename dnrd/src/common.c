@@ -67,10 +67,6 @@ sem_t               dnrd_sem;  /* Used for all thread synchronization */
 /* The path where we chroot. All config files are relative this path */
 char chroot_path[512] = CHROOT_PATH;
 
-int  domain_act = 0;
-int  domain_cnt = 0;
-dnsdomain_t dnsdomains[MAX_DOMAINS];
-
 
 /*
  * This is the address we listen on.  It gets initialized to INADDR_ANY,
@@ -243,12 +239,6 @@ char* make_cname(const char *text)
     return cname;
 }
 
-size_t _strnlen(const char *s, size_t maxlen) {
-  size_t len=0;
-  while (*s++ && len<maxlen) len++;
-  return (len);
-}
-
 void sprintf_cname(const char *cname, int namesize, char *buf, int bufsize)
 {
   const char *s = cname; /*source pointer */
@@ -256,7 +246,7 @@ void sprintf_cname(const char *cname, int namesize, char *buf, int bufsize)
 
   if (cname == NULL) return;
     
-  if ((_strnlen(cname, namesize)+1) > (unsigned)bufsize) {
+  if ((strnlen(cname, namesize)+1) > (unsigned)bufsize) {
     if (bufsize > 11) {
       sprintf(buf, "(too long)");
     }

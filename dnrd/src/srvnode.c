@@ -7,9 +7,10 @@
 #include "srvnode.h"
 #include "lib.h"
 
-srvnode_t *alloc_srvnode() {
+srvnode_t *alloc_srvnode(void) {
   srvnode_t *p = allocate(sizeof(srvnode_t));
-  return p;
+  /* actually we return a new emty list... */
+  return p->next=p;
 }
 
 
@@ -17,7 +18,7 @@ srvnode_t *alloc_srvnode() {
  * returns ptr to the head/tail dummy node in an empty list
  */
 
-srvnode_t *init_srvlist() {
+srvnode_t *init_srvlist(void) {
   srvnode_t *p = alloc_srvnode();
   p->sock=0;
   p->next = p;
@@ -49,39 +50,33 @@ void destroy_srvnode(srvnode_t *p) {
   free(p);
 }
 
-/* destroys the server list */
-void destroy_srvlist(srvnode_t *head) {
+/* emties a linked server list. returns the head */
+srvnode_t *empty_srvlist(srvnode_t *head) {
   srvnode_t *p;
   while (p->next != head) {
     destroy_srvnode(del_srvnode(p));
   }
+}
+
+/* destroys the server list, including the head */
+srvnod_t *destroy_srvlist(srvnode_t *head) {
+  empty_srvlist(head);
   free(head);
+  return NULL;
 }
 
 
-void printlist(srvnode_t *head) {
-  srvnode_t *p = head->next;
-  while (p != head) {
-    printf("%i\n",p->sock);
-    p = p->next;
+/* add a server */
+srvnode_t *add_srv(srvnode_t *head, char *ipaddr) {
+  srvnode_t *p;
+  struct in_inaddr inp;
+
+  if (!inet_aton(ipaddr, &inp)) {
+    return NULL;
   }
-}
-
-srvnode_t *add_srv(srvnode_t *head, int i) {
-  srvnode_t *p = alloc_srvnode();
-  p->sock = i;
+  p = alloc_srvnode();
+  memcpy(&p->addr.sin_addr, &inp, sizeof(p->addr.sin_addr));
+  p->active = 1;
   ins_srvnode(head, p);
   return p;
-}
-
-int main(int argc, char**argv) {
-  int i;
-  srvnode_t *list = init_srvlist();
-
-  for (i=1; i<10; i++) {
-    add_srv(list, i);
-  }
-  printlist(list);
-  destroy_srvlist(list);
-  return 0;
 }

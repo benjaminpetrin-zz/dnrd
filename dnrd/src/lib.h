@@ -42,5 +42,9 @@ char *copy_string(char *y, char *x, int len);
 
 unsigned int get_stringcode(char *string);
 
+#ifndef HAVE_STRNLEN
+size_t strnlen(const char *s, size_t maxlen);
+#endif
+
 #endif
 
