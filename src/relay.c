@@ -144,8 +144,15 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
 	log_debug("Forwarding the query to DNS server %s",
 		  inet_ntoa(d->current->addr.sin_addr));
       } else {
-	log_debug("All servers deactivated.");
+	log_debug("All servers deactivated. Replying with \"entry not found\"");
+	if (!set_notfound(msg, *len)) return -1;
+	return 0;
       }
+
+    } else {
+	log_debug("All servers deactivated. Replying with \"entry not found\"");
+	if (!set_notfound(msg, *len)) return -1;
+	return 0;
     }
     dnsquery_add(fromaddrp, msg, *len);
     *dptr = d;
