@@ -45,7 +45,7 @@
 
 #ifndef EXCLUDE_MASTER
 #include "master.h"
-#define	MASTER_CONFIG		CHROOT_PATH "/master"
+#define	MASTER_CONFIG		DNRD_ROOT "/master"
 #endif
 
 #define	PACKET_ASSEMBLYSIZE	600
