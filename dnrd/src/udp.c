@@ -58,8 +58,8 @@ static int udp_send(int sock, srvnode_t *srv, void *msg, int len)
 		sizeof(struct sockaddr_in));
 
     if (rc != len) {
-	log_msg(LOG_ERR, "sendto error: %s",
-		inet_ntoa(srv->addr.sin_addr));
+	log_msg(LOG_ERR, "sendto error: %s: ",
+		inet_ntoa(srv->addr.sin_addr), strerror(errno));
 	return (rc);
     }
     if ((srv->send_time == 0)) srv->send_time = now;
