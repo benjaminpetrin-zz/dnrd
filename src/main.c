@@ -284,6 +284,7 @@ int main(int argc, char *argv[])
 	log_msg(LOG_ERR, "can't drop supplementary groups");
 	cleanexit(-1);
     }
+#ifndef __CYGWIN__ /** { **/
     /*
      * Switch uid/gid to something safer than root if requested.
      * By default, attempt to switch to user & group id 65534.
@@ -295,7 +296,6 @@ int main(int argc, char *argv[])
 	    cleanexit(-1);
 	}
     }
-#ifndef __CYGWIN__
     else if (!pwent) {
 	log_msg(LOG_ERR, "Couldn't become the \"nobody\" user.  Please use "
 		"the \"-uid\" option.\n"
@@ -306,15 +306,12 @@ int main(int argc, char *argv[])
 	log_msg(LOG_ERR, "couldn't switch to gid %i", pwent->pw_gid);
 	cleanexit(-1);
     }
-#endif
-
     if (daemonuid != 0) {
 	if (setuid(daemonuid) < 0) {
 	    log_msg(LOG_ERR, "couldn't switch to uid %i", daemonuid);
 	    cleanexit(-1);
 	}
     }
-#ifndef __CYGWIN__
     else if (!pwent) {
 	log_msg(LOG_ERR, "Couldn't become the \"nobody\" user.  Please use "
 		"the \"-uid\" option.\n"
@@ -325,7 +322,7 @@ int main(int argc, char *argv[])
 	log_msg(LOG_ERR, "couldn't switch to uid %i", pwent->pw_uid);
 	cleanexit(-1);
     }
-#endif
+#endif /** } __CYGWIN__ **/
 
 
     /*
@@ -348,10 +345,11 @@ int main(int argc, char *argv[])
       p->current = p->srvlist->next;
     } while ((p=p->next) != domain_list);
 
+#ifndef __CYGWIN__ /** { **/
     /*
      * Now it's time to become a daemon.
      */
-    if (!opt_windows && !opt_debug) {
+    if (!opt_debug) {
 	pid_t pid = fork();
 	if (pid < 0) {
 	    log_msg(LOG_ERR, "%s: Couldn't fork\n", progname);
@@ -366,6 +364,7 @@ int main(int argc, char *argv[])
 	fclose(stdout);
 	fclose(stderr);
     }
+#endif /** } __CYGWIN__ */
 
 #ifdef ENABLE_PIDFILE
     /*

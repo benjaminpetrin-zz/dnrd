@@ -48,7 +48,6 @@ static struct option long_options[] =
     {"load-balance", 0, 0, 'b'},
     {"cache",        1, 0, 'c'},
     {"debug",        0, 0, 'd'},
-    {"windows",      0, 0, 'w'},
     {"help",         0, 0, 'h'},
     {"ignore",       0, 0, 'i'},
 #ifdef ENABLE_PIDFILE
@@ -62,7 +61,9 @@ static struct option long_options[] =
     {"retry",        1, 0, 'r'},
     {"server",       1, 0, 's'},
     {"timeout",      1, 0, 't'},
+#ifndef __CYGWIN__
     {"uid",          1, 0, 'u'},
+#endif
     {"version",      0, 0, 'v'},
     {"dnrd-root",    1, 0, 'R'},
     {0, 0, 0, 0}
@@ -80,8 +81,15 @@ static struct option long_options[] =
 #else
 #define PIDPARM 
 #endif
+
+#ifdef __CYGWIN__
+#define UIDPARM "u:"
+#else
+#define UIDPARM
+#endif
  
-const char short_options[] = "a:bc:dwhi" PIDPARM "l" MASTERPARM "M:r:R:s:t:u:v";
+const char short_options[] = 
+    "a:bc:dhi" PIDPARM "l" MASTERPARM "M:r:R:s:t:" UIDPARM "v";
 
 /*
  * give_help()
@@ -102,8 +110,6 @@ static void give_help()
 "    -c, --cache=off|[LOW:]HIGH\n"
 "                            Turn off cache or tune the low/high water marks\n"
 "    -d, --debug             Turn on debugging - run in foreground.\n"
-"    -w, --windows           Specialize for Win32/Cygwin: "
-"                            run in foreground, etc.\n"
 "    -h, --help              Print this message, then exit.\n"
 "    -i, --ignore            Ignore cache for disabled servers\n"
 #ifdef ENABLE_PIDFILE
@@ -123,7 +129,9 @@ static void give_help()
 "                            (Can be used more than once for multiple or\n"
 "                            backup servers)\n"
 "    -t, --timeout=N         Set forward DNS server timeout to N\n"
+#ifndef __CYGWIN__
 "    -u, --uid=ID            Username or numeric id to switch to\n"
+#endif
 "    -R, --dnrd-root=DIR     The dnrd root directory. dnrd will chroot to\n"
 "                            this dir.\n"
 "    -v, --version           Print out the version number and exit.\n"
@@ -154,7 +162,9 @@ static void give_help()
 "              for names in that domain. (Can be used more than once for\n"
 "              multiple or backup servers)\n"
 "    -t N      Set forward DNS server timeout to N\n"
+#ifndef __CYGWIN__
 "    -u ID     Username or numeric id to switch to\n"
+#endif
 "    -R DIR    The dnrd root directory. dnrd will chroot to this dir.\n"
 "    -v        Print out the version number and exit.\n"
 
@@ -220,10 +230,6 @@ int parse_args(int argc, char **argv)
 	  }
 	  case 'd': {
 	      opt_debug++;
-	      break;
-	  }
-	  case 'w': {
-	      opt_windows++;
 	      break;
 	  }
 	  case 'h': {
@@ -307,6 +313,7 @@ int parse_args(int argc, char **argv)
 	      log_debug(1, "Timeout=0. Servers will never timeout.");
 	    break;
 	  }
+#ifndef __CYGWIN__ /** { **/
 	  case 'u': {
 	      char *ep;
 	      struct passwd *pwent;
@@ -322,6 +329,7 @@ int parse_args(int argc, char **argv)
 	      daemongid = pwent->pw_gid;
 	      break;
 	  }
+#endif /** } __CYGWIN__ **/
 	  case 'v': {
 	      printf("dnrd version %s\n\n", version);
 	      exit(0);

@@ -47,7 +47,6 @@
  * These are all the global variables.
  */
 int                 opt_debug = OPT_DEBUG;
-int                 opt_windows = 0;
 int                 opt_serv = 0;
 const char*         progname = 0;
 
@@ -66,8 +65,10 @@ int                 tcpsock = -1;
 int                 select_timeout = SELECT_TIMEOUT;
 int                 forward_timeout = FORWARD_TIMEOUT;
 //int                 load_balance = 0;
+#ifndef __CYGWIN__
 uid_t               daemonuid = 0;
 gid_t               daemongid = 0;
+#endif
 const char*         version = PACKAGE_VERSION;
 int                 gotterminal = 1; /* 1 if attached to a terminal */
 sem_t               dnrd_sem;  /* Used for all thread synchronization */

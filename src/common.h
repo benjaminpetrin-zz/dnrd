@@ -81,15 +81,16 @@ struct dnssrv_t {
 extern const char*         version;   /* the version number for this program */
 extern const char*         progname;  /* the name of this program */
 extern int                 opt_debug; /* debugging option */
-extern int                 opt_windows; /* windows (cygwin) mode option */
 extern const char*         pid_file; /* File containing current daemon's PID */
 extern int                 isock;     /* for communication with clients */
 extern int                 tcpsock;   /* same as isock, but for tcp requests */
 extern int                 select_timeout; /* select timeout in seconds */
 extern int                 forward_timeout; /* timeout for forward DNS */
 extern struct sockaddr_in  recv_addr; /* address on which we receive queries */
+#ifndef __CYGWIN__
 extern uid_t               daemonuid; /* to switch to once daemonised */
 extern gid_t               daemongid; /* to switch to once daemonised */
+#endif
 extern int                 gotterminal;
 #ifndef EXCLUDE_MASTER
 extern char		   master_param[200];
