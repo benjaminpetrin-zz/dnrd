@@ -237,7 +237,7 @@ void retry_srvlist(domnode_t *d, const int delay) {
   while ((s = s->next) && (s != d->srvlist))
     if (s->inactive && (now - s->inactive) >= delay ) {
       s->inactive=now;
-      send_dummy(s);
+      udp_send_dummy(s);
     }
 }
 

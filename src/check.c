@@ -18,16 +18,10 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-/*
-#include "query.h"
-#include "relay.h"
-#include "cache.h"
-#include "common.h"
-#include "tcp.h"
-#include "udp.h"
-#include "master.h"
-*/
-#include "check.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdio.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -38,15 +32,80 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "check.h"
+#include "dns.h"
 
 /*
- * valid_dnspacket()
+ * check_query()
  *
  * This functions does some test to verify that the message is sane
- * returns < 0 if insane message
- *
+ * returns:
+ *          -1 if the query is insane and should be ignored
+ *          0 if the query is ok and should be processed
+ *          1 if the query is not ok and a format error should be sent
  */
 
-static int valid_dnspacket(int len, void *msg) {
+int check_query(int len, void *msg) {
+  short int flags = ntohs(((short int *)msg)[1]); /* flags */
+
+  /* first check the size */
+  if (len <12) {
+    log_debug("Query packet is to small. Ignoring");
+    return -1;
+  }
+
+  if (len > UDP_MAXSIZE) {
+    log_debug("Query packet is too big. Ignoring");
+    return -1;
+  }
+
+  /* check if Z is set. It should never been set */
+  if (flags & MASK_Z) {
+    log_debug("Z was set. Ignoring query");
+    return -1;
+  }
+
+  /* Check if it is a query, if QR is set */
+  if (flags & MASK_QR) {
+    log_debug("QR was set. Ignoring query");
+    return -1;
+  }
+
+  /* ok this is valid */
+  return 0;
+}
+
+/*
+ * check_reply()
+ *
+ * This functions does some test to verify that the message is sane
+ * returns:
+ *          -1 if the reply is insane and should be ignored
+ *          0 if the query is ok and should be processed
+ */
+
+int check_reply(int len, void *msg) {
+  short int flags = ntohs(((short int *)msg)[1]); /* flags */
+
+  if (len <12) {
+    log_debug("Reply packet was to small. Ignoring");
+    return -1;
+  }
+
+  /* check if Z is set. It should never been set */
+  if (flags & MASK_Z) {
+    log_debug("Z was set. Ignoring reply");
+    return -1;
+  }
+
+  /* Check if it is a query, if QR is set */
+  if (! (flags & MASK_QR)) {
+    log_debug("QR was not set. Ignoring reply");
+    return -1;
+  }
+
+  /* check for possible cache poisoning attempts etc here.... */
+
+  /* ok this packet is ok */
   return 0;
 }

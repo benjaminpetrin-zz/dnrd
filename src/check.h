@@ -23,7 +23,12 @@
 #ifndef _DNRD_CHECK_H_
 #define _DNRD_CHECK_H_
 
-static int valid_dnspacket(int len, void *msg);
+ /* According to RFC 1035 (2.3.4) */
+#define UDP_MAXSIZE 512
+
+int check_query(int len, void *msg);
+int check_reply(int len, void *msg);
+
 
 
 #endif /* _DNRD_CHECK_H_ */

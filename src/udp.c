@@ -32,6 +32,7 @@
 #include "relay.h"
 #include "cache.h"
 #include "query.h"
+#include "check.h"
 
 #ifndef EXCLUDE_MASTER
 #include "master.h"
@@ -84,12 +85,12 @@ int send2current(domnode_t *d, void *msg, const int len) {
  * know the correct reply via master, caching, etc.), or forwarding them to
  * an appropriate DNS server.
  */
-void handle_udprequest()
+void udp_handle_request()
 {
     unsigned           addr_len;
     int                len;
-    const int          maxsize = 512; /* According to RFC 1035 */
-    char               msg[maxsize+4];/* Do we really want this on the stack?*/
+    const int          maxsize = UDP_MAXSIZE;
+    static char        msg[maxsize+4];/* Do we really want this on the stack?*/
     struct sockaddr_in from_addr;
     int                fwd;
     domnode_t          *dptr;
@@ -102,13 +103,10 @@ void handle_udprequest()
 	log_debug("recvfrom error %s", strerror(errno));
 	return;
     }
-    if (len > maxsize) {
-	log_msg(LOG_WARNING, "Received message is too big to process");
-	return;
-    }
-    if (len < 12) {
-      return; /* too small */
-    }
+
+    /* do some basic checking */
+    if (! check_query(len, msg)) return;
+
     /* Determine how query should be handled */
     if ((fwd = handle_query(&from_addr, msg, &len, &dptr)) < 0)
       return; /* if its bogus, just ignore it */
@@ -201,58 +199,61 @@ static int dnsrecv(srvnode_t *s, void *msg, int len)
  * know the correct reply via master, caching, etc.), or forwarding them to
  * an appropriate DNS server.
  */
-void handle_udpreply(srvnode_t *srv)
+void udp_handle_reply(srvnode_t *srv)
 {
     const int          maxsize = 512; /* According to RFC 1035 */
-    char               msg[maxsize+4];/* Do we really want this on the stack?*/
+    static char        msg[maxsize+4];
     int                len;
     struct sockaddr_in from_addr;
     unsigned           addr_len;
 
-    len = dnsrecv(srv, msg, maxsize);
+    if ((len = dnsrecv(srv, msg, maxsize)) <0)
+      return; /* recv error */
+    
+    /* do basic checking */
+    if (! check_reply(len, msg)) return;
+
     if (opt_debug) {
 	char buf[256];
 	sprintf_cname(&msg[12], len-12, buf, 256);
 	log_debug("Received DNS reply for \"%s\"", buf);
     }
-    if (len > 0) {
 
-      dump_dnspacket("reply", msg, len);
-      addr_len = sizeof(struct sockaddr_in);
-      if (!dnsquery_find(msg, &from_addr)) {
-	if (!srv->inactive) {
-	  log_debug("ERROR: couldn't find the original query");
+    dump_dnspacket("reply", msg, len);
+    addr_len = sizeof(struct sockaddr_in);
+    if (!dnsquery_find(msg, &from_addr)) {
+      if (!srv->inactive) {
+	log_debug("ERROR: couldn't find the original query");
 #ifdef DEBUG
-	  dnsquery_dump();
+	dnsquery_dump();
 #endif
-	}
       }
-      else {
-	cache_dnspacket(msg, len, srv);
-	log_debug("Forwarding the reply to the host");
-	if (sendto(isock, msg, len, 0,
-		   (const struct sockaddr *)&from_addr,
-		   addr_len) != len) {
-	  log_debug("sendto error %s", strerror(errno));
-	}
-	
+    }
+    else {
+      cache_dnspacket(msg, len, srv);
+      log_debug("Forwarding the reply to the host");
+      if (sendto(isock, msg, len, 0,
+		 (const struct sockaddr *)&from_addr,
+		 addr_len) != len) {
+	log_debug("sendto error %s", strerror(errno));
       }
       
-      /* this server is obviously alive, we reset the counters */
-      srv->send_count = 0; /* this is not used anymore? */
-      srv->send_time = 0;
-      if (srv->inactive) log_debug("Reactivating server %s",
-				   inet_ntoa(srv->addr.sin_addr));
-      srv->inactive = 0;
     }
+      
+    /* this server is obviously alive, we reset the counters */
+    srv->send_count = 0; /* this is not used anymore? */
+    srv->send_time = 0;
+    if (srv->inactive) log_debug("Reactivating server %s",
+				 inet_ntoa(srv->addr.sin_addr));
+    srv->inactive = 0;
 }
 
 
 /* send a dummy packet to a deactivated server to check if its back*/
-int send_dummy(srvnode_t *s) {
+int udp_send_dummy(srvnode_t *s) {
   static unsigned char dnsbuf[] = {
   /* HEADER */
-
+    /* will this work on a big endian system? */
     0x00, 0x00, /* ID */
     0x00, 0x00, /* QR|OC|AA|TC|RD -  RA|Z|RCODE  */
     0x00, 0x01, /* QDCOUNT */
