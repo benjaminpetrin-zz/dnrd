@@ -50,12 +50,10 @@ Administrators priveleges are required to install dnrd.
 4.  Properties of the Executable
 
 The port produces a dnrd.exe file that is intended to run as an
-unpriveleged Win32 local service.  Dnrd has a new command line option
-"-w" (--windows) that is mandatory.  This option prevents dnrd from
-spanwning a new process.  This makes dnrd work more gracefully as
-a service.
+unpriveleged Win32 local service.  For this reason, dnrd will not spawn a
+subprocess under Cygwin.
 
-The dnrd command line option "-u" (--userid) will fail.  Don't use it.  A
+The dnrd command line option "-u" (--userid) is not present under Cygwin.  A
 different userid can be chosen for dnrd when it is installed as a Win32
 service.
 

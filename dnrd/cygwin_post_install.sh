@@ -38,10 +38,10 @@ service_name="dnrd"
 service_desc="dnrd: relay domain name server (DNS)"
 
 # CYGWIN environment variable to set for the service that runs dnrd
-cygwin_var="ntea ntsec smbntsec"
+cygwin_var="server ntea ntsec smbntsec"
 
-# Command line for dnrd.  Must include "-w" and really should include "-l".
-dnrd_parameters="-l -w -c off -s 192.168.0.1 -a 169.254.25.129"
+# Command line for dnrd. 
+dnrd_parameters="-l -c off -t 0 -s 192.168.0.1 -a 169.254.25.129"
 
 # So far so good!
 failure="no"
