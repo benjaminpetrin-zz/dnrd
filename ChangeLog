@@ -1,3 +1,16 @@
+version 2.19
+------------
+Nathan Angelacos <nangel@users.sourceforge.net>
+ - Fix reactivating issues when dnscache is single upstream server
+
+David Arnstein <arnstein@pobox.com>
+ - Windows (cygwin) support
+
+Natanael Copa <n@tanael.org>
+ - Added LEVEL option to -d argument
+ - Manual page fixes
+ - Remove annoying "Couldn't kill dnrd: No such process" message
+	
 version 2.18
 ------------
 Natanael Copa <n@tanael.org>
