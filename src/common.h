@@ -48,6 +48,11 @@
 #define FORWARD_TIMEOUT 2
 #endif
 
+/* only check if any server are to be reactivated every
+ * REACTIVATE_INTERVAL seconds
+ */
+#define REACTIVATE_INTERVAL 10
+
 struct dnssrv_t {
   int                    sock;      /* for communication with server */
   struct sockaddr_in     addr;      /* IP address of server */
@@ -85,6 +90,8 @@ extern sem_t               dnrd_sem;  /* Used for all thread synchronization */
 
 extern char                chroot_path[512];
 extern domnode_t           *domain_list;
+
+extern int                 reactivate_interval;
 
 
 /* kill any currently running copies of dnrd */

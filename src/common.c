@@ -21,9 +21,6 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
-
-#include "common.h"
-#include "lib.h"
 #include <stdarg.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -35,6 +32,9 @@
 #include <assert.h>
 #include <string.h>
 #include <errno.h>
+#include "common.h"
+#include "lib.h"
+
 
 #ifdef DEBUG
 #define OPT_DEBUG 1
@@ -65,6 +65,7 @@ const char*         version = PACKAGE_VERSION;
 int                 gotterminal = 1; /* 1 if attached to a terminal */
 sem_t               dnrd_sem;  /* Used for all thread synchronization */
 
+int                 reactivate_interval = REACTIVATE_INTERVAL;
 
 /* The path where we chroot. All config files are relative this path */
 char chroot_path[512] = CHROOT_PATH;

@@ -31,6 +31,8 @@ typedef struct _domnode {
   srvnode_t       *srvlist; /* linked list of servers */
   srvnode_t       *current;
   int             roundrobin; /* load balance the servers */
+  int             retrydelay; /* delay before reactivating the servers */
+  
   struct _domnode *next;    /* ptr to next server */
 } domnode_t;
 
@@ -50,6 +52,8 @@ domnode_t *search_subdomnode(domnode_t *head, const char *name,
 srvnode_t *next_active(domnode_t *d);
 srvnode_t *deactivate_current(domnode_t *d);
 
+srvnode_t *reactivate_srvlist(domnode_t *d);
+srvnode_t *retry_srvlist(domnode_t *d, const int delay);
 
 
 

@@ -20,7 +20,7 @@
 
 */
 
-
+#include <stdlib.h>
 #include "domnode.h"
 #include "lib.h"
 #include "common.h"
@@ -181,6 +181,27 @@ srvnode_t *deactivate_current(domnode_t *d) {
   return next_active(d);
 }
 
+
+/* reactivate all dns servers */
+srvnode_t *reactivate_srvlist(domnode_t *d) {
+  time_t now = time(NULL);
+  srvnode_t *s;
+  if (!d) return (NULL);
+  s = d->srvlist;
+  while ((s = s->next) && (s != d->srvlist))
+    s->inactive = 0;
+}
+
+/* reactivate servers that have been inactive for delay seconds */
+srvnode_t *retry_srvlist(domnode_t *d, const int delay) {
+  time_t now = time(NULL);
+  srvnode_t *s;
+  if (!d) return (NULL);
+  s = d->srvlist;
+  while ((s = s->next) && (s != d->srvlist))
+    if (s->inactive && s->inactive + delay > now)
+      s->inactive = 0;
+}
 
 #ifdef DEBUG
 /*
