@@ -103,7 +103,7 @@ static int master_initialised	= 0;
 static char config[200]		= MASTER_CONFIG;
 
 static int auto_authority	= 1;
-static int master_reload	= 0;
+static unsigned char master_reload	= 0;
 
 	/*
 	 * The DNS database is stored in an array of dbmax length.  The
@@ -213,6 +213,7 @@ static int reset_master(void)
     if (dbv)
     {
 	free(dbv);
+	dbv = NULL;
 	dbc = 0;
     }
 
