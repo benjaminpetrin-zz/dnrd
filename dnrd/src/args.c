@@ -203,7 +203,7 @@ int parse_args(int argc, char **argv)
 	  }
 #endif
 	  case 'r': {
-	    if (reactivate_interval = atoi(optarg))
+	    if ((reactivate_interval = atoi(optarg)))
 	      log_debug("Setting retry interval to %i seconds.", 
 			reactivate_interval);
 	    else 
@@ -242,7 +242,7 @@ int parse_args(int argc, char **argv)
 	    break;
 	  }
 	  case 't': {
-	    if (forward_timeout = atoi(optarg))
+	    if ((forward_timeout = atoi(optarg)))
 	      log_debug("Setting timeout value to %i seconds.", 
 			forward_timeout);
 	    else 
