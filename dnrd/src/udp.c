@@ -290,7 +290,7 @@ void udp_handle_reply(query_t *prev)
 int udp_send_dummy(srvnode_t *s) {
   static unsigned char dnsbuf[] = {
   /* HEADER */
-    /* we send a lookup for root servers */
+    /* we send a lookup for localhost */
     /* will this work on a big endian system? */
     0x00, 0x00, /* ID */
     0x01, 0x00, /* QR|OC|AA|TC|RD -  RA|Z|RCODE  */
@@ -302,7 +302,8 @@ int udp_send_dummy(srvnode_t *s) {
     9, 'l','o','c','a','l','h','o','s','t',0,  /* QNAME */
     0x00,0x01,   /* QTYPE A record */
     0x00,0x01   /* QCLASS: IN */
-      
+
+    /* in case you want to lookup root servers instead, use this: */
     /*    0x00,       /* QNAME:  empty */
     /*    0x00, 0x02, /* QTYPE:  a authorative name server */
     /*    0x00, 0x01  /* QCLASS: IN */
