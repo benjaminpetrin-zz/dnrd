@@ -7,6 +7,7 @@ AM_INIT_AUTOMAKE(dnrd,2.13beta1)
 
 dnl Checks for programs.
 AC_PROG_CC
+AC_ISC_POSIX
 
 dnl Checks for libraries.
 
