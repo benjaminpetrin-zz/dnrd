@@ -100,34 +100,12 @@ void handle_udprequest()
 
     /* If we have domains associated with our servers, send it to the
        appropriate server as determined by srvr */
-    if (dptr->current != NULL) {
-	dnssend(dptr->current, msg, len);
-	return;
+    while ( (dptr->current != NULL) &&
+	    (dnssend(dptr->current, msg, len) != len)) {
+      deactivate_current(dptr);
     }
 
-    /* 1 or more redundant servers.  Cycle through them as needed */
-    processed = 0;
-    //undeclared...    s=dptr->current;
-    /*
-    while ( (dnssend(dptr->current, msg, len) != len) && dptr->
-	    
-    */
-    /*
-    thisdns   = serv_act;
-    for (i = 0; i < serv_cnt; i++) {
-	if (dnssend(serv_act, msg, len) == len) {
-	    if (i != 0) {
-		log_debug("switched to DNS server %s",
-			  inet_ntoa(dns_srv[thisdns].addr.sin_addr));
-	    }
-	    processed = 1;
-	    break;
-	}
-	thisdns = (thisdns + 1) % serv_cnt;
-    }
-    */
-
-    if (processed == 0) {
+    if (dptr->current == NULL) {
 	int	packetlen;
 	char	packet[maxsize+4];
 
@@ -217,17 +195,24 @@ void handle_udpreply(srvnode_t *srv)
 	log_debug("Received DNS reply for \"%s\"", buf);
     }
     if (len > 0) {
-	dump_dnspacket("reply", msg, len);
-	cache_dnspacket(msg, len);
-	log_debug("Forwarding the reply to the host");
-	addr_len = sizeof(struct sockaddr_in);
-	if (!dnsquery_find(msg, &from_addr)) {
-	    log_debug("ERROR: couldn't find the original query");
+      /* this server is obviously alive, we reset the counters */
+      srv->send_count = 0;
+      srv->send_time = 0;
+
+      dump_dnspacket("reply", msg, len);
+      cache_dnspacket(msg, len);
+      log_debug("Forwarding the reply to the host");
+      addr_len = sizeof(struct sockaddr_in);
+      if (!dnsquery_find(msg, &from_addr)) {
+	log_debug("ERROR: couldn't find the original query");
+      }
+      else {
+	if (sendto(isock, msg, len, 0,
+		   (const struct sockaddr *)&from_addr,
+		   addr_len) != len) {
+	  log_debug("sendto error %s", strerror(errno));
 	}
-	else if (sendto(isock, msg, len, 0,
-			(const struct sockaddr *)&from_addr,
-			addr_len) != len) {
-	    log_debug("sendto error %s", strerror(errno));
-	}
+	
+      }
     }
 }
