@@ -292,7 +292,7 @@ static void *tcp_handler(tcp_handle_t *dummy)
  */
 
 
-void handle_tcprequest()
+void tcp_handle_request()
 {
     tcp_handle_t *arg;
 #ifdef ENABLE_PTHREADS

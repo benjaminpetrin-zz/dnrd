@@ -22,7 +22,7 @@
 #define _DNRD_TCP_H_
 
 /* Handle any tcp connections */
-void handle_tcprequest();
+void tcp_handle_request();
 
 #endif  /* _DNRD_TCP_H_ */
 

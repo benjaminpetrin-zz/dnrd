@@ -264,17 +264,17 @@ void run()
 	do {
 	  if ((s=d->srvlist)) {
 	    while ((s=s->next) != d->srvlist)
-	      if (FD_ISSET(s->sock, &fds)) handle_udpreply(s);
+	      if (FD_ISSET(s->sock, &fds)) udp_handle_reply(s);
 	  }
 	} while ((d=d->next) != domain_list);
 
 #ifdef ENABLE_TCP
 	/* Check for incoming TCP requests */
-	if (FD_ISSET(tcpsock, &fds)) handle_tcprequest();
+	if (FD_ISSET(tcpsock, &fds)) tcp_handle_request();
 #endif
 
 	/* Check for new DNS queries */
-	if (FD_ISSET(isock, &fds)) handle_udprequest();
+	if (FD_ISSET(isock, &fds)) udp_handle_request();
 
     }
 }

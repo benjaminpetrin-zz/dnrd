@@ -23,13 +23,13 @@
 #include "srvnode.h"
 
 /* Function to call when a message is available on isock */
-void handle_udprequest();
+void udp_handle_request();
 
 /* Call this to handle upd DNS replies */
-void handle_udpreply(srvnode_t *srv);
+void udp_handle_reply(srvnode_t *srv);
 
 /* send a reactivation packet */
-int send_dummy(srvnode_t *s);
+int udp_send_dummy(srvnode_t *s);
 
 
 #endif /* _DNRD_UDP_H_ */
