@@ -93,7 +93,8 @@ domnode_t *destroy_domlist(domnode_t *head) {
 
 
 /* add a domain */
-domnode_t *add_domain(domnode_t *list, char *name, const int maxlen) {
+domnode_t *add_domain(domnode_t *list, const int load_balance, 
+		      char *name, const int maxlen) {
   domnode_t *p;
   char *cname;
   p = alloc_domnode();
@@ -105,6 +106,7 @@ domnode_t *add_domain(domnode_t *list, char *name, const int maxlen) {
   } else {
     p->domain = NULL;
   }
+  p->roundrobin = load_balance;
   ins_domnode(list, p);
   return p;
 }
@@ -155,7 +157,7 @@ srvnode_t *next_active(domnode_t *d) {
   if (s->inactive) s=NULL;
     
   if (s) {
-    if (load_balance) {
+    if (d->roundrobin) {
       log_debug("Setting server %s for domain %s",
 		inet_ntoa(s->addr.sin_addr), cname2asc(d->domain));
     } else {
