@@ -23,6 +23,7 @@
 
 #include "domnode.h"
 #include "lib.h"
+#include "common.h"
 
 /* Allocate a domain node */
 domnode_t *alloc_domnode(void) {
@@ -144,9 +145,6 @@ domnode_t *search_subdomnode(domnode_t *head, const char *name,
 */
 srvnode_t *next_active(domnode_t *d) {
   srvnode_t *s, *start;
-#ifdef DEBUG
-  char domain[200];
-#endif
 
   if (d->current) {
     start=d->current;
@@ -155,21 +153,17 @@ srvnode_t *next_active(domnode_t *d) {
   }
   for (s=start->next; s->inactive && s != start; s = s->next);
   if (s->inactive) s=NULL;
-
-#ifdef DEBUG
-  if (d->domain)
-    sprintf_cname(d->domain, 200, domain, 200);
-  else
-    strncpy(domain, "(default)",200);
     
   if (s) {
-    log_debug("Setting server %s for domain %s",
-	      inet_ntoa(s->addr.sin_addr), domain);
+    if (load_balance) {
+      log_debug("Setting server %s for domain %s",
+		inet_ntoa(s->addr.sin_addr), cname2asc(d->domain));
+    } else {
+      log_msg(LOG_NOTICE, "Setting server %s for domain %s");
+    }
   } else 
-    log_debug("No active servers for domain %s", domain);
-
-#endif
-  
+    log_msg(LOG_WARNING, "No active servers for domain %s", 
+	    cname2asc(d->domain));
   return (d->current = s);
 }
 
@@ -179,7 +173,7 @@ srvnode_t *next_active(domnode_t *d) {
 srvnode_t *deactivate_current(domnode_t *d) {
   if (d->current) {
     d->current->inactive = time(NULL);
-    log_msg("Deactivating DNS server %s",
+    log_msg(LOG_NOTICE, "Deactivating DNS server %s",
 	      inet_ntoa(d->current->addr.sin_addr));
   }
   return next_active(d);
