@@ -56,9 +56,11 @@ const char*         pid_file = "/var/run/dnrd.pid";
 #endif
 int                 isock = -1;
 int                 tcpsock = -1;
+/*
 struct dnssrv_t     dns_srv[MAX_SERV];
 int                 serv_act = 0;
 int                 serv_cnt = 0;
+*/
 uid_t               daemonuid = 0;
 gid_t               daemongid = 0;
 const char*         version = PACKAGE_VERSION;
@@ -68,6 +70,7 @@ sem_t               dnrd_sem;  /* Used for all thread synchronization */
 /* The path where we chroot. All config files are relative this path */
 char chroot_path[512] = CHROOT_PATH;
 
+domnode_t *domain_list;
 
 /*
  * This is the address we listen on.  It gets initialized to INADDR_ANY,
@@ -233,9 +236,12 @@ void cleanexit(int status)
     log_debug("Shutting down...\n");
     if (isock >= 0) close(isock);
     if (tcpsock >= 0) close(tcpsock);
+    /*
     for (i = 0; i < serv_cnt; i++) {
 	close(dns_srv[i].sock);
     }
+    */
+    destroy_domlist(domain_list);
     exit(status);
 }
 
@@ -252,16 +258,16 @@ void cleanexit(int status)
  *           text characters, and ends in a null byte.  The space for
  *           this new representation is allocated by this function.
  */
-char* make_cname(const char *text)
+char* make_cname(const char *text, const int maxlen)
 {
     const char *tptr = text;
     const char *end = text;
-    char *cname = (char*)malloc(strlen(text) + 2);
+    char *cname = (char*)malloc(strnlen(text, maxlen) + 2);
     char *cptr = cname;
     while (*end != 0) {
 	size_t diff;
 	end = strchr(tptr, '.');
-	if (end == NULL) end = text + strlen(text);
+	if (end == NULL) end = text + strnlen(text, maxlen);
 	if (end < tptr + 2) {
 	    free(cname);
 	    return NULL;
@@ -273,7 +279,7 @@ char* make_cname(const char *text)
 	tptr = end + 1;
     }
     *cptr = 0;
-    assert((unsigned)(cptr - cname) == strlen(text) + 1);
+    assert((unsigned)(cptr - cname) == strnlen(text, maxlen) + 1);
     return cname;
 }
 
