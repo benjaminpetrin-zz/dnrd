@@ -170,40 +170,23 @@ int parse_args(int argc, char **argv)
 	      break;
 	  }
 	  case 's': {
-	      char *sep = strchr(optarg, (int)':');
-	      if (serv_cnt >= MAX_SERV) {
-		  log_msg(LOG_ERR, "%s: Max. %d DNS servers allowed\n",
-			  progname, MAX_SERV);
-		  exit(-1);
-	      }
-	      if (gotdomain == -1) {
-		  log_msg(LOG_ERR, "%s: When giving server arguments with "
-			  "domain names,\nonly the last one is permitted to "
-			  "not have a domain name.\n", progname);
-		  exit(-1);
-	      }
-	      if (sep) {
-		  dns_srv[serv_cnt].domain = make_cname(sep + 1);
-		  if (gotdomain == -1) {
-		      log_msg(LOG_ERR, "%s: Server arguments with domain "
-			      "names must appear before\n"
-			      "those without domain names.\n", progname);
-		      exit(-1);
-		  }
-		  gotdomain = 1;
-		  *sep = 0;
-	      }
-	      else if (gotdomain != 0) {
-		  gotdomain = -1;
-	      }
-	      if (!inet_aton(optarg, &dns_srv[serv_cnt].addr.sin_addr)) {
-		  log_msg(LOG_ERR, "%s: Bad ip address \"%s\"\n",
-			  progname, optarg);
-		  exit(-1);
-	      }
-	      if (sep) *sep = ':';
-	      serv_cnt++;
-	      break;
+	    domnode_t *p;
+	    char *s, *sep = strchr(optarg, (int)':');
+	    
+	    if (sep) { /* is a domain specified? */
+	      s=make_cname(strnlwr(sep+1,200),200);
+	      *sep = 0;
+	      if (!(p=search_domnode(domain_list, s)))
+		p=add_domain(domain_list, s, 200);
+	    } else p=domain_list;
+
+	    if (!add_srv(last_srvnode(p->srvlist), optarg)) {
+	      log_msg(LOG_ERR, "%s: Bad ip address \"%s\"\n",
+		      progname, optarg);
+	      exit(-1);
+	    }
+	    if (sep) *sep = ':';
+	    break;
 	  }
 	  case 'u': {
 	      char *ep;

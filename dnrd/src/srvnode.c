@@ -66,8 +66,10 @@ srvnode_t *del_srvnode(srvnode_t *list) {
 /* closes the server socket and frees the mem */
 srvnode_t *destroy_srvnode(srvnode_t *p) {
   /* close socket */
-  if (p->sock) close(p->sock);
-  free(p);
+  if(p) {
+    if (p->sock) close(p->sock);
+    free(p);
+  }
   return NULL;
 }
 
@@ -80,24 +82,34 @@ srvnode_t *empty_srvlist(srvnode_t *head) {
 }
 
 /* destroys the server list, including the head */
-srvnod_t *destroy_srvlist(srvnode_t *head) {
+srvnode_t *destroy_srvlist(srvnode_t *head) {
   empty_srvlist(head);
   free(head);
   return NULL;
 }
 
 
-/* add a server */
+/* add a server. If head==NULL, return a new list */
 srvnode_t *add_srv(srvnode_t *head, char *ipaddr) {
   srvnode_t *p;
-  struct in_inaddr inp;
+  struct sockaddr_in addr;
 
-  if (!inet_aton(ipaddr, &inp)) {
+  if (!inet_aton(ipaddr, &addr.sin_addr)) {
     return NULL;
   }
   p = alloc_srvnode();
-  memcpy(&p->addr.sin_addr, &inp, sizeof(p->addr.sin_addr));
+  memcpy(&p->addr.sin_addr, &addr.sin_addr, sizeof(p->addr.sin_addr));
   p->active = 1;
-  ins_srvnode(head, p);
+  if (head) {
+    ins_srvnode(head, p);
+  }
+  return p;
+}
+
+/* returns the last srvnode in the list */
+srvnode_t *last_srvnode(srvnode_t *head) {
+  srvnode_t *p = head;
+  if (p)
+    while (p->next != head) p = p->next;
   return p;
 }

@@ -22,12 +22,13 @@
 
 
 #include "domnode.h"
-
+#include "lib.h"
 
 /* Allocate a domain node */
 domnode_t *alloc_domnode(void) {
   domnode_t *p = allocate(sizeof(domnode_t));
   p->domain=NULL;
+  p->srvlist=alloc_srvnode();
   /* actually we return a new emty list... */
   return p->next=p;
 }
@@ -87,15 +88,16 @@ domnode_t *destroy_domlist(domnode_t *head) {
 
 
 /* add a domain */
-domnode_t *add_domain(domnode_t *list, char *name, int maxlen) {
+domnode_t *add_domain(domnode_t *list, const char *name, const int maxlen) {
   domnode_t *p;
 
   p = alloc_domnode();
 
   /* in case the domain is NULL */ 
-  if (domain) {
+  if (name) {
     /* allocate strnlen +1 incase there is no ending \0 */
-    p->domain = allocate(strnlen(domain, maxlen)+1);
+    p->domain = allocate(strnlen(name, maxlen)+1);
+    strncpy(p->domain, name, maxlen);
   } else {
     p->domain = NULL;
   }
@@ -104,9 +106,32 @@ domnode_t *add_domain(domnode_t *list, char *name, int maxlen) {
   return p;
 }
 
-/* search for a domain */
-domnode_t *search_domain(domnode_t *head, char *name) {
+/* search for a domain. returns the node if found or then head if not */
+domnode_t *search_domnode(domnode_t *head, const char *name) {
+  domnode_t *d=head;
   /* the list head is pointing to the default domain */
-  if (name == NULL) return head;
-  
+  if ((name == NULL) || (d == NULL)) return head;
+  while ((d=d->next) != head) {
+    if (strcmp(d->domain, name) == 0) return d;
+  }
+  return head;
+}
+
+/* search for the domnode that has the domain. Returns domnode if
+   domain is a subdomain under domnode */
+
+domnode_t *search_subdomnode(domnode_t *head, const char *name, 
+			     const int maxlen) {
+  domnode_t *d=head;
+  int h,n;
+  const char *p;
+  /* the list head is pointing to the default domain */
+  if ((name == NULL) || (d == NULL)) return head;
+  while ((d=d->next) != head) {
+    if ( (n = strnlen(name, maxlen)) > (h = strnlen(d->domain, maxlen))) {
+      p = name + n - h;
+    } else p=name;
+    if (strncmp(d->domain, p, maxlen - (p - name)) == 0) return d;
+  }
+  return head;
 }

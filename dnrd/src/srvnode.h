@@ -32,6 +32,9 @@ typedef struct _srvnode {
   struct sockaddr_in     addr;      /* IP address of server */
   int                 active; /* is this server active? */
   int                 nexttry; /* next time to retry */
+  int                 send_count;
+  int                 send_time;
+  int                 tcp;
   struct _srvnode     *next; /* ptr to next server */
 
 } srvnode_t;
@@ -45,6 +48,7 @@ srvnode_t *destroy_srvnode(srvnode_t *p);
 srvnode_t *empty_srvlist(srvnode_t *head);
 srvnode_t *destroy_srvlist(srvnode_t *head);
 srvnode_t *add_srv(srvnode_t *head, char *ipaddr);
+srvnode_t *last_srvnode(srvnode_t *head);
 
 
 

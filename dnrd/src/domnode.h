@@ -29,6 +29,7 @@
 typedef struct _domnode {
   char            *domain;  /* the domain */
   srvnode_t       *srvlist; /* linked list of servers */
+  srvnode_t       *current;
   struct _domnode *next;    /* ptr to next server */
 } domnode_t;
 
@@ -39,8 +40,10 @@ domnode_t *del_domnode(domnode_t *list);
 domnode_t *destroy_domnode(domnode_t *p);
 domnode_t *empty_domlist(domnode_t *head);
 domnode_t *destroy_domlist(domnode_t *head);
-domnode_t *add_domain(domnode_t *list, char *name);
-domnode_t *search_domain(domnode_t *head, char *name);
+domnode_t *add_domain(domnode_t *list, const char *name, const int maxlen);
+domnode_t *search_domnode(domnode_t *head, const char *name);
+domnode_t *search_subdomnode(domnode_t *head, const char *name, 
+			     const int maxlen);
 
 
 

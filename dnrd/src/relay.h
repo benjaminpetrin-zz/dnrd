@@ -21,13 +21,16 @@
 #ifndef _DNRD_RELAY_H_
 #define _DNRD_RELAY_H_
 
+#include "domnode.h"
 #include <netinet/in.h>
+
 
 /* The main loop */
 void run();
 
+static srvnode_t *server_switch(domnode_t *p);
+
 /* Determine what to do with a DNS request */
-int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
-		 unsigned *srvidx);
+int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len, domnode_t **dptr);
 
 #endif  /* _DNRD_RELAY_H_ */
