@@ -118,7 +118,7 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
 	return 0;
     }
 
-    if (load_balance) next_active(d);
+    if (d->roundrobin) next_active(d);
     /* Send to a server until it "times out". */
     if (d->current) {
       time_t now = time(NULL);

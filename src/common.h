@@ -74,7 +74,7 @@ extern int                 isock;     /* for communication with clients */
 extern int                 tcpsock;   /* same as isock, but for tcp requests */
 extern int                 select_timeout; /* select timeout in seconds */
 extern int                 forward_timeout; /* timeout for forward DNS */
-extern int                 load_balance; /* load balance servers */
+//extern int                 load_balance; /* load balance servers */
 
 extern struct sockaddr_in  recv_addr; /* address on which we receive queries */
 extern uid_t               daemonuid; /* to switch to once daemonised */

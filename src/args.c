@@ -124,6 +124,7 @@ static void give_help()
  */
 int parse_args(int argc, char **argv)
 {
+  static int load_balance = 0;
     int c;
     int gotdomain = 0;
 
@@ -186,8 +187,9 @@ int parse_args(int argc, char **argv)
 	      s = make_cname(strnlwr(sep+1,200),200);
 	      *sep = 0;
 	      if (!(p=search_domnode(domain_list, s))) {
-		p=add_domain(domain_list, s, 200);
-		log_debug("Added domain %s", sep+1);
+		p=add_domain(domain_list, load_balance, s, 200);
+		log_debug("Added domain %s %s load balancing", sep+1, 
+			  load_balance ? "with" : "without");
 	      }
 	    } else p=domain_list;
 
@@ -198,6 +200,11 @@ int parse_args(int argc, char **argv)
 	    } else {
 	      log_debug("Server %s added to domain %s", optarg, 
 			sep ? sep+1:"(default)");
+	    }
+	    if (p->roundrobin != load_balance) {
+	      p->roundrobin =load_balance;
+	      log_debug("Turned on load balancing for domain %s",
+			cname2asc(p->domain));
 	    }
 	    if (sep) *sep = ':';
 	    break;
