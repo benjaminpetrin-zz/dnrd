@@ -349,7 +349,7 @@ int main(int argc, char *argv[])
     /*
      * Now it's time to become a daemon.
      */
-    if (!opt_debug) {
+    if ((!opt_debug) || (!gotterminal)) {
 	pid_t pid = fork();
 	if (pid < 0) {
 	    log_msg(LOG_ERR, "%s: Couldn't fork\n", progname);

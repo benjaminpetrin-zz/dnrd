@@ -82,6 +82,11 @@ the background and print out debugging information in the current
 console. Supported debug levels are 1\-4. The higher level, the more
 debug info is printed.
 .sp
+The
+.B -l
+option can be used to force dnrd to run in the background and log
+debug info to syslog.
+.sp
 Sending signal SIGUSR1 will toggle the debug level between level 0 (no
 debugging) and level 3.
 
@@ -110,7 +115,11 @@ Kills the currently running dnrd process.
 .B \-l
 .TP 
 .B \-\-log
-Send all messages to syslog. dnrd uses the deamon facility.
+Send all messages to syslog. dnrd uses the deamon facility.  If used with the
+.B \-d
+flag, this option will cause dnrd to fork and run in the background, logging
+all debugging messages to syslog.
+
 
 .TP 
 .BR \-m \ ( off | hosts )
