@@ -61,7 +61,7 @@ extern const char*         pid_file; /* File containing current daemon's PID */
 extern int                 isock;     /* for communication with clients */
 extern int                 tcpsock;   /* same as isock, but for tcp requests */
 extern struct dnssrv_t     dns_srv[]; /* DNS server information struct */
-extern int                 serv_act; /* index into dns_srv for active server */
+extern int               serv_act; /* index into dns_srv for active server */
 extern int                 serv_cnt;  /* number of DNS servers */
 extern struct sockaddr_in  recv_addr; /* address on which we receive queries */
 extern uid_t               daemonuid; /* to switch to once daemonised */
@@ -72,8 +72,6 @@ extern sem_t               dnrd_sem;  /* Used for all thread synchronization */
 
 extern char chroot_path[512];
 
-extern int  domain_act;
-extern int  domain_cnt;
 
 
 /* kill any currently running copies of dnrd */

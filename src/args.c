@@ -99,16 +99,6 @@ static void give_help()
     printf("\n");
 }
 
-static int add_dnsdomain(const char* ipdomain) {
-  char *sep = strchr(ipdomain, (int)':');
-  int i;
-  /* find the domain in the list */
-  for (i=0; i<domain_cnt; i++) {
-      if (sep) {
-	/* FORTSETT HER */
-      }
-  }
-}
 
 
 /*
@@ -180,8 +170,6 @@ int parse_args(int argc, char **argv)
 	      break;
 	  }
 	  case 's': {
-	    add_dnsdomain(optarg);
-
 	      char *sep = strchr(optarg, (int)':');
 	      if (serv_cnt >= MAX_SERV) {
 		  log_msg(LOG_ERR, "%s: Max. %d DNS servers allowed\n",
