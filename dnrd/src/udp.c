@@ -211,7 +211,7 @@ void handle_udpreply(srvnode_t *srv)
 	  log_debug("ERROR: couldn't find the original query");
       }
       else {
-	cache_dnspacket(msg, len);
+	cache_dnspacket(msg, len, srv);
 	log_debug("Forwarding the reply to the host");
 	if (sendto(isock, msg, len, 0,
 		   (const struct sockaddr *)&from_addr,

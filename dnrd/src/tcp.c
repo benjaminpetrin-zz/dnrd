@@ -173,7 +173,7 @@ static void *tcp_handler(void *dummy)
 		  break;
 		}
 		dump_dnspacket("reply", buffer + 2, bytes - 2);
-		cache_dnspacket(buffer + 2, bytes - 2);
+		cache_dnspacket(buffer + 2, bytes - 2, s);
 		if (write(connect, buffer, bytes) != bytes) {
 		  child_die = 1;
 		  break;

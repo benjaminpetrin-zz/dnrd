@@ -31,7 +31,7 @@
 #include "cache.h"
 #include "lib.h"
 #include "dns.h"
-
+#include "srvnode.h"
 
 	/*
 	 * Cache time calculations are done in seconds.  CACHE_TIMEUNIT
@@ -82,6 +82,7 @@ typedef struct _cache {
 
     dnsheader_t	*p;		/* The DNS packet with decoded header */
 
+  srvnode_t *server; /* the server that gave this answer */
     struct _cache *next, *prev;
 } cache_t;
 
@@ -107,7 +108,7 @@ static int free_cx(cache_t *cx)
     return (0);
 }
 
-static cache_t *create_cx(dnsheader_t *x, rr_t *query)
+static cache_t *create_cx(dnsheader_t *x, rr_t *query, srvnode_t *server)
 {
     cache_t	*cx;
 
@@ -121,6 +122,7 @@ static cache_t *create_cx(dnsheader_t *x, rr_t *query)
     cx->class    = query->class;
     cx->p        = x;
     cx->lastused = time(NULL);
+    cx->server = server;
 
     return (cx);
 }
@@ -177,7 +179,7 @@ static cache_t *remove_cx(cache_t *cx)
  * conditions for caching.  If so put the entire response into
  * our cache.
  */
-int cache_dnspacket(void *packet, int len)
+int cache_dnspacket(void *packet, int len, srvnode_t *server)
 {
     dnsheader_t *x;
     rr_t	query;
@@ -198,7 +200,7 @@ int cache_dnspacket(void *packet, int len)
      * cache list.
      */
     sem_wait(&dnrd_sem);
-    cx = create_cx(x, &query);
+    cx = create_cx(x, &query, server);
     append_cx(cx);
 
     /*
@@ -265,6 +267,12 @@ int cache_lookup(void *packet, int len)
 
 	memcpy(packet + 2, cx->p->packet + 2, cx->p->len - 2);
 	cache_hits++;
+
+	/* lets check if the server is active */
+	if (ignore_inactive_cache_hits && cx->server->inactive ) {
+	  log_debug("server is inactive. Skipping cache entry");
+	  return (0);
+	}
 
 	return (cx->p->len);
       }
