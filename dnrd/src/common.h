@@ -23,9 +23,11 @@
 #ifndef _DNRD_COMMON_H_
 #define _DNRD_COMMON_H_
 
+#include "domnode.h"
 #include <netinet/in.h>
 #include <syslog.h>
 #include <semaphore.h>
+
 
 #define MAX_SERV           5          /* maximum number of DNS servers */
 #define MAX_DOMAINS        8          /* maximum number of domains */
@@ -60,9 +62,11 @@ extern int                 opt_debug; /* debugging option */
 extern const char*         pid_file; /* File containing current daemon's PID */
 extern int                 isock;     /* for communication with clients */
 extern int                 tcpsock;   /* same as isock, but for tcp requests */
-extern struct dnssrv_t     dns_srv[]; /* DNS server information struct */
-extern int               serv_act; /* index into dns_srv for active server */
-extern int                 serv_cnt;  /* number of DNS servers */
+
+//extern struct dnssrv_t     dns_srv[]; /* DNS server information struct */
+//extern int               serv_act; /* index into dns_srv for active server */
+//extern int                 serv_cnt;  /* number of DNS servers */
+
 extern struct sockaddr_in  recv_addr; /* address on which we receive queries */
 extern uid_t               daemonuid; /* to switch to once daemonised */
 extern gid_t               daemongid; /* to switch to once daemonised */
@@ -70,8 +74,8 @@ extern int                 gotterminal;
 extern char		   master_param[200];
 extern sem_t               dnrd_sem;  /* Used for all thread synchronization */
 
-extern char chroot_path[512];
-
+extern char                chroot_path[512];
+extern domnode_t           *domain_list;
 
 
 /* kill any currently running copies of dnrd */
@@ -88,7 +92,7 @@ void cleanexit(int status);
 
 /* Reads in the domain name as a string, allocates space for the CNAME
    version of it */
-char* make_cname(const char *text);
+char* make_cname(const char *text, const int maxlen);
 void sprintf_cname(const char *cname, int namesize, char *buf, int bufsize);
 
 /* Dumping DNS packets */
