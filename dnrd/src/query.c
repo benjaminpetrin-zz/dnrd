@@ -31,6 +31,10 @@
 #include <time.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include "lib.h"
 #include "common.h"
 #include "query.h"
@@ -97,7 +101,7 @@ query_t *query_create(domnode_t *d, srvnode_t *s) {
   memset(&my_addr, 0, sizeof(my_addr));
   my_addr.sin_family = AF_INET;
   my_addr.sin_addr.s_addr = INADDR_ANY;
-  my_addr.sin_port = htons( myrand(65536-1024)+1024 );
+  my_addr.sin_port = htons( myrand(65536-1026)+1025 );
   if (bind(q->sock, (struct sockaddr *)&my_addr, 
 	   sizeof(struct sockaddr)) == -1) {
     log_msg(LOG_WARNING, "bind: %s", strerror(errno));
@@ -226,7 +230,6 @@ void query_timeout(time_t age) {
 
 int query_count(void) {
   int count=0;
-  time_t now = time(NULL);
   query_t *q;
   
   for (q=&qlist; q->next != &qlist; q = q->next) {
