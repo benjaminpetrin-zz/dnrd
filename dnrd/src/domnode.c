@@ -62,6 +62,7 @@ domnode_t *init_domainlist(void) {
  * returns the new node
  */
 domnode_t *ins_domnode (domnode_t *list, domnode_t *p) {
+  assert((list != NULL) && (p != NULL));
   p->next = list->next;
   list->next = p;
   return p;
@@ -72,6 +73,7 @@ domnode_t *ins_domnode (domnode_t *list, domnode_t *p) {
  */
 domnode_t *del_domnode(domnode_t *list) {
   domnode_t *p = list->next;
+  assert((list != NULL));
   list->next = p->next;
   return p;
 }
@@ -82,6 +84,7 @@ domnode_t *destroy_domnode(domnode_t *p) {
     log_debug("tried to destroy a NULL domnode"); 
     return NULL;
   }
+  assert((p != NULL));
   if (p->srvlist) destroy_srvlist(p->srvlist);
   if (p->domain) free(p->domain);
   free(p);
@@ -91,6 +94,7 @@ domnode_t *destroy_domnode(domnode_t *p) {
 /* empties a linked server list. returns the head */
 domnode_t *empty_domlist(domnode_t *head) {
   domnode_t *p=head;
+  assert(p!=NULL);
   while (p->next != head) {
     destroy_domnode(del_domnode(p));
   }
@@ -99,6 +103,7 @@ domnode_t *empty_domlist(domnode_t *head) {
 
 /* destroys the domain list, including the head */
 domnode_t *destroy_domlist(domnode_t *head) {
+  assert(head!=NULL);
   empty_domlist(head);
   destroy_domnode(head);
   return NULL;
@@ -110,6 +115,7 @@ domnode_t *destroy_domlist(domnode_t *head) {
 domnode_t *add_domain(domnode_t *list, const int load_balance, 
 		      char *cname, const int maxlen) {
   domnode_t *p;
+  assert(list != NULL);
   p = alloc_domnode();
   p->domain = cname;
   p->roundrobin = load_balance;
@@ -120,8 +126,9 @@ domnode_t *add_domain(domnode_t *list, const int load_balance,
 /* search for a domain. returns the node if found or NULL if not */
 domnode_t *search_domnode(domnode_t *head, const char *name) {
   domnode_t *d=head;
+  assert((head != NULL) && (name != NULL));
   /* the list head is pointing to the default domain */
-  if ((name == NULL) || (d == NULL)) return head;
+  //  if ((name == NULL) || (d == NULL)) return head;
   while ((d=d->next) != head) {
     if (strcmp(d->domain, name) == 0) return d;
   }
@@ -136,6 +143,7 @@ domnode_t *search_subdomnode(domnode_t *head, const char *name,
   domnode_t *d=head;
   int h,n;
   const char *p;
+  assert( (head != NULL) && (name != NULL));
   /* the list head is pointing to the default domain */
   if ((name == NULL) || (d == NULL)) return head;
   while ((d=d->next) != head) {
@@ -149,7 +157,8 @@ domnode_t *search_subdomnode(domnode_t *head, const char *name,
 
 /* wrapper for setting current server */
 srvnode_t *set_current(domnode_t *d, srvnode_t *s) {
-  if (d == NULL) return NULL;
+  assert(d!=NULL);
+  //  if (d == NULL) return NULL;
   if (s) {
     if (d->roundrobin) {
       log_debug("Setting server %s for domain %s",
@@ -171,7 +180,7 @@ srvnode_t *set_current(domnode_t *d, srvnode_t *s) {
 */
 srvnode_t *next_active(domnode_t *d) {
   srvnode_t *s, *start;
-
+  assert(d!=NULL);
   if (d->current) {
     start=d->current;
   } else { /* previously deactivated everything, lets check from start */
@@ -188,6 +197,7 @@ srvnode_t *next_active(domnode_t *d) {
    Returns: next active server, NULL if there are none 
 */
 srvnode_t *deactivate_current(domnode_t *d) {
+  assert(d!=NULL);
   if (d->current) {
     d->current->inactive = time(NULL);
     log_msg(LOG_NOTICE, "Deactivating DNS server %s",
@@ -200,7 +210,7 @@ srvnode_t *deactivate_current(domnode_t *d) {
 /* reactivate all dns servers */
 void reactivate_srvlist(domnode_t *d) {
   srvnode_t *s;
-  assert(!d); /* should never be called with NULL */ 
+  assert(d!=NULL); /* should never be called with NULL */ 
   s = d->srvlist;
   while ((s = s->next) && (s != d->srvlist)) {
     s->inactive = 0;
@@ -212,7 +222,7 @@ void reactivate_srvlist(domnode_t *d) {
 void retry_srvlist(domnode_t *d, const int delay) {
   time_t now = time(NULL);
   srvnode_t *s;
-  assert(!d); /* should never happen */
+  assert(d!=NULL); /* should never happen */
   s = d->srvlist;
   while ((s = s->next) && (s != d->srvlist))
     if (s->inactive && (now - s->inactive) > delay ) {
