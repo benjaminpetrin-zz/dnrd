@@ -11,6 +11,7 @@ dnrd \- proxy name server
 .RB "[\|" \-b | \-\-load\-balance "\|]"
 .RB "[\|" \-d | \-\-debug "\|]"
 .RB "[\|" \-h | \-\-help "\|]"
+.RB "[\|" \-i | \-\-help "\|]"
 .RB "[\|" \-k | \-\-kill "\|]"
 .RB "[\|" \-m \ ( off | hosts )| \-\-master= ( off | hosts ")]" 
 .RB "[\|" \-s\ \fIipaddr (: \fIdomain )| \-\-server=\fIipaddr (: \fIdomain )]
@@ -64,6 +65,12 @@ also dump out the raw packet contents.
 .TP
 .B \-\-help
 Prints out usage information
+
+.TP
+.B \-i
+.TP
+.B \-\-ignore
+Ignore cache for deactivated servers.
 
 .TP
 .B \-k
