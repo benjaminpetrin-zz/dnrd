@@ -141,8 +141,8 @@ domnode_t *search_domnode(domnode_t *head, const char *name) {
 
 domnode_t *search_subdomnode(domnode_t *head, const char *name, 
 			     const int maxlen) {
-  domnode_t *d=head;
-  int h,n;
+  domnode_t *d=head, *curr=head;
+  int h,n, maxfound=0;
   const char *p;
   assert( (head != NULL) && (name != NULL));
   /* the list head is pointing to the default domain */
@@ -151,9 +151,18 @@ domnode_t *search_subdomnode(domnode_t *head, const char *name,
     if ( (n = strnlen(name, maxlen)) > (h = strnlen(d->domain, maxlen))) {
       p = name + n - h;
     } else p=name;
-    if (strncmp(d->domain, p, maxlen - (p - name)) == 0) return d;
+
+    /* this works because the domain names are in cname format so
+       hayes.org will nor appear as a subdomain under yes.org yes.org
+       will be encoded as "\3yes\3org" while hayes.org will be encoded
+       as "\5hayes\3org"
+    */
+    if ((strncmp(d->domain, p, maxlen - (p - name)) == 0) && (h > maxfound)) {
+      maxfound = h; /* max length found */
+      curr = d;
+    }
   }
-  return head;
+  return curr;
 }
 
 /* wrapper for setting current server */
