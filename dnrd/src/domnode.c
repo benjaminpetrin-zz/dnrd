@@ -164,7 +164,7 @@ srvnode_t *next_active(domnode_t *d) {
     
   if (s) {
     log_debug("Setting server %s for domain %s",
-	      inet_ntoa(s->addr.sin_addr, domain));
+	      inet_ntoa(s->addr.sin_addr), domain);
   } else 
     log_debug("No active servers for domain %s", domain);
 
@@ -184,3 +184,14 @@ srvnode_t *deactivate_current(domnode_t *d) {
   }
   return next_active(d);
 }
+
+
+#ifdef DEBUG
+/*
+void dump_domlist(domnode_t *head) {
+  domnode_t *p=head;
+
+  do
+    }
+*/
+#endif
