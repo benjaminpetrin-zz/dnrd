@@ -24,6 +24,7 @@
 #ifndef DOMNODE_H
 #define DOMNODE_H
 
+#include <sys/types.h>
 #include "srvnode.h"
 
 typedef struct _domnode {

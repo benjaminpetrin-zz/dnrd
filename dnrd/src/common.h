@@ -23,10 +23,11 @@
 #ifndef _DNRD_COMMON_H_
 #define _DNRD_COMMON_H_
 
-#include "domnode.h"
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <syslog.h>
 #include <semaphore.h>
+#include "domnode.h"
 
 /* default chroot path. this might be redefined in compile time */ 
 #ifndef CHROOT_PATH
