@@ -65,15 +65,19 @@ domnode_t *del_domnode(domnode_t *list) {
 
 /* destroys the server list and frees the mem */
 domnode_t *destroy_domnode(domnode_t *p) {
+  if (p==NULL) {
+    log_debug("tried to destroy a NULL domnode"); 
+    return NULL;
+  }
   if (p->srvlist) destroy_srvlist(p->srvlist);
-  free(p->domain);
+  if (p->domain) free(p->domain);
   free(p);
   return NULL;
 }
 
 /* empties a linked server list. returns the head */
 domnode_t *empty_domlist(domnode_t *head) {
-  domnode_t *p;
+  domnode_t *p=head;
   while (p->next != head) {
     destroy_domnode(del_domnode(p));
   }
@@ -82,7 +86,7 @@ domnode_t *empty_domlist(domnode_t *head) {
 /* destroys the domain list, including the head */
 domnode_t *destroy_domlist(domnode_t *head) {
   empty_domlist(head);
-  free(head);
+  destroy_domnode(head);
   return NULL;
 }
 
