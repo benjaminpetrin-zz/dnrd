@@ -63,7 +63,7 @@ PACKAGE = @PACKAGE@
 VERSION = @VERSION@
 
 sbin_PROGRAMS = dnrd
-dnrd_SOURCES = args.c args.h cache.c cache.h check.c check.h common.c common.h dns.c dns.h lib.c lib.h main.c master.c master.h query.c query.h relay.c relay.h sig.c sig.h tcp.c tcp.h udp.c udp.h
+dnrd_SOURCES = args.c args.h cache.c cache.h check.c check.h common.c common.h dns.c dns.h lib.c lib.h main.c master.c master.h query.c query.h relay.c relay.h sig.c sig.h tcp.c tcp.h udp.c udp.h srvnode.h srvnode.c domnode.c domnode.h
 dnrd_LDADD = -lpthread
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
@@ -76,7 +76,7 @@ CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 dnrd_OBJECTS =  args.o cache.o check.o common.o dns.o lib.o main.o \
-master.o query.o relay.o sig.o tcp.o udp.o
+master.o query.o relay.o sig.o tcp.o udp.o srvnode.o domnode.o
 dnrd_DEPENDENCIES = 
 dnrd_LDFLAGS = 
 CFLAGS = @CFLAGS@
@@ -91,8 +91,9 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = tar
 GZIP_ENV = --best
 DEP_FILES =  .deps/args.P .deps/cache.P .deps/check.P .deps/common.P \
-.deps/dns.P .deps/lib.P .deps/main.P .deps/master.P .deps/query.P \
-.deps/relay.P .deps/sig.P .deps/tcp.P .deps/udp.P
+.deps/dns.P .deps/domnode.P .deps/lib.P .deps/main.P .deps/master.P \
+.deps/query.P .deps/relay.P .deps/sig.P .deps/srvnode.P .deps/tcp.P \
+.deps/udp.P
 SOURCES = $(dnrd_SOURCES)
 OBJECTS = $(dnrd_OBJECTS)
 
