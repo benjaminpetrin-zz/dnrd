@@ -172,12 +172,41 @@ static void reactivate_servers(int interval) {
 
   if (!last_try) last_try = now;
   /* check for reactivate servers */
-  if ( (now - last_try < interval) || no_srvlist(d->srvlist)  ) 
+  if ( (now - last_try < interval))
     return;
  
   last_try = now;
   do {
-    retry_srvlist(d, interval );
+    if (!no_srvlist(d->srvlist))
+      retry_srvlist(d, interval);
+  } while ((d = d->next) != domain_list);  
+}
+/* Check if any server are timing out and should be deactivated */
+static void deactivate_servers(int interval) {
+  time_t now=time(NULL);
+  static int last_try = 0;
+  int current_disabled;
+  domnode_t *d = domain_list;
+  srvnode_t *s;
+
+  if (!last_try) last_try = now;
+  if (now - last_try < interval)
+    return;
+  last_try = now;
+
+  do {
+    current_disabled=0;
+    if ((s=d->srvlist)) 
+      while ((s=s->next) != d->srvlist) {
+	if (s->inactive) continue;
+	if (s->send_time
+	    && (difftime(now, s->send_time) > forward_timeout)) {
+	  s->inactive = now;
+	  if (s == d->current) /* we need to update d->current */
+	    current_disabled=1; 
+	}
+	if (current_disabled) deactivate_current(d);
+      }
   } while ((d = d->next) != domain_list);  
 }
 
@@ -233,8 +262,12 @@ void run()
     retn = pselect(maxsock+1, &fdread, 0, 0, &tout, &orig_sigmask);
     
     /* reactivate servers */
-    if (reactivate_interval != 0) 
+    if (reactivate_interval != 0) {
       reactivate_servers(reactivate_interval);
+      /* check if any server should be timed out */
+      if (forward_timeout != 0)
+	deactivate_servers(1);
+    }
 
     /* Handle errors */
     if (retn < 0) {
