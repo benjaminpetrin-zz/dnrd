@@ -237,8 +237,9 @@ static unsigned char *read_record(dnsheader_t *x, rr_t *y,
      * Fetch the resource data.
      */
 
-    memcpy(&y->len, here, sizeof(unsigned short int));
-    len = y->len = ntohs(y->len);
+    memcpy(&conv, here, sizeof(unsigned short int));
+    len = y->len = ntohs(conv);
+    log_debug("len=%i", len);
     here += 2;
 
     /* safe to read RDATA? */
