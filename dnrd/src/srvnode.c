@@ -1,6 +1,26 @@
-/* 
- *
- */
+/*
+
+    File: srvnode.c
+    
+    Copyright (C) 2004 by Natanael Copa <n@tanael.org>
+
+    This source is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2, or (at your option)
+    any later version.
+
+    This source is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+*/
+
+
 
 
 #include <sys/types.h>
@@ -44,10 +64,11 @@ srvnode_t *del_srvnode(srvnode_t *list) {
 }
 
 /* closes the server socket and frees the mem */
-void destroy_srvnode(srvnode_t *p) {
+srvnode_t *destroy_srvnode(srvnode_t *p) {
   /* close socket */
   if (p->sock) close(p->sock);
   free(p);
+  return NULL;
 }
 
 /* emties a linked server list. returns the head */
