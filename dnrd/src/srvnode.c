@@ -79,16 +79,16 @@ srvnode_t *del_srvnode_after(srvnode_t *list) {
 /* closes the server socket and frees the mem */
 srvnode_t *destroy_srvnode(srvnode_t *p) {
   /* close socket */
-  if(p) {
-    if (p->sock) close(p->sock);
-    free(p);
-  }
+  assert(p!=NULL);
+  if (p->sock) close(p->sock);
+  free(p);
   return NULL;
 }
 
 /* emties a linked server list. returns the head */
 srvnode_t *clear_srvlist(srvnode_t *head) {
   srvnode_t *p=head;
+  assert(head != NULL);
   while (p->next != head) {
     destroy_srvnode(del_srvnode_after(p));
   }
@@ -97,6 +97,7 @@ srvnode_t *clear_srvlist(srvnode_t *head) {
 
 /* destroys the server list, including the head */
 srvnode_t *destroy_srvlist(srvnode_t *head) {
+  assert(head != NULL);
   clear_srvlist(head);
   free(head);
   return NULL;
