@@ -35,8 +35,8 @@ found in
 .B \-a
 .TP
 .B \-\-address
-Bind only to the interface with the specified address. [Is the default to bind to everything?
-if so - say so  - NA]
+Bind only to the interface with the specified address. By default dnrd
+binds to everything.
 
 .TP
 .B \-b
@@ -53,26 +53,33 @@ option, dnrd will use next active server as soon a request is
 served. If a server times out it will be deactivated and will not be
 used until it comes back. As soon it is reactivated it will join the
 list.
+.sp
+Note that if there are no
+.B \-s
+after the
+.B \-b\fR,
+this will do nothing at all.
 
 .TP
 .BR \-c \ ( off |[ \fIlow :] \fIhigh )
 .TP
 .BR \-\-cache= ( off |[ \fIlow :] \fIhigh )
-This option can be used to either turn off caching of DNS responses, or to
-change the high and low watermarks.  With the high/low water mark option, cached
-entries are purged when the number of responses reaches the high-water mark,
-and they will be purged until the number of cached responses reaches the low-water
-mark. [Are they purged in oldest-first, random, or what order? - NA]  By default,
-caching is on, with low and high water-marks of 800 and 1000 respectively.
+This option can be used to either turn off caching of DNS responses,
+or to change the high and low watermarks. With the high/low water mark
+option, cached entries are purged when the number of responses reaches
+the high-water mark, and they will be purged until the number of
+cached responses reaches the low-water mark, purging the oldest
+first. By default, caching is on, with low and high water-marks of 800
+and 1000 respectively.
 
 .TP
 .B \-d
 .TP
 .B \-\-debug
-This turns on debugging.  The dnrd process will run in the current console [I think
-the english way to say this is "will not fork into the background" - NA]
-and print out debugging information.  If the option is given twice, it will
-also dumps the raw packet contents.
+This turns on debugging.  The dnrd process will not fork into the
+background and print out debugging information in the current
+console. If the option is given twice, it will also dumps the raw
+packet contents.
 
 .TP
 .B \-h
@@ -86,8 +93,8 @@ Prints usage information
 .B \-\-ignore
 Ignore cache for deactivated servers. If a forward DNS server times
 out and gets deactivated, all cache entries for this server are
-ignored. This helps avoid network timeout delays when offline. [when
-what is offline - the DNS server, or the DNRD machine? - NA]
+ignored. This helps avoid network timeout delays when dnrd serves a
+offline/dialup network.
 
 .TP
 .B \-k
@@ -99,7 +106,7 @@ Kills the currently running dnrd process.
 .B \-l
 .TP
 .B \-\-log
-Send all messages to syslog. [What service/priority? -NA]
+Send all messages to syslog. dnrd uses the deamon facility.
 
 .TP
 .BR \-m \ ( off | hosts )
@@ -144,9 +151,7 @@ Add a forward DNS server. If multiple
 options are given, dnrd treats the first as a primary DNS server and
 the rest as backup servers. If the primary DNS server times out, it
 is deactivated and the next specified server (that is active)
-is used until the previous gets reactivated. [ Does the load balancing
-option affect this ? NA]
-
+is used until the previous gets reactivated.
 .sp
 The 
 .I domain
@@ -154,23 +159,22 @@ option allows dnrd to determine which DNS server should get the query
 based on the domain name in the query. This is useful when you have
 an internet connection and a vpn connection to work, for instance. Several servers with the same 
 .I domain
-might be specified and then will they work as backup servers. If
+might be specified and then will they work as backup servers. 
+.sp
+If
 .B \-b
-option is specified, then will all servers with the same 
+option is specified, then will all servers specified after the
+.B \-b
+option, be grouped by 
 .I domain\fR,
-specified after the
-.B \-b
-option, be grouped and load balanced.
-[Natanael, I think this is called "split horizon", you might want to check out if
-that's the way you want to describe it.   Split horizon basically means that the public
-dns entry for www.foo.com is 1.2.3.4, but you want the internal users to go to 192.168.1.1]
-
+and load balanced.
 
 .TP
 .BI \-t\  N
 .TP
 .BI \-\-timeout= N
-Set the timeout value for forward DNS servers. If a server don't respond to a query within
+Set the timeout value for forward DNS servers. If a server don't
+respond to a query within
 .I N
 seconds it is deactivated. The default value is
 .I 3
@@ -180,8 +184,8 @@ seconds it is deactivated. The default value is
 .TP
 .BI \-\-userid= userid
 By default, dnrd switches to uid 65535 after starting up.  This is a
-security feature.  The default uid can
-be overridden using this option.
+security feature.  The default uid can be overridden using this
+option.
 .I userid
 can either be a name or a number.
 
@@ -193,10 +197,7 @@ Prints out the version number
 
 .SH BUGS
 .PP
-Even if it is possible to bind dnrd to one single interface it is not
-possible to run several dnrd processes on the same host. [I don't understand
-this.. are you saying that "you cannot run more than one dnrd process, even
-if each is listening on a separated interface"?]
+It is not possible to run more than one dnrd process on the same host.
 
 .SH FILES
 .PP
@@ -208,7 +209,8 @@ as a primary nameserver.
 .PP
 .B /etc/hosts
 .PP
-By default, dnrd will act as a primary nameserver for hosts found in this file.
+By default, dnrd will act as a primary nameserver for hosts found in
+this file.
 .PP
 .B /var/run/dnrd.pid
 .PP
