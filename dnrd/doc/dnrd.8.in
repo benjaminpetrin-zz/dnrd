@@ -1,27 +1,27 @@
-.TH DNRD 8 "Domain Name Relay Daemon" "DNRD v2.19" "Domain Name Relay Daemon"
-.SH NAME
+.TH "DNRD" "8" "Domain Name Relay Daemon" "DNRD v2.19" "Domain Name Relay Daemon"
+.SH "NAME"
 dnrd \- proxy name server
-.SH SYNOPSIS
+.SH "SYNOPSIS"
 .hy 0
 .na
-.TP
+.TP 
 .B dnrd
-.RB "[\|" \-a \ \fIlocaladdress\fB | \-\-address=\fIlocaladdress\fB "\|]" 
-.RB "[\|" \-b | \-\-load\-balance "\|]"
-.RB "[\|" \-c \ ( off |[ \fIlow\fB :] \fIhigh\fB )| \-\-cache= ( off |[ \fIlow\fB :] \fIhigh\fB )]
-.RB "[\|" \-d \fIN\fB | \-\-debug=\fIN\fB "\|]"
-.RB "[\|" \-h | \-\-help "\|]"
-.RB "[\|" \-i | \-\-ignore "\|]"
-.RB "[\|" \-k | \-\-kill "\|]"
-.RB "[\|" \-l | \-\-log "\|]"
-.RB "[\|" \-m \ ( \fIoff\fB | \fIhosts\fB )| \-\-master= ( \fIoff\fB | \fIhosts\fB ")]" 
-.RB "[\|" \-M \ \fIN\fB | \-\-max\-sock=\fIN\fB "\|]"
-.RB "[\|" \-r \ \fIN\fB | \-\-retry=\fIN\fB "\|]"
-.RB "[\|" \-s\ \fIipaddr\fB (: \fIdomain\fB )| \-\-server=\fIipaddr\fB (: \fIdomain\fB )]
-.RB "[\|" \-t \ \fIN\fB | \-\-timeout=\fIN\fB "\|]"
-.RB "[\|" \-u\ \fIuserid\fB | \-\-uid=\fIuserid\fB "\|]" 
-.RB "[\|" \-v | \-\-version "\|]"
-.SH DESCRIPTION
+[\ \-a\ localaddress\ |\ \-\-address=localaddress\ ]
+[\ \-b\ |\ \-\-load\-balance\ ]
+[\ \-c\ (off\ |[\ low:]\ high\ )\ |\ \-\-cache=(off\ |\ [\ low\ :]\ high\ )]
+[\ \-d\ \ N\ |\ \-\-debug=N\ ]
+[\ \-h\ |\ \-\-help\ ]
+[\ \-i\ |\ \-\-ignore\ ]
+[\ \-k\ |\ \-\-kill\ ]
+[\ \-l\ |\ \-\-log\ ]
+[\ \-m\ ( off |\ hosts )|\ \-\-master= ( off | hosts )]
+[\ \-M\ IN |\ \-\-max\-sock=N\ ]
+[\ \-r\ IN |\ \-\-retry=N 
+[\ \-s\ ipaddr (:domain ) | \-\-server=ipaddr (: domain )]
+[\ \-t\ N | \-\-timeout=N ]
+[\ \-u\ userid | \-\-uid=userid ] 
+[\ \-v\ |\ \-\-version ]
+.SH "DESCRIPTION"
 .B dnrd\fR is a proxying nameserver. It forwards DNS queries to the appropriate
 nameserver, but can also act as the primary nameserver for a subnet
 behind a firewall.  Proxying is configured on the command line using
@@ -29,19 +29,19 @@ the
 .B \-s
 option.  By default, dnrd will act as the primary nameserver for hosts
 found in
-.IR /etc/hosts .
+.I R /etc/hosts .
 
-.SH OPTIONS
-.TP
+.SH "OPTIONS"
+.TP 
 .B \-a
-.TP
+.TP 
 .B \-\-address
 Bind only to the interface with the specified address. By default dnrd
 binds to everything.
 
-.TP
+.TP 
 .B \-b
-.TP
+.TP 
 .B \-\-load\-balance
 Turn on load balancing. All forward servers that are specified after
 this option (with
@@ -61,67 +61,67 @@ after the
 .B \-b\fR,
 this will do nothing at all.
 
-.TP
+.TP 
 .BR \-c \ ( off |[ \fIlow :] \fIhigh )
-.TP
+.TP 
 .BR \-\-cache= ( off |[ \fIlow :] \fIhigh )
 This option can be used to either turn off caching of DNS responses,
 or to change the high and low watermarks. With the high/low water mark
 option, cached entries are purged when the number of responses reaches
-the high-water mark, and they will be purged until the number of
-cached responses reaches the low-water mark, purging the oldest
-first. By default, caching is on, with low and high water-marks of 800
+the high\-water mark, and they will be purged until the number of
+cached responses reaches the low\-water mark, purging the oldest
+first. By default, caching is on, with low and high water\-marks of 800
 and 1000 respectively.
 
-.TP
+.TP 
 .B \-d N
-.TP
+.TP 
 .B \-\-debug N
 This turns on debugging level N. The dnrd process will not fork into
 the background and print out debugging information in the current
-console. Supported debug levels are 1-4. The higher level, the more
+console. Supported debug levels are 1\-4. The higher level, the more
 debug info is printed.
 .sp
 Sending signal SIGUSR1 will toggle the debug level between level 0 (no
 debugging) and level 3.
 
-.TP
+.TP 
 .B \-h
-.TP
+.TP 
 .B \-\-help
 Prints usage information
 
-.TP
+.TP 
 .B \-i
-.TP
+.TP 
 .B \-\-ignore
 Ignore cache for deactivated servers. If a forward DNS server times
 out and gets deactivated, all cache entries for this server are
 ignored. This helps avoid network timeout delays when dnrd serves a
 offline/dialup network.
 
-.TP
+.TP 
 .B \-k
-.TP
+.TP 
 .B \-\-kill
 Kills the currently running dnrd process.
 
-.TP
+.TP 
 .B \-l
-.TP
+.TP 
 .B \-\-log
 Send all messages to syslog. dnrd uses the deamon facility.
 
-.TP
+.TP 
 .BR \-m \ ( off | hosts )
-.TP
+.TP 
 .BR \-\-master= ( off | hosts )
 dnrd can act as the primary name server for a number of hosts.  By default, it
 will read in
 .I @DNRD_ROOT@/master
 to determine how this is done.  If that file
 doesn't exist, it will act as the primary server for the hosts found in
-.IR /etc/hosts .
+.I R /etc/hosts .
 This option allows you to override the default behavior.  Setting it to
 .B off
 turns off all primary server functionality.  Setting it to 
@@ -129,27 +129,27 @@ turns off all primary server functionality.  Setting it to
 causes dnrd to act as the primary server for hosts in
 .I /etc/hosts
 regardless of whether it could find
-.IR @DNRD_ROOT@/master .
+.I R @DNRD_ROOT@/master .
 .sp
 Sending the signal HUP to the dnrd process will cause the
-@DNRD_ROOT@/master file to be re-read. Since /etc/hosts is outside the
+@DNRD_ROOT@/master file to be re\-read. Since /etc/hosts is outside the
 chrooted envronment, dnrd will not be able to reread this
 file. Therefore it is not recommended to use /etc/hosts at all. Future
 versions of dnrd will not support any use of /etc/hosts.
 
-.TP
+.TP 
 .BI \-M\  N
-.TP
+.TP 
 .BI \-\-max\-sock= N
 Set the maximum allowed open sockets. Default is 200.
 
-.TP
+.TP 
 .BI \-r\  N
-.TP
+.TP 
 .BI \-\-retry= N
 Set the retry interval time. When a forward DNS server times
 out it is deactivated. (use the
-.B -t
+.B \-t
 option to set the timeout value) Dnrd will try to send a request for
 localhost every
 .I N
@@ -159,9 +159,9 @@ is reactivated. The default value is
 seconds. Setting this to zero will make dnrd to never deactivate a
 server.
 
-.TP
+.TP 
 .BI \-s\  ipaddr \fR(: domain \fR)
-.TP
+.TP 
 .BI \-\-server= ipaddr \fR(: domain \fR)
 Add a forward DNS server. If multiple
 .B \-s
@@ -186,9 +186,9 @@ option, be grouped by
 .I domain\fR,
 and load balanced.
 
-.TP
+.TP 
 .BI \-t\  N
-.TP
+.TP 
 .BI \-\-timeout= N
 Set the timeout value for forward DNS servers. If a server don't
 respond to a query within
@@ -201,9 +201,9 @@ Setting this to zero will make dnrd to never deactivate a server
 because of timeouts. However, a server might be deactivated if sendto
 fails.
 
-.TP
+.TP 
 .BI \-u\  userid
-.TP
+.TP 
 .BI \-\-userid= userid
 By default, dnrd switches to uid 65535 after starting up.  This is a
 security feature.  The default uid can be overridden using this
@@ -211,41 +211,41 @@ option.
 .I userid
 can either be a name or a number.
 
-.TP
+.TP 
 .B \-v
-.TP
+.TP 
 .B \-\-version
 Prints out the version number
 
-.SH BUGS
-.PP
+.SH "BUGS"
+.PP 
 It is not possible to run more than one dnrd process on the same host.
 
-Sending -SIGHUP will not reread the /etc/hosts file since dnrd is
+Sending \-SIGHUP will not reread the /etc/hosts file since dnrd is
 chrooted to @DNRD_ROOT@. Use @DNRD_ROOT@/master instead and avoid
 using /etc/hosts at all.
 
-.SH FILES
-.PP
+.SH "FILES"
+.PP 
 .B @DNRD_ROOT@/master
-.PP
+.PP 
 This file is used to configure
 .B dnrd
 as a primary nameserver.
-.PP
+.PP 
 .B /etc/hosts
-.PP
+.PP 
 By default, dnrd will act as a primary nameserver for hosts found in
 this file. Note that this file will not be used at all in future versions.
-.PP
+.PP 
 .B /var/run/dnrd.pid
-.PP
-The currently-running dnrd process' pid is placed into this file.
+.PP 
+The currently\-running dnrd process' pid is placed into this file.
 It is needed to allow new dnrd processes to find and kill the currently
 running process.
 
-.SH AUTHOR
-.PP
+.SH "AUTHOR"
+.PP 
 The original version of dnrd was written by Brad Garcia
 .BR garsh@home\&.com .
 Other contributors are listed in the HISTORY
