@@ -111,7 +111,7 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
 	}
     }
 
-    /* First flags check. If Z flag, QR or RCODE is set, jut ignore
+    /* First flags check. If Z flag, QR or RCODE is set, just ignore
      * the request. According to rfc1035 4.1.1 Z flag must be zero in
      * all queries and responses. We should also not have any RCODE
      */

@@ -106,7 +106,7 @@ int isrunning(int pid) {
 /* wait_for_exit()
  *
  * In: pid     - the process id to wait for
- *     timeout - maximum time to wait in 1/10 secs
+ *     timeout - maximum time to wait in 1/100 secs
  *
  * Returns: 1 if it died in before timeout
  *
