@@ -50,7 +50,9 @@ static struct option long_options[] =
     {"debug",        0, 0, 'd'},
     {"help",         0, 0, 'h'},
     {"ignore",       0, 0, 'i'},
+#ifdef ENABLE_PIDFILE
     {"kill",         0, 0, 'k'},
+#endif
     {"log",          0, 0, 'l'},
     {"max-sock",     1, 0, 'M'},
 #ifndef EXCLUDE_MASTER
@@ -61,16 +63,24 @@ static struct option long_options[] =
     {"timeout",      1, 0, 't'},
     {"uid",          1, 0, 'u'},
     {"version",      0, 0, 'v'},
-    {"chroot-path",  1, 0, 'p'},
+    {"dnrd-root",    1, 0, 'R'},
     {0, 0, 0, 0}
 };
 #endif /* __GNU_LIBRARY__ */
 
 #ifndef EXCLUDE_MASTER
-const char short_options[] = "a:bc:dhiklmM:r:s:t:u:v";
+#define MASTERPARM "m"
 #else
-const char short_options[] = "a:bc:dhiklM:r:s:t:u:v";
+#define MASTERPARM
 #endif
+
+#ifdef ENABLE_PIDFILE
+#define PIDPARM "k"
+#else
+#define PIDPARM 
+#endif
+ 
+const char short_options[] = "a:bc:dhi" PIDPARM "l" MASTERPARM "M:rR:s:t:u:v";
 
 /*
  * give_help()
@@ -92,7 +102,9 @@ static void give_help()
 	   "Turn on debugging - run in foreground.\n");
     printf("    -h, --help                Print this message, then exit.\n");
     printf("    -i, --ignore              Ignore cache for disabled servers\n");
+#ifdef ENABLE_PIDFILE
     printf("    -k, --kill                Kill a running daemon.\n");
+#endif
     printf("    -l, --log                 Send all messages to syslog.\n");
 #ifndef EXCLUDE_MASTER
     printf("    -m, --master=MASTERMODE\n");
@@ -113,11 +125,10 @@ static void give_help()
     printf("    -t, --timeout=N           Set forward DNS server timeout to N\n");
     printf("    -u, --uid=ID              "
 	   "Username or numeric id to switch to\n");
-    /*
-    printf("    -p, --chroot-path=CHROOTPATH\n"
-	   "                              "
-	   "The chroot path. dnrd will chroot to this dir\n");
-    */
+
+    printf("    -R, --dnrd-root=DIR       The dnrd root directory. dnrd will chroot to\n"
+           "                              this dir.\n");
+
     printf("    -v, --version             "
 	   "Print out the version number and exit.\n");
     printf("\n");
@@ -187,6 +198,7 @@ int parse_args(int argc, char **argv)
 	    ignore_inactive_cache_hits = 1; 
 	    break;
 	  }
+#ifdef ENABLE_PIDFILE
 	  case 'k': {
 	      if (!kill_current()) {
 		  printf("No %s daemon found.  Exiting.\n", progname);
@@ -194,6 +206,7 @@ int parse_args(int argc, char **argv)
 	      exit(0);
 	      break;
 	  }
+#endif
 	  case 'l': {
 	      gotterminal = 0;
 	      break;
@@ -279,7 +292,7 @@ int parse_args(int argc, char **argv)
 	  }
 
 	  case 'p': {
-	    strncpy(chroot_path, optarg, sizeof(chroot_path));
+	    strncpy(dnrd_root, optarg, sizeof(dnrd_root));
 	    log_debug(1, "Using %s as chroot");
 	    break;
 	  }

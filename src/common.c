@@ -49,11 +49,15 @@
 int                 opt_debug = OPT_DEBUG;
 int                 opt_serv = 0;
 const char*         progname = 0;
+
+#ifdef ENABLE_PIDFILE
 #if defined(__sun__)
 const char*         pid_file = "/var/tmp/dnrd.pid";
 #else
 const char*         pid_file = "/var/run/dnrd.pid";
 #endif
+#endif
+
 int                 isock = -1;
 #ifdef ENABLE_TCP
 int                 tcpsock = -1;
@@ -70,9 +74,9 @@ sem_t               dnrd_sem;  /* Used for all thread synchronization */
 int                 reactivate_interval = REACTIVATE_INTERVAL;
 
 /* The path where we chroot. All config files are relative this path */
-char                chroot_path[512] = CHROOT_PATH;
+char                dnrd_root[512] = DNRD_ROOT;
 
-char                config_file[] = CHROOT_PATH "/" CONFIG_FILE;
+char                config_file[512] = DNRD_ROOT "/" CONFIG_FILE;
 
 domnode_t           *domain_list;
 /* turn this on to skip cache hits from responses of inactive dns servers */
@@ -106,6 +110,7 @@ struct sockaddr_in recv_addr = { AF_INET, 53, { INADDR_ANY } };
 /* init recv_addr in main.c instead of here */ 
 struct sockaddr_in recv_addr;
 
+#ifdef ENABLE_PIDFILE
 /* check if a pid is running 
  * from the unix faq
  * http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC18
@@ -174,6 +179,7 @@ int kill_current()
     unlink(pid_file);
     return retn;
 }
+#endif /* ENABLE_PIDFILE*/
 
 /*
  * log_msg()

@@ -60,7 +60,9 @@
 int main(int argc, char *argv[])
 {
   /*    int                i;*/
+#ifdef ENABLE_PIDFILE
     FILE              *filep;
+#endif
     struct servent    *servent;   /* Let's be good and find the port numbers
 				     the right way */
     struct passwd     *pwent;
@@ -108,10 +110,12 @@ int main(int argc, char *argv[])
 
     openlog(progname, LOG_PID, LOG_DAEMON);
 
+#ifdef ENABLE_PIDFILE
     /*
      * Kill any currently running copies of the program.
      */
     kill_current();
+#endif
 
     /*
      * Setup the thread synchronization semaphore
@@ -121,6 +125,7 @@ int main(int argc, char *argv[])
 	cleanexit(-1);
     }
 
+#ifdef ENABLE_PIDFILE
     /*
      * Write our pid to the appropriate file.
      * Just open the file here.  We'll write to it after we fork.
@@ -131,6 +136,7 @@ int main(int argc, char *argv[])
 		"Check that dnrd was started by root.", pid_file);
 	exit(-1);
     }
+#endif
 
     /*
      * Pretend we don't know that we want port 53
@@ -202,21 +208,21 @@ int main(int argc, char *argv[])
      * Change our root and current working directories to /etc/dnrd.
      * Also, so some sanity checking on that directory first.
      */
-    dirp = opendir(chroot_path);
+    dirp = opendir(dnrd_root);
     if (!dirp) {
 	log_msg(LOG_ERR, "The directory %s must be created before "
-		"dnrd will run", chroot_path);
+		"dnrd will run", dnrd_root);
 	cleanexit(-1);
     }
 
-    rslt = stat("/etc/dnrd", &st);
+    rslt = stat(dnrd_root, &st);
     if (st.st_uid != 0) {
-	log_msg(LOG_ERR, "The /etc/dnrd directory must be owned by root");
+	log_msg(LOG_ERR, "The %s directory must be owned by root", dnrd_root);
 	cleanexit(-1);
     }
     if ((st.st_mode & (S_IWGRP | S_IWOTH)) != 0) {
 	log_msg(LOG_ERR,
-		"The /etc/dnrd directory should only be user writable");
+		"The %s directory should only be user writable", dnrd_root);
 	cleanexit(-1);
     }
 
@@ -231,31 +237,33 @@ int main(int argc, char *argv[])
 
 	if (rslt) continue;
 	if (S_ISDIR(st.st_mode)) {
-	    log_msg(LOG_ERR, "The /etc/dnrd directory must not contain "
-		    "subdirectories");
+	    log_msg(LOG_ERR, "The %s directory must not contain "
+		    "subdirectories", dnrd_root);
 	    cleanexit(-1);
 	}
 	if ((st.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH|S_IWGRP|S_IWOTH)) != 0) {
-	    log_msg(LOG_ERR, "A file in /etc/dnrd has either execute "
+	    log_msg(LOG_ERR, "A file in %s has either execute "
 		    "permissions or non-user write permission.  Please do a "
-		    "\"chmod a-x,go-w\" on all files in this directory");
+		    "\"chmod a-x,go-w\" on all files in this directory",
+		    dnrd_root);
 	    cleanexit(-1);
 	}
 	if (st.st_uid != 0) {
-	    log_msg(LOG_ERR, "All files in /etc/dnrd must be owned by root");
+	    log_msg(LOG_ERR, "All files in %s must be owned by root",
+		    dnrd_root);
 	    cleanexit(-1);
 	}
     }
     closedir(dirp);
 
-    if (chdir(chroot_path)) {
+    if (chdir(dnrd_root)) {
 	log_msg(LOG_ERR, "couldn't chdir to %s, %s",
-		chroot_path, strerror(errno));
+		dnrd_root, strerror(errno));
 	cleanexit(-1);
     }
-    if (chroot(chroot_path)) {
+    if (chroot(dnrd_root)) {
 	log_msg(LOG_ERR, "couldn't chroot to %s, %s",
-		chroot_path, strerror(errno));
+		dnrd_root, strerror(errno));
 	cleanexit(-1);
     }
 
@@ -347,12 +355,14 @@ int main(int argc, char *argv[])
 	fclose(stderr);
     }
 
+#ifdef ENABLE_PIDFILE
     /*
      * Write our pid to the appropriate file.
      * Now we actually write to it and close it.
      */
     fprintf(filep, "%i\n", (int)getpid());
     fclose(filep);
+#endif
 
     /*
      * Run forever.

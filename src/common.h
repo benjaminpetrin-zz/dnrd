@@ -23,6 +23,10 @@
 #ifndef _DNRD_COMMON_H_
 #define _DNRD_COMMON_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -31,8 +35,8 @@
 #include "domnode.h"
 
 /* default chroot path. this might be redefined in compile time */ 
-#ifndef CHROOT_PATH
-#define CHROOT_PATH "/etc/dnrd"
+#ifndef DNRD_ROOT
+#define DNRD_ROOT "/usr/local/etc/dnrd"
 #endif 
 
 #ifndef CONFIG_FILE
@@ -89,7 +93,7 @@ extern int                 gotterminal;
 extern char		   master_param[200];
 extern sem_t               dnrd_sem;  /* Used for all thread synchronization */
 
-extern char                chroot_path[512];
+extern char                dnrd_root[512];
 extern char                config_file[];
 extern domnode_t           *domain_list;
 
