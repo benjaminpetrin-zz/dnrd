@@ -407,7 +407,7 @@ unsigned char *parse_query(rr_t *y, unsigned char *msg, int len)
     /* should we really convert the name to lowercase?  
      * rfc1035 2.3.3
      */
-    strlwr(y->name);
+    strnlwr(y->name, sizeof(y->name));
 	    
     return (here);
 }
