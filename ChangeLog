@@ -1,3 +1,15 @@
+version 2.16.1
+--------------
+Nathan Angelacos <nangel@users.sourceforge.net>
+ - Fix the --retry option
+
+Natanael Copa <n@tanael.org>
+ - --retry=0 will make dnrd to never deactivate any servers
+ - short option -r now works.
+ - --timeout=0 will make dnrd to never timeout any servers
+ - added some debug info when -d is used
+ - updated man page
+ 
 version 2.16
 ------------
 Natanael Copa <n@tanael.org>

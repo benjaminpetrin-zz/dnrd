@@ -43,20 +43,16 @@
 #include "master.h"
 #endif
 
-/* time interval to retry a deactivated server */
-#define SINGLE_RETRY 10
-
 
 /* prepare the dns packet for a not found reply */
+/* not used anymore
 char *set_notfound(char *msg, const int len) {
   if (len < 4) return NULL;
-  /* FIXME: host to network should be called here */
-  /* Set flags QR and AA */
   msg[2] |= 0x84;
-  /* Set flags RA and RCODE=3 */
   msg[3] = 0x83;
   return msg;
 }
+*/
 
 /* prepare the dns packet for a Server Failure reply */
 char *set_srvfail(char *msg, const int len) {
@@ -138,9 +134,9 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
     d=search_subdomnode(domain_list, &msg[12], *len);
 
     if (no_srvlist(d->srvlist)) {
-      /* there is no servers for this domain, reply with "entry not found" */
-	log_debug("Replying to query with \"entry not found\"");
-	if (!set_notfound(msg, *len)) return -1;
+      /* there is no servers for this domain, reply with "Server failure" */
+	log_debug("Replying to query with \"Server failure\"");
+	if (!set_srvfail(msg, *len)) return -1;
 	return 0;
     }
 
@@ -148,7 +144,9 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
     /* Send to a server until it "times out". */
     if (d->current) {
       time_t now = time(NULL);
-      if ((d->current->send_time != 0)
+      if ((d->current->send_time != 0) 
+	  && (forward_timeout != 0)
+	  && (reactivate_interval != 0)
 	  && (now - d->current->send_time > forward_timeout)) {
 	deactivate_current(d);
       }
@@ -174,7 +172,7 @@ static void reactivate_servers(int interval) {
   static int last_try = 0;
   domnode_t *d = domain_list;
   /*  srvnode_t *s;*/
-  
+
   if (!last_try) last_try = now;
   /* check for reactivate servers */
   if ( (now - last_try < interval) || no_srvlist(d->srvlist)  ) 
@@ -182,7 +180,7 @@ static void reactivate_servers(int interval) {
  
   last_try = now;
   do {
-    retry_srvlist(d, SINGLE_RETRY);
+    retry_srvlist(d, interval );
     if (!d->roundrobin) {
       /* find the first active server in serverlist */
       d->current=NULL;
@@ -249,7 +247,8 @@ void run()
 	dnsquery_timeout(60);
 
 	/* reactivate servers */
-	reactivate_servers(10);
+	if (reactivate_interval != 0) 
+	  reactivate_servers(reactivate_interval);
 
 	/* Handle errors */
 	if (retn < 0) {

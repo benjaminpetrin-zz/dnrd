@@ -66,9 +66,9 @@ static struct option long_options[] =
 #endif /* __GNU_LIBRARY__ */
 
 #ifndef EXCLUDE_MASTER
-const char short_options[] = "a:bc:dhiklm:s:t:u:v";
+const char short_options[] = "a:bc:dhiklm:r:s:t:u:v";
 #else
-const char short_options[] = "a:bc:dhikl:s:t:u:v";
+const char short_options[] = "a:bc:dhikl:r:s:t:u:v";
 #endif
 
 /*
@@ -203,9 +203,11 @@ int parse_args(int argc, char **argv)
 	  }
 #endif
 	  case 'r': {
-	    reactivate_interval = atoi(optarg);
-	    log_debug("Setting retry interval to %i seconds.", 
-		      reactivate_interval);
+	    if (reactivate_interval = atoi(optarg))
+	      log_debug("Setting retry interval to %i seconds.", 
+			reactivate_interval);
+	    else 
+	      log_debug("Retry=0. Will never deactivate servers.");
 	    break;
 	  }
 	  case 's': {
@@ -240,9 +242,11 @@ int parse_args(int argc, char **argv)
 	    break;
 	  }
 	  case 't': {
-	    forward_timeout = atoi(optarg);
-	    log_debug("Setting retry interval to %i seconds.", 
-		      reactivate_interval);
+	    if (forward_timeout = atoi(optarg))
+	      log_debug("Setting timeout value to %i seconds.", 
+			forward_timeout);
+	    else 
+	      log_debug("Timeout=0. Servers will never timeout.");
 	    break;
 	  }
 	  case 'u': {

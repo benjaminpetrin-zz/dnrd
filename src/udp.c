@@ -69,13 +69,12 @@ static int dnssend(srvnode_t *s, void *msg, int len)
 int send2current(domnode_t *d, void *msg, const int len) {
     /* If we have domains associated with our servers, send it to the
        appropriate server as determined by srvr */
-    while ( (d->current != NULL) &&
-	    (dnssend(d->current, msg, len) != len)) {
-      deactivate_current(d);
-    }
-    if (d->current != NULL) {
-      return len;
-    } else return 0;
+  while ((d->current != NULL) && (dnssend(d->current, msg, len) != len)) {
+    if (reactivate_interval) deactivate_current(d);
+  }
+  if (d->current != NULL) {
+    return len;
+  } else return 0;
 }
 
 /*
@@ -242,6 +241,8 @@ void handle_udpreply(srvnode_t *srv)
       /* this server is obviously alive, we reset the counters */
       srv->send_count = 0; /* this is not used anymore? */
       srv->send_time = 0;
+      if (srv->inactive) log_debug("Reactivating server %s",
+				   inet_ntoa(srv->addr.sin_addr));
       srv->inactive = 0;
     }
 }
@@ -273,6 +274,7 @@ int send_dummy(srvnode_t *s) {
   /* should not happen */
   assert(s != NULL);
 
-  log_debug("Sending dummy id=%i",  (unsigned short int) dnsbuf[0]++ );
+  log_debug("Sending dummy id=%i to %s",  (unsigned short int) dnsbuf[0]++,
+	    inet_ntoa(s->addr.sin_addr));
   return dnssend(s, &dnsbuf, sizeof(dnsbuf));
 }
