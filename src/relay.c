@@ -190,6 +190,8 @@ void run()
   fd_set             fdmaster;
   fd_set             fdread;
   int                retn;
+  domnode_t          *d = domain_list;
+  srvnode_t          *s;
     /*    int                i, j;*/
 
   FD_ZERO(&fdmaster);
@@ -260,9 +262,28 @@ void run()
     cache_expire();
 #ifndef EXCLUDE_MASTER
     /* Reload the master database if neccessary */
-	master_reinit();
+    master_reinit();
 #endif
-	/* Remove old unanswered queries */
-	//	dnsquery_timeout(60);
+    /* Remove old unanswered queries */
+    //	dnsquery_timeout(60);
+    
+    /* create new query/socket for next incomming request */
+    do {
+      if ((s=d->srvlist)) {
+	while ((s=s->next) != d->srvlist) {
+	  if (s->newquery == NULL) {
+	    if( (s->newquery = query_get_new(d, s)) == NULL) {
+	      log_debug("Could not create newquery");
+	    } else {
+	      log_debug("created new querysocket for %s in domain %s",
+			inet_ntoa(s->addr.sin_addr), 	  
+			cname2asc(d->domain));
+	    }
+	  }
+	}
+      }
+    } while ((d=d->next) != domain_list);
+
+    
   }
 }
