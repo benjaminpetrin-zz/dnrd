@@ -382,8 +382,15 @@ int read_configuration(char *filename)
 	     * name makes one DNS record.
 	     */
 	    get_word(&p, ipnum, sizeof(ipnum));
+	    if (*get_hostname(&p, domain, word, sizeof(word)) == 0) {
+	      /* no host name specified. Lets assign the domainname the ip*/
+	      add_nameip(domain, sizeof(domain), ipnum);
+	    } else {
+	      /* add the hostnames */
+	      add_nameip(word, sizeof(word), ipnum);
 	    while (*get_hostname(&p, domain, word, sizeof(word)) != 0)
 		    add_nameip(word, sizeof(word), ipnum);
+	}
 	}
 	else if (strcmp(get_word(&p, word, sizeof(word)), "domain") == 0) {
 	    get_word(&p, domain, sizeof(domain));
@@ -917,10 +924,11 @@ int master_lookup(unsigned char *msg, int len)
     }
 
     domain++;
-    if (authority_lookup(domain) != NULL) {
+    if ((authority_lookup(query.name) != NULL) 
+	||  (authority_lookup(domain) != NULL)) {
 	dnsheader_t *x;
 
-	log_debug(2, "master: found AUTHORITY for %s\n", domain);
+	log_debug(2, "master: found AUTHORITY for %s\n", query.name);
 
 	x = begin_assembly(&query);
 	x->ancount = 0;
