@@ -1,4 +1,4 @@
-.TH DNRD 8 "Domain Name Relay Daemon" "DNRD v2.18" "Domain Name Relay Daemon"
+.TH DNRD 8 "Domain Name Relay Daemon" "DNRD v2.19" "Domain Name Relay Daemon"
 .SH NAME
 dnrd \- proxy name server
 .SH SYNOPSIS
@@ -8,18 +8,18 @@ dnrd \- proxy name server
 .B dnrd
 .RB "[\|" \-a \ \fIlocaladdress\fB | \-\-address=\fIlocaladdress\fB "\|]" 
 .RB "[\|" \-b | \-\-load\-balance "\|]"
-.RB "[\|" \-c \ ( off |[ \fIlow :] \fIhigh )| \-\-cache= ( off |[ \fIlow :] \fIhigh )]
-.RB "[\|" \-d | \-\-debug "\|]"
+.RB "[\|" \-c \ ( off |[ \fIlow\fB :] \fIhigh\fB )| \-\-cache= ( off |[ \fIlow\fB :] \fIhigh\fB )]
+.RB "[\|" \-d \fIN\fB | \-\-debug=\fIN\fB "\|]"
 .RB "[\|" \-h | \-\-help "\|]"
 .RB "[\|" \-i | \-\-ignore "\|]"
 .RB "[\|" \-k | \-\-kill "\|]"
 .RB "[\|" \-l | \-\-log "\|]"
-.RB "[\|" \-m \ ( off | hosts )| \-\-master= ( off | hosts ")]" 
+.RB "[\|" \-m \ ( \fIoff\fB | \fIhosts\fB )| \-\-master= ( \fIoff\fB | \fIhosts\fB ")]" 
 .RB "[\|" \-M \ \fIN\fB | \-\-max\-sock=\fIN\fB "\|]"
 .RB "[\|" \-r \ \fIN\fB | \-\-retry=\fIN\fB "\|]"
-.RB "[\|" \-s\ \fIipaddr (: \fIdomain )| \-\-server=\fIipaddr (: \fIdomain )]
+.RB "[\|" \-s\ \fIipaddr\fB (: \fIdomain\fB )| \-\-server=\fIipaddr\fB (: \fIdomain\fB )]
 .RB "[\|" \-t \ \fIN\fB | \-\-timeout=\fIN\fB "\|]"
-.RB "[\|" "\-u\ \fIuserid" | \-\-uid=\fIuserid "\|]" 
+.RB "[\|" \-u\ \fIuserid\fB | \-\-uid=\fIuserid\fB "\|]" 
 .RB "[\|" \-v | \-\-version "\|]"
 .SH DESCRIPTION
 .B dnrd\fR is a proxying nameserver. It forwards DNS queries to the appropriate
@@ -74,13 +74,16 @@ first. By default, caching is on, with low and high water-marks of 800
 and 1000 respectively.
 
 .TP
-.B \-d
+.B \-d N
 .TP
-.B \-\-debug
-This turns on debugging.  The dnrd process will not fork into the
-background and print out debugging information in the current
-console. If the option is given twice, it will also dumps the raw
-packet contents.
+.B \-\-debug N
+This turns on debugging level N. The dnrd process will not fork into
+the background and print out debugging information in the current
+console. Supported debug levels are 1-4. The higher level, the more
+debug info is printed.
+.sp
+Sending signal SIGUSR1 will toggle the debug level between level 0 (no
+debugging) and level 3.
 
 .TP
 .B \-h
@@ -128,9 +131,11 @@ causes dnrd to act as the primary server for hosts in
 regardless of whether it could find
 .IR @DNRD_ROOT@/master .
 .sp
-Note that future versions of dnrd will not use /etc/hosts at all.
-
-
+Sending the signal HUP to the dnrd process will cause the
+@DNRD_ROOT@/master file to be re-read. Since /etc/hosts is outside the
+chrooted envronment, dnrd will not be able to reread this
+file. Therefore it is not recommended to use /etc/hosts at all. Future
+versions of dnrd will not support any use of /etc/hosts.
 
 .TP
 .BI \-M\  N
