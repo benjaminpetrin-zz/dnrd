@@ -41,21 +41,22 @@
 #if defined(__GNU_LIBRARY__)
 static struct option long_options[] =
 {
-    {"address", 1, 0, 'a'},
-    {"cache",   1, 0, 'c'},
-    {"debug",   0, 0, 'd'},
-    {"help",    0, 0, 'h'},
-    {"kill",    0, 0, 'k'},
-    {"log",     0, 0, 'l'},
-    {"master",  1, 0, 'm'},
-    {"server",  1, 0, 's'},
-    {"uid",     1, 0, 'u'},
-    {"version", 0, 0, 'v'},
+    {"address",      1, 0, 'a'},
+    {"cache",        1, 0, 'c'},
+    {"debug",        0, 0, 'd'},
+    {"help",         0, 0, 'h'},
+    {"kill",         0, 0, 'k'},
+    {"log",          0, 0, 'l'},
+    {"master",       1, 0, 'm'},
+    {"server",       1, 0, 's'},
+    {"uid",          1, 0, 'u'},
+    {"version",      0, 0, 'v'},
+    {"chroot-path",  1, 0, 'p'},
     {0, 0, 0, 0}
 };
 #endif /* __GNU_LIBRARY__ */
 
-const char short_options[] = "a:c:dhklm:s:u:v";
+const char short_options[] = "a:c:dhklm:s:u:vp:";
 
 /*
  * give_help()
@@ -91,10 +92,24 @@ static void give_help()
 	   "                              backup servers)\n");
     printf("    -u, --uid=ID              "
 	   "Username or numeric id to switch to\n");
+    printf("    -p, --chroot-path=CHROOTPATH              "
+	   "The chroot path. dnrd will chroot to this dir\n");
     printf("    -v, --version             "
 	   "Print out the version number and exit.\n");
     printf("\n");
 }
+
+static int add_dnsdomain(const char* ipdomain) {
+  char *sep = strchr(ipdomain, (int)':');
+  int i;
+  /* find the domain in the list */
+  for (i=0; i<domain_cnt; i++) {
+      if (sep) {
+	/* FORTSETT HER */
+      }
+  }
+}
+
 
 /*
  * parse_args()
@@ -165,6 +180,8 @@ int parse_args(int argc, char **argv)
 	      break;
 	  }
 	  case 's': {
+	    add_dnsdomain(optarg);
+
 	      char *sep = strchr(optarg, (int)':');
 	      if (serv_cnt >= MAX_SERV) {
 		  log_msg(LOG_ERR, "%s: Max. %d DNS servers allowed\n",
@@ -219,6 +236,12 @@ int parse_args(int argc, char **argv)
 	      printf("dnrd version %s\n\n", version);
 	      exit(0);
 	      break;
+	  }
+
+	  case 'p': {
+	    strncpy(chroot_path, optarg, sizeof(chroot_path));
+	    log_debug("Using %s as chroot");
+	    break;
 	  }
 	  case ':': {
 	      log_msg(LOG_ERR, "%s: Missing parameter for \"%s\"\n",

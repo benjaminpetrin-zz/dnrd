@@ -28,13 +28,31 @@
 #include <semaphore.h>
 
 #define MAX_SERV           5          /* maximum number of DNS servers */
+#define MAX_DOMAINS        8          /* maximum number of domains */
+
+/* default chroot path. this might be redefined in compile time */ 
+#ifndef CHROOT_PATH
+#define CHROOT_PATH "/etc/dnrd"
+#endif 
+
 
 struct dnssrv_t {
-    int                    sock;      /* for communication with server */
-    struct sockaddr_in     addr;      /* IP address of server */
-    char*                  domain;    /* optional domain to match.  Set to
+  int                    sock;      /* for communication with server */
+  struct sockaddr_in     addr;      /* IP address of server */
+  char*                  domain;    /* optional domain to match.  Set to
 					 zero for a default server */
+  
 };
+
+
+typedef struct _dnsdomain {
+  int                 sock[MAX_SERV];
+  struct sockaddr_in  addr[MAX_SERV];
+  char* domain;
+  int current;
+  int count;
+} dnsdomain_t;
+
 
 extern const char*         version;   /* the version number for this program */
 extern const char*         progname;  /* the name of this program */
@@ -51,6 +69,12 @@ extern gid_t               daemongid; /* to switch to once daemonised */
 extern int                 gotterminal;
 extern char		   master_param[200];
 extern sem_t               dnrd_sem;  /* Used for all thread synchronization */
+
+extern char chroot_path[512];
+
+extern int  domain_act;
+extern int  domain_cnt;
+
 
 /* kill any currently running copies of dnrd */
 int kill_current();

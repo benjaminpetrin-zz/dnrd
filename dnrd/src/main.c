@@ -180,10 +180,11 @@ int main(int argc, char *argv[])
      * Change our root and current working directories to /etc/dnrd.
      * Also, so some sanity checking on that directory first.
      */
-    dirp = opendir("/etc/dnrd");
+    dirp = opendir(chroot_path);
     if (!dirp) {
-	log_msg(LOG_ERR, "The directory /etc/dnrd must be created before "
-		"dnrd will run");
+	log_msg(LOG_ERR, "The directory %s must be created before "
+		"dnrd will run", chroot_path);
+	cleanexit(-1);
     }
 
     rslt = stat("/etc/dnrd", &st);
@@ -225,14 +226,14 @@ int main(int argc, char *argv[])
     }
     closedir(dirp);
 
-    if (chdir("/etc/dnrd")) {
+    if (chdir(chroot_path)) {
 	log_msg(LOG_ERR, "couldn't chdir to %s, %s",
-		"/etc/dnrd", strerror(errno));
+		chroot_path, strerror(errno));
 	cleanexit(-1);
     }
-    if (chroot("/etc/dnrd")) {
+    if (chroot(chroot_path)) {
 	log_msg(LOG_ERR, "couldn't chroot to %s, %s",
-		"/etc/dnrd", strerror(errno));
+		chroot_path, strerror(errno));
 	cleanexit(-1);
     }
 

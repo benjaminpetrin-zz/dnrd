@@ -37,7 +37,7 @@
 #include "master.h"
 #include "lib.h"
 
-#define	MASTER_CONFIG		"/etc/dnrd/master"
+#define	MASTER_CONFIG		CHROOT_PATH "/master"
 #define	PACKET_ASSEMBLYSIZE	600
 
 
