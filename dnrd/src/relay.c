@@ -203,7 +203,7 @@ void run()
 
     FD_ZERO(&fdmask);
     FD_SET(isock,   &fdmask);
-#ifndef EXCLUDE_TCP
+#ifdef ENABLE_TCP
     FD_SET(tcpsock, &fdmask);
     maxsock = (tcpsock > isock) ? tcpsock : isock;
 #else
@@ -262,7 +262,7 @@ void run()
 	  }
 	} while ((d=d->next) != domain_list);
 
-#ifndef EXCLUDE_TCP
+#ifdef ENABLE_TCP
 	/* Check for incoming TCP requests */
 	if (FD_ISSET(tcpsock, &fds)) handle_tcprequest();
 #endif

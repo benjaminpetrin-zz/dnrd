@@ -22,8 +22,10 @@
 #include <config.h>
 #endif
 
-#ifndef EXCLUDE_TCP
-
+#ifdef ENABLE_TCP
+#ifdef ENABLE_PTHREADS
+#include <pthread.h>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -41,8 +43,14 @@
 #include "common.h"
 #include "relay.h"
 #include "cache.h"
-#include "pthread.h"
 #include "lib.h"
+
+
+#ifdef ENABLE_PTHREADS
+#define TCP_EXIT(x) pthread_exit((x))
+#else
+#define TCP_EXIT(x) _exit((x))
+#endif
 
 typedef struct tcp_handle_info {
     int	               connect;
@@ -96,7 +104,7 @@ static int ip_open(struct sockaddr_in server, unsigned int port)
  *                 proxying.  After the request is served the thread
  *                 terminates.
  */
-static void *tcp_handler(void *dummy)
+static void *tcp_handler(tcp_handle_t *dummy)
 {
     tcp_handle_t      *arg = (tcp_handle_t *)dummy;
     int	               rc, bytes;
@@ -111,11 +119,8 @@ static void *tcp_handler(void *dummy)
     domnode_t *d =domain_list;
     srvnode_t *s;
 
-    free(arg);
+    /*    free(arg);*/
 
-    log_debug("[%d] Exiting thread", getpid());
-    pthread_exit(0);
-    
     do {
       if ((s=d->srvlist))
 	while ((s=s->next) != d->srvlist) s->tcp = -1;
@@ -140,11 +145,11 @@ static void *tcp_handler(void *dummy)
 	rc = select(maxsock, &available, NULL, NULL, &tov);
 	if (rc < 0) {
 	    log_msg(LOG_ERR, "[%d] select() error: %m\n", getpid());
-	    pthread_exit(0);
+	    TCP_EXIT(0);
 	}
 	else if (rc == 0) {
 	    log_msg(LOG_NOTICE, "[%d] connection timed out", getpid());
-	    pthread_exit(0);
+	    TCP_EXIT(0);
 	}
 
 	/* Forward replies from DNS server to client */
@@ -272,8 +277,8 @@ static void *tcp_handler(void *dummy)
     } while ((d=d->next) != domain_list);
 
     close(connect);
-    log_debug("[%d] Exiting thread", getpid());
-    pthread_exit(0);
+    log_debug("[%d] Exiting child", getpid());
+    TCP_EXIT(0);
     /* NOTREACHED */
     return (void *)0;
 }
@@ -290,7 +295,11 @@ static void *tcp_handler(void *dummy)
 void handle_tcprequest()
 {
     tcp_handle_t *arg;
+#ifdef ENABLE_PTHREADS
     pthread_t t;
+    pthread_attr_t  attr;
+#endif
+    pid_t pid;
 
     arg = (tcp_handle_t *)allocate(sizeof(tcp_handle_t));
     arg->len = sizeof(arg->client);
@@ -303,11 +312,23 @@ void handle_tcprequest()
 	return;
     }
 
+#ifdef ENABLE_PTHREADS
+    pthread_attr_init (&attr);
+    pthread_attr_setdetachstate (&attr, PTHREAD_CREATE_DETACHED);
     log_debug("creating a thread (parent=%d)", getpid());
-    if (pthread_create(&t, NULL, tcp_handler, (void *)arg)) {
+    if (pthread_create(&t, &attr, (void *)&tcp_handler, (void *)arg)) {
 	log_msg(LOG_ERR, "Couldn't spawn thread to handle tcp connection");
 	free(arg);
     }
-
+#else
+    if ((pid=fork())==0) {
+      /* we are the child */
+      tcp_handler(arg);
+    } else if (pid < 0) {
+      log_msg(LOG_ERR, "fork for TCP connection failed");
+    }
+    free(arg);
+#endif
+    
 }
 #endif

@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
     /*
      * Setup our DNS tcp proxy socket.
      */
-#ifndef EXCLUDE_TCP
+#ifdef ENABLE_TCP
     if ((tcpsock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 	log_msg(LOG_ERR, "tcpsock: Couldn't open socket");
 	cleanexit(-1);
