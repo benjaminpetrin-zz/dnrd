@@ -18,6 +18,9 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -102,6 +105,7 @@ void handle_udprequest()
 	}
 	return;
     }
+    dnsquery_add(&from_addr, msg, len);
 
     /* If we have domains associated with our servers, send it to the
        appropriate server as determined by srvr */
@@ -198,8 +202,8 @@ void handle_udpreply(srvnode_t *srv)
 
     len = dnsrecv(srv, msg, maxsize);
     if (opt_debug) {
-	char buf[80];
-	sprintf_cname(&msg[12], len-12, buf, 80);
+	char buf[256];
+	sprintf_cname(&msg[12], len-12, buf, 256);
 	log_debug("Received DNS reply for \"%s\"", buf);
     }
     if (len > 0) {

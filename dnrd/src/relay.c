@@ -17,7 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
-
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -48,6 +50,7 @@
 /* prepare the dns packet for a not found reply */
 char *set_notfound(char *msg, const int len) {
   if (len < 3) return NULL;
+  /* FIXME: host to network should be called here */
   /* Set flags QR and AA */
   msg[2] |= 0x84;
   /* Set flags RA and RCODE=3 */
@@ -85,12 +88,11 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
     domnode_t *d;
 
     if (opt_debug) {
-	char      cname_buf[80];
-	sprintf_cname(&msg[12], *len-12, cname_buf, 80);
+	char      cname_buf[256];
+	sprintf_cname(&msg[12], *len-12, cname_buf, 256);
 	log_debug("Received DNS query for \"%s\"", cname_buf);
-	if ((dump_dnspacket("query", msg, *len) < 0) < 0) {
+	if (dump_dnspacket("query", msg, *len) < 0)
 	  log_debug("Format error");
-	}
     }
 
     /* First flags check. If Z flag, QR or RCODE is set, just ignore
@@ -154,7 +156,6 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
 	if (!set_notfound(msg, *len)) return -1;
 	return 0;
     }
-    dnsquery_add(fromaddrp, msg, *len);
     *dptr = d;
     return 1;
 }
@@ -202,8 +203,12 @@ void run()
 
     FD_ZERO(&fdmask);
     FD_SET(isock,   &fdmask);
+#ifndef EXCLUDE_TCP
     FD_SET(tcpsock, &fdmask);
     maxsock = (tcpsock > isock) ? tcpsock : isock;
+#else
+    maxsock = isock;
+#endif
     do {
       if ((s=d->srvlist)) {
 	while ((s=s->next) != d->srvlist) {
@@ -257,8 +262,10 @@ void run()
 	  }
 	} while ((d=d->next) != domain_list);
 
+#ifndef EXCLUDE_TCP
 	/* Check for incoming TCP requests */
 	if (FD_ISSET(tcpsock, &fds)) handle_tcprequest();
+#endif
 
 	/* Check for new DNS queries */
 	if (FD_ISSET(isock, &fds)) handle_udprequest();
