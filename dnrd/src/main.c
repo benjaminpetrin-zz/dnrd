@@ -205,8 +205,9 @@ int main(int argc, char *argv[])
     pwent = getpwnam("nobody");
 
     /*
-     * Change our root and current working directories to /etc/dnrd.
-     * Also, so some sanity checking on that directory first.
+     * Change our root and current working directories to
+     * /usr/local/etc/dnrd.  Also, so some sanity checking on that
+     * directory first.
      */
     dirp = opendir(dnrd_root);
     if (!dirp) {
