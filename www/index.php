@@ -36,6 +36,8 @@ domains.</li>
 
 <li>Support for openbsd, freebsd and linux.</li>
 
+<li>TCP support</li>
+
 </ul>
 
 </div>

@@ -8,14 +8,11 @@ require("menu.php");
 
 <div id="content">
 
-
-<h2>Manual Page</h2>
-<A NAME="lbAB">&nbsp;</A>
-<H3>NAME</H3>
+<h2>DNRD</H2>
 
 dnrd - proxy name server
 <A NAME="lbAC">&nbsp;</A>
-<H3>SYNOPSIS</H3>
+<h3>SYNOPSIS</h3>
 
 
 
@@ -23,21 +20,29 @@ dnrd - proxy name server
 <DT><B>dnrd</B>
 
 <DD>
-[<B>-a </B><I>localaddress</I><B></B>|<B>--address=</B><I>localaddress</I><B></B>]
-
-[<B>-c</B>&nbsp;(<B>off</B>|[<B></B><I>low</I>:]<B></B><I>high</I>)|<B>--cache=</B>(<B>off</B>|[<B></B><I>low</I>:]<B></B><I>high</I>)]
+[<B>-a</B>&nbsp;<I>localaddress</I><B>|</B>--address=<I>localaddress</I><B>]</B>
 
 [<B>-b</B>|<B>--load-balance</B>]
+
+[<B>-c</B>&nbsp;(<B>off</B>|[<B></B><I>low</I>:]<B></B><I>high</I>)|<B>--cache=</B>(<B>off</B>|[<B></B><I>low</I>:]<B></B><I>high</I>)]
 
 [<B>-d</B>|<B>--debug</B>]
 
 [<B>-h</B>|<B>--help</B>]
 
+[<B>-i</B>|<B>--ignore</B>]
+
 [<B>-k</B>|<B>--kill</B>]
+
+[<B>-l</B>|<B>--log</B>]
 
 [<B>-m</B>&nbsp;(<B>off</B>|<B>hosts</B>)|<B>--master=</B>(<B>off</B>|<B>hosts</B>)]
 
+[<B>-r</B>&nbsp;<I>N</I><B>|</B>--retry=<I>N</I><B>]</B>
+
 [<B>-s&nbsp;</B><I>ipaddr</I>(:<B></B><I>domain</I>)|<B>--server=</B><I>ipaddr</I>(:<B></B><I>domain</I>)]
+
+[<B>-t</B>&nbsp;<I>N</I><B>|</B>--timeout=<I>N</I><B>]</B>
 
 [<B>-u&nbsp;</B><I>userid</I>|<B>--uid=</B><I>userid</I>]
 
@@ -45,21 +50,22 @@ dnrd - proxy name server
 
 </DL>
 <A NAME="lbAD">&nbsp;</A>
-<H3>DESCRIPTION</H3>
+<h3>DESCRIPTION</h3>
 
 <B>dnrd</B> is a proxying nameserver. It forwards DNS queries to the appropriate
 
-nameserver, but can also act as the primary nameserver for a few machines.
-Proxying is configured on the command line using the 
+nameserver, but can also act as the primary nameserver for a subnet
+behind a firewall.  Proxying is configured on the command line using
+the
 <B>-s</B>
 
-option.  By default,
-dnrd will act as the primary nameserver for hosts found in
+option.  By default, dnrd will act as the primary nameserver for hosts
+found in
 <I>/etc/hosts</I>.
 
 <P>
 <A NAME="lbAE">&nbsp;</A>
-<H3>OPTIONS</H3>
+<h3>OPTIONS</h3>
 
 <DL COMPACT>
 <DT><B>-a</B>
@@ -68,8 +74,8 @@ dnrd will act as the primary nameserver for hosts found in
 <DT><B>--address</B>
 
 <DD>
-Bind only to the interface with the specified address.  This is a security
-feature.
+Bind only to the interface with the specified address. By default dnrd
+binds to everything.
 <P>
 <DT><B>-b</B>
 
@@ -77,8 +83,27 @@ feature.
 <DT><B>--load-balance</B>
 
 <DD>
-If several forward server is specified with -s the requests are load
-balanced among the servers in a round robin scheme.
+Turn on load balancing. All forward servers that are specified after
+this option (with
+<B>-s</B>)
+
+will load balance in a round robin scheme. By default, dnrd will use
+the next server in the list if the first times out. As soon as the
+first is reactivated, it will be used again. With
+<B>-b</B>
+
+option, dnrd will use next active server as soon a request is
+served. If a server times out it will be deactivated and will not be
+used until it comes back. As soon it is reactivated it will join the
+list.
+<P>
+Note that if there are no
+<B>-s</B>
+
+after the
+<B>-b</B>,
+
+this will do nothing at all.
 <P>
 <DT><B>-c</B>&nbsp;(<B>off</B>|[<B></B><I>low</I>:]<B></B><I>high</I>)
 
@@ -86,12 +111,13 @@ balanced among the servers in a round robin scheme.
 <DT><B>--cache=</B>(<B>off</B>|[<B></B><I>low</I>:]<B></B><I>high</I>)
 
 <DD>
-This option can be used to either turn off caching of DNS responses, or to
-change the high and low watermarks.  The high water mark is the number of
-cached DNS responses that will be kept before we start dropping entries.
-The low water mark is the number of entries to keep around after we've
-started dropping entries.  By default, caching is on, with low and high
-watermarks of 800 and 1000 respectively.
+This option can be used to either turn off caching of DNS responses,
+or to change the high and low watermarks. With the high/low water mark
+option, cached entries are purged when the number of responses reaches
+the high-water mark, and they will be purged until the number of
+cached responses reaches the low-water mark, purging the oldest
+first. By default, caching is on, with low and high water-marks of 800
+and 1000 respectively.
 <P>
 <DT><B>-d</B>
 
@@ -99,9 +125,10 @@ watermarks of 800 and 1000 respectively.
 <DT><B>--debug</B>
 
 <DD>
-This turns on debugging.  The dnrd process will run in the current console
-and print out debugging information.  If the option is given twice, it will
-also dump out the raw packet contents.
+This turns on debugging.  The dnrd process will not fork into the
+background and print out debugging information in the current
+console. If the option is given twice, it will also dumps the raw
+packet contents.
 <P>
 <DT><B>-h</B>
 
@@ -109,7 +136,18 @@ also dump out the raw packet contents.
 <DT><B>--help</B>
 
 <DD>
-Prints out usage information
+Prints usage information
+<P>
+<DT><B>-i</B>
+
+<DD>
+<DT><B>--ignore</B>
+
+<DD>
+Ignore cache for deactivated servers. If a forward DNS server times
+out and gets deactivated, all cache entries for this server are
+ignored. This helps avoid network timeout delays when dnrd serves a
+offline/dialup network.
 <P>
 <DT><B>-k</B>
 
@@ -117,7 +155,15 @@ Prints out usage information
 <DT><B>--kill</B>
 
 <DD>
-Kills the currently running dnrd process and immediately returns.
+Kills the currently running dnrd process.
+<P>
+<DT><B>-l</B>
+
+<DD>
+<DT><B>--log</B>
+
+<DD>
+Send all messages to syslog. dnrd uses the deamon facility.
 <P>
 <DT><B>-m</B>&nbsp;(<B>off</B>|<B>hosts</B>)
 
@@ -133,7 +179,7 @@ to determine how this is done.  If that file
 doesn't exist, it will act as the primary server for the hosts found in
 <I>/etc/hosts</I>.
 
-This option allows you to override this default behavior.  Setting it to
+This option allows you to override the default behavior.  Setting it to
 <B>off</B>
 
 turns off all primary server functionality.  Setting it to 
@@ -146,30 +192,74 @@ regardless of whether it could find
 <I>/etc/dnrd/master</I>.
 
 <P>
+<DT><B>-r&nbsp;</B><I>N</I>
+
+<DD>
+<DT><B>--retry=</B><I>N</I>
+
+<DD>
+Set the retry interval time. When a forward DNS server times
+out it is deactivated. (use the
+<B>-t</B>
+
+option to set the timeout value) Dnrd will try to send a request for
+localhost every
+<I>N</I>
+
+seconds. As soon there are a respose from a deactivated server, it
+is reactivated. The default value is
+<I>5</I>
+
+seconds.
+<P>
 <DT><B>-s&nbsp;</B><I>ipaddr</I><B></B>(:<I>domain</I><B></B>)
 
 <DD>
 <DT><B>--server=</B><I>ipaddr</I><B></B>(:<I>domain</I><B></B>)
 
 <DD>
-This option is used to tell dnrd where to forward DNS queries.  If multiple
+Add a forward DNS server. If multiple
 <B>-s</B>
 
-options are given with no domain names, then  dnrd
-will treat these as redundant DNS servers, and will switch between them
-whenever the current one stops responding.
+options are given, dnrd treats the first as a primary DNS server and
+the rest as backup servers. If the primary DNS server times out, it
+is deactivated and the next specified server (that is active)
+is used until the previous gets reactivated.
 <P>
 The 
 <I>domain</I>
 
-option allows dnrd
-to determine which DNS server should get the query based on the domain name
-in the query.  This is useful when you have an internet connection and a
-vpn connection to work, for instance.  In this case, all the
-<B>-s</B>
+option allows dnrd to determine which DNS server should get the query
+based on the domain name in the query. This is useful when you have
+an internet connection and a vpn connection to work, for instance. Several servers with the same 
+<I>domain</I>
 
-options should have a domain defined, except for the last one, which will act
-as the &quot;default&quot; name server.
+might be specified and then will they work as backup servers. 
+<P>
+If
+<B>-b</B>
+
+option is specified, then will all servers specified after the
+<B>-b</B>
+
+option, be grouped by 
+<I>domain</I>,
+
+and load balanced.
+<P>
+<DT><B>-t&nbsp;</B><I>N</I>
+
+<DD>
+<DT><B>--timeout=</B><I>N</I>
+
+<DD>
+Set the timeout value for forward DNS servers. If a server don't
+respond to a query within
+<I>N</I>
+
+seconds it is deactivated. The default value is
+<I>3</I>
+
 <P>
 <DT><B>-u&nbsp;</B><I>userid</I>
 
@@ -178,9 +268,8 @@ as the &quot;default&quot; name server.
 
 <DD>
 By default, dnrd switches to uid 65535 after starting up.  This is a
-security feature. If dnrd is ever compromised by a buffer-overflow attack,
-the attacker will have gained no useful privileges.  The default uid can
-be overridden using this option.
+security feature.  The default uid can be overridden using this
+option.
 <I>userid</I>
 
 can either be a name or a number.
@@ -195,15 +284,14 @@ Prints out the version number
 <P>
 </DL>
 <A NAME="lbAF">&nbsp;</A>
-<H3>BUGS</H3>
+<h3>BUGS</h3>
 
 <P>
 
-Even if it is possible to bind dnrd to one single interface it is not
-possible to run several dnrd processes on the same host.
+It is not possible to run more than one dnrd process on the same host.
 <P>
 <A NAME="lbAG">&nbsp;</A>
-<H3>FILES</H3>
+<h3>FILES</h3>
 
 <P>
 
@@ -221,7 +309,8 @@ as a primary nameserver.
 
 <P>
 
-By default, dnrd will act as a primary nameserver for hosts found in this file.
+By default, dnrd will act as a primary nameserver for hosts found in
+this file.
 <P>
 
 <B>/var/run/dnrd.pid</B>
@@ -233,7 +322,7 @@ It is needed to allow new dnrd processes to find and kill the currently
 running process.
 <P>
 <A NAME="lbAH">&nbsp;</A>
-<H3>AUTHOR</H3>
+<h3>AUTHOR</h3>
 
 <P>
 
@@ -243,6 +332,7 @@ The original version of dnrd was written by Brad Garcia
 Other contributors are listed in the HISTORY
 file included with the source code.
 <P>
+
 
 </div>
 
