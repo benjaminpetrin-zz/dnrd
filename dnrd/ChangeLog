@@ -1,4 +1,5 @@
 version 2.12.1
+--------------
 Natanael Copa <n@tanael.org>
  - Restarting dnrd fixed
  - Fixed bug that disabled caching
