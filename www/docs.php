@@ -10,6 +10,7 @@ require("menu.php");
 
 <H2>DNRD</H2>
 
+
 dnrd - proxy name server
 <A NAME="lbAC">&nbsp;</A>
 <h3>SYNOPSIS</h3>
@@ -37,6 +38,8 @@ dnrd - proxy name server
 [<B>-l</B>|<B>--log</B>]
 
 [<B>-m</B>&nbsp;(<B>off</B>|<B>hosts</B>)|<B>--master=</B>(<B>off</B>|<B>hosts</B>)]
+
+[<B>-M</B>&nbsp;<I>N</I><B>|</B>--max-sock=<I>N</I><B>]</B>
 
 [<B>-r</B>&nbsp;<I>N</I><B>|</B>--retry=<I>N</I><B>]</B>
 
@@ -192,6 +195,14 @@ regardless of whether it could find
 <I>/etc/dnrd/master</I>.
 
 <P>
+<DT><B>-M&nbsp;</B><I>N</I>
+
+<DD>
+<DT><B>--max-sock=</B><I>N</I>
+
+<DD>
+Set the maximum allowed open sockets. Default is 200.
+<P>
 <DT><B>-r&nbsp;</B><I>N</I>
 
 <DD>
@@ -337,7 +348,6 @@ The original version of dnrd was written by Brad Garcia
 Other contributors are listed in the HISTORY
 file included with the source code.
 <P>
-
 
 
 </div>
