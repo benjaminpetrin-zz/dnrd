@@ -55,7 +55,9 @@ static struct option long_options[] =
 #ifndef EXCLUDE_MASTER
     {"master",       1, 0, 'm'},
 #endif
+    {"retry",        1, 0, 'r'},
     {"server",       1, 0, 's'},
+    {"timeout",      1, 0, 't'},
     {"uid",          1, 0, 'u'},
     {"version",      0, 0, 'v'},
     {"chroot-path",  1, 0, 'p'},
@@ -198,6 +200,12 @@ int parse_args(int argc, char **argv)
 	      break;
 	  }
 #endif
+	  case 'r': {
+	    reactivate_interval = atoi(optarg);
+	    log_debug("Setting retry interval to %i seconds.", 
+		      reactivate_interval);
+	    break;
+	  }
 	  case 's': {
 	    domnode_t *p;
 	    char *s,*sep = strchr(optarg, (int)':');
@@ -225,6 +233,12 @@ int parse_args(int argc, char **argv)
 			cname2asc(p->domain));
 	    }
 	    if (sep) *sep = ':';
+	    break;
+	  }
+	  case 't': {
+	    forward_timeout = atoi(optarg);
+	    log_debug("Setting retry interval to %i seconds.", 
+		      reactivate_interval);
 	    break;
 	  }
 	  case 'u': {
