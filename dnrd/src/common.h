@@ -24,6 +24,7 @@
 #define _DNRD_COMMON_H_
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <syslog.h>
 #include <semaphore.h>
@@ -94,6 +95,8 @@ extern domnode_t           *domain_list;
 extern int                 reactivate_interval;
 extern int                 ignore_inactive_cache_hits; 
 
+extern int maxsock;
+extern fd_set fdmaster;
 
 /* kill any currently running copies of dnrd */
 int kill_current();
@@ -102,7 +105,7 @@ int kill_current();
 void log_msg(int type, const char *fmt, ...);
 
 /* same, but only if debugging is turned on */
-void log_debug(const char *fmt, ...);
+void log_debug(int level, const char *fmt, ...);
 
 /* cleanup everything and exit */
 void cleanexit(int status);

@@ -82,7 +82,7 @@ domnode_t *del_domnode(domnode_t *list) {
 /* destroys the server list and frees the mem */
 domnode_t *destroy_domnode(domnode_t *p) {
   if (p==NULL) {
-    log_debug("tried to destroy a NULL domnode"); 
+    log_debug(1, "tried to destroy a NULL domnode"); 
     return NULL;
   }
   assert((p != NULL));
@@ -171,7 +171,7 @@ srvnode_t *set_current(domnode_t *d, srvnode_t *s) {
   //  if (d == NULL) return NULL;
   if (s) {
     if (d->roundrobin) {
-      log_debug("Setting server %s for domain %s",
+      log_debug(3, "Setting server %s for domain %s",
 		inet_ntoa(s->addr.sin_addr), cname2asc(d->domain));
     } else {
       log_msg(LOG_NOTICE, "Setting server %s for domain %s",

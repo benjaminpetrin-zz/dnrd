@@ -39,7 +39,7 @@
 	 * debugging.
 	 */
 
-#define	CACHE_TIMEUNIT		60
+#define	CACHE_TIMEUNIT		1
 
 	/*
 	 * DNS queries that have been answered positively are stored for
@@ -140,7 +140,7 @@ static cache_t *append_cx(cache_t *cx)
     }
 
     cx->created = time(NULL);
-    log_debug("cache: added %s, type= %d, class: %d, ans= %d\n",
+    log_debug(3, "cache: added %s, type= %d, class: %d, ans= %d\n",
 	      cx->name, cx->type, cx->class, cx->p->ancount);
 
     return (cx);
@@ -257,7 +257,7 @@ int cache_lookup(void *packet, int len)
 	  cx->class == query.class  &&
 	  strcasecmp(cx->name, query.name) == 0) {
 	
-	log_debug("cache: found %s, type= %d, class: %d, ans= %d\n",
+	log_debug(3, "cache: found %s, type= %d, class: %d, ans= %d\n",
 		  cx->name, cx->type, cx->class, cx->p->ancount);
 
 	if (cx->positive > 0) {
@@ -270,7 +270,7 @@ int cache_lookup(void *packet, int len)
 
 	/* lets check if the server is active */
 	if (ignore_inactive_cache_hits && cx->server->inactive ) {
-	  log_debug("server is inactive. Skipping cache entry");
+	  log_debug(2, "server is inactive. Skipping cache entry");
 	  return (0);
 	}
 
@@ -380,13 +380,13 @@ int cache_expire(void)
     }
 
 
-    log_debug("cache stats: %d entries, %d missed, %d hits",
+    log_debug(2, "cache stats: %d entries, %d missed, %d hits",
     	      total, cache_misses, cache_hits);
     cache_misses = 0;
     cache_hits   = 0;
 
     if (expired > 0) {
-	log_debug("cache: %d of %d expired, %d remaining\n",
+	log_debug(2, "cache: %d of %d expired, %d remaining\n",
 		  expired, total, total - expired);
     }
 
@@ -444,7 +444,7 @@ int cache_init(void)
 	    cache_lowwater  = (cache_highwater * 75) / 100;
 	}
 
-	log_debug("cache low/high: %d/%d", cache_lowwater, cache_highwater);
+	log_debug(1, "cache low/high: %d/%d", cache_lowwater, cache_highwater);
     }
 
     return (0);

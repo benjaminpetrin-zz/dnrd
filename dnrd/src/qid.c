@@ -23,7 +23,8 @@ int myrand(int max) {
 
 void qid_init_pool(void) {
   int i;
-  FILE *f;
+  /*  FILE *f;
+   */
   struct timeval tv;
 
   for (i=0; i<QID_POOL_SIZE; i++)

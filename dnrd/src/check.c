@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "common.h"
 #include "check.h"
 #include "dns.h"
 #include "srvnode.h"
@@ -52,12 +53,12 @@ int check_query(void *msg, int len) {
 
   /* first check the size */
   if (len <12) {
-    log_debug("Query packet is to small. Ignoring");
+    log_debug(1, "Query packet is to small. Ignoring");
     return -1;
   }
 
   if (len > UDP_MAXSIZE) {
-    log_debug("Query packet is too big. Ignoring");
+    log_debug(1, "Query packet is too big. Ignoring");
     return -1;
   }
 
@@ -69,13 +70,13 @@ int check_query(void *msg, int len) {
 
   /* check if Z is set. It should never been set */
   if (flags & MASK_Z) {
-    log_debug("Z was set. Ignoring query");
+    log_debug(1, "Z was set. Ignoring query");
     return -1;
   }
 
   /* Check if it is a query, if QR is set */
   if (flags & MASK_QR) {
-    log_debug("QR was set. Ignoring query");
+    log_debug(1, "QR was set. Ignoring query");
     return -1;
   }
 

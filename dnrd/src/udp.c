@@ -49,30 +49,40 @@
  *
  * Returns:  The return code from sendto().
  */
-static int query_send(query_t *q, void *msg, int len)
+static int udp_send(int sock, srvnode_t *srv, void *msg, int len)
 {
     int	rc;
     time_t now = time(NULL);
-
-    if ( (q->srv = q->domain->current) == NULL) {
-      log_debug("no current server for domain");
-      return 0;
-    }
-
-    rc = sendto(q->sock, msg, len, 0,
-		(const struct sockaddr *) &q->srv->addr,
+    rc = sendto(sock, msg, len, 0,
+		(const struct sockaddr *) &srv->addr,
 		sizeof(struct sockaddr_in));
 
     if (rc != len) {
 	log_msg(LOG_ERR, "sendto error: %s",
-		inet_ntoa(q->srv->addr.sin_addr));
-      /* Here we should try next server... */
+		inet_ntoa(srv->addr.sin_addr));
 	return (rc);
     }
-    q->send_time = now;
-    q->send_count++;
+    if ((srv->send_time == 0)) srv->send_time = now;
+    srv->send_count++;
     return (rc);
 }
+
+int send2current(query_t *q, void *msg, const int len) {
+    /* If we have domains associated with our servers, send it to the
+       appropriate server as determined by srvr */
+  domnode_t *d;
+  assert(q != NULL);
+  assert(q->domain != NULL);
+
+  d = q->domain;
+  while ((d->current != NULL) && (udp_send(q->sock, d->current, msg, len) != len)) {
+    if (reactivate_interval) deactivate_current(d);
+  }
+  if (d->current != NULL) {
+    return len;
+  } else return 0;
+}
+
 
 /*
  * handle_udprequest()
@@ -90,14 +100,14 @@ query_t *udp_handle_request()
     struct sockaddr_in from_addr;
     int                fwd;
     domnode_t          *dptr;
-    query_t *q;
+    query_t *q, *prev;
 
     /* Read in the message */
     addr_len = sizeof(struct sockaddr_in);
     len = recvfrom(isock, msg, maxsize, 0,
 		   (struct sockaddr *)&from_addr, &addr_len);
     if (len < 0) {
-	log_debug("recvfrom error %s", strerror(errno));
+	log_debug(1, "recvfrom error %s", strerror(errno));
 	return NULL;
     }
 
@@ -112,30 +122,29 @@ query_t *udp_handle_request()
     if (fwd == 0) {
 	if (sendto(isock, msg, len, 0, (const struct sockaddr *)&from_addr,
 		   addr_len) != len) {
-	    log_debug("sendto error %s", strerror(errno));
+	    log_debug(1, "sendto error %s", strerror(errno));
 	}
 	return NULL;
     }
 
 
     /* dptr->current should never be NULL it is checked in handle_query */
-    if ((q = query_get_new(dptr, dptr->current))==NULL) {
-      /* of some reason we could not get any new queries. we have to
-	 drop this packet */
-      log_msg(LOG_WARNING, 
-	      "Could not create new upstream query. Dropping incoming query");
-      return NULL;
-    }
 
     //    dnsquery_add(&from_addr, msg, len);
     // if (!send2current(dptr, msg, len)) {
 
     /* rewrite msg, get id and add to list*/
-    query_add(q, &from_addr, msg, len);
 
-    if (query_send(q, msg, len) > 0) {
+    if ((prev=query_add(dptr, dptr->current, &from_addr, msg, len)) == NULL){
+      /* of some reason we could not get any new queries. we have to
+	 drop this packet */
+      return NULL;
+    }
+    q = prev->next;
+
+
+    if (send2current(q, msg, len) > 0) {
       /* add to query list etc etc */
-      
       return q;
     } else {
 
@@ -157,15 +166,11 @@ query_t *udp_handle_request()
        */
       
       if ((packetlen = master_dontknow(msg, len, packet)) > 0) {
-	/*
-	  query_remove(msg, &from_addr);
-	   if (!dnsquery_find(msg, &from_addr)) {
-	   log_debug("ERROR: couldn't find the original query");
-	   return;
-	   }*/
+	query_delete_next(prev);
+	return NULL;
 	if (sendto(isock, msg, len, 0, (const struct sockaddr *)&from_addr,
 		   addr_len) != len) {
-	  log_debug("sendto error %s", strerror(errno));
+	  log_debug(1, "sendto error %s", strerror(errno));
 	  return NULL;
 	}
       }
@@ -193,7 +198,7 @@ static int reply_recv(query_t *q, void *msg, int len)
 		  (struct sockaddr *) &from, &fromlen);
 
     if (rc == -1) {
-	log_msg(LOG_ERR, "recvfrom error: %s: %m",
+	log_msg(LOG_ERR, "recvfrom error: %s",
 		inet_ntoa(q->srv->addr.sin_addr));
 	return (-1);
     }
@@ -218,46 +223,66 @@ static int reply_recv(query_t *q, void *msg, int len)
  * This function handles udp DNS requests by either replying to them (if we
  * know the correct reply via master, caching, etc.), or forwarding them to
  * an appropriate DNS server.
+ *
+ * Note that the mached query is prev->next and not prev.
  */
-void udp_handle_reply(query_t *q)
+void udp_handle_reply(query_t *prev)
 {
   //    const int          maxsize = 512; /* According to RFC 1035 */
     static char        msg[UDP_MAXSIZE+4];
     int                len;
-    struct sockaddr_in from_addr;
     unsigned           addr_len;
+    query_t *q = prev->next;
 
+    log_debug(3, "handling socket %i", q->sock);
     if ((len = reply_recv(q, msg, UDP_MAXSIZE)) < 0)
       {
-	log_debug("dnsrecv failed: %i", len);
+	log_debug(1, "dnsrecv failed: %i", len);
+	query_delete_next(prev);
 	return; /* recv error */
       }
     
     /* do basic checking */
-    if (check_reply(q->srv, msg, len) < 0) return;
+    if (check_reply(q->srv, msg, len) < 0) {
+      log_debug(1, "check_reply failed");
+      query_delete_next(prev);
+      return;
+    }
 
     if (opt_debug) {
 	char buf[256];
 	sprintf_cname(&msg[12], len-12, buf, 256);
-	log_debug("Received DNS reply for \"%s\"", buf);
+	log_debug(3, "Received DNS reply for \"%s\"", buf);
     }
 
     dump_dnspacket("reply", msg, len);
     addr_len = sizeof(struct sockaddr_in);
 
-    cache_dnspacket(msg, len, q->srv);
-    log_debug("Forwarding the reply to the host");
-    if (sendto(isock, msg, len, 0,
-	       (const struct sockaddr *)&from_addr,
-	       addr_len) != len) {
-      log_debug("sendto error %s", strerror(errno));
+    /* was this a dummy reactivate query? */
+    if (q->domain != NULL) {
+      /* no, lets cache the reply and send to client */
+      cache_dnspacket(msg, len, q->srv);
+
+      /* set the client qid */
+      *((unsigned short *)msg) = q->client_qid;
+      log_debug(3, "Forwarding the reply to the host %s",
+		inet_ntoa(q->client.sin_addr));
+      if (sendto(isock, msg, len, 0,
+		 (const struct sockaddr *)&q->client,
+		 addr_len) != len) {
+	log_debug(1, "sendto error %s", strerror(errno));
+      }
+    } else {
+      log_debug(2, "We got a reactivation dummy reply. Cool!");
     }
       
     /* this server is obviously alive, we reset the counters */
     q->srv->send_time = 0;
-    if (q->srv->inactive) log_debug("Reactivating server %s",
+    if (q->srv->inactive) log_debug(1, "Reactivating server %s",
 				 inet_ntoa(q->srv->addr.sin_addr));
     q->srv->inactive = 0;
+    /* remove query from list and destroy it */
+    query_delete_next(prev);
 }
 
 
@@ -281,15 +306,24 @@ int udp_send_dummy(srvnode_t *s) {
     /* QCLASS */
     0x00,0x01   /* IN */
   };
-  
-  /* send the packet */
+  query_t *q;
+  struct sockaddr_in srcaddr;
 
   /* should not happen */
   assert(s != NULL);
 
-  log_debug("Sending dummy id=%i to %s",  (unsigned short int) dnsbuf[0]++,
-	    inet_ntoa(s->addr.sin_addr));
-  /*  return dnssend(s, &dnsbuf, sizeof(dnsbuf)); */
-  /* here we should construct a dummy_query */
+  if (query_add(NULL, s, &srcaddr, dnsbuf, sizeof(dnsbuf)) != NULL) {
+    int rc;
+    q = q->next; /* query add returned the query 1 before in list */
+    /* don't let those queries live too long */
+    q->ttl = reactivate_interval;
+    memset(&srcaddr, 0, sizeof(srcaddr));
+    log_debug(2, "Sending dummy id=%i to %s", ((unsigned short *)dnsbuf)[0], 
+	      inet_ntoa(s->addr.sin_addr));
+    /*  return dnssend(s, &dnsbuf, sizeof(dnsbuf)); */
+    rc=udp_send(q->sock, s, dnsbuf, sizeof(dnsbuf));
+    ((unsigned short *)dnsbuf)[0]++;
+    return rc;
+  }
   return -1;
 }

@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <string.h>
+#include <errno.h>
 #include "lib.h"
 #include "common.h"
 #include "query.h"
@@ -37,11 +38,13 @@
 
 
 query_t qlist; /* the active query list */
-static query_t *qlist_tail = &qlist;
+static query_t *qlist_tail;
+
 
 int max_sockets = 30;
-
 int upstream_sockets = 0; /* number of upstream sockets */
+
+static int dropping = 0; /* dropping new packets */
 
 /* init the query list */
 void query_init() {
@@ -52,37 +55,72 @@ void query_init() {
 /* create a new query, and open a socket to the server */
 query_t *query_create(domnode_t *d, srvnode_t *s) {
   query_t *q;
+#ifdef RANDOM_SRC
+  struct sockaddr_in my_addr;
+#endif
 
   /* should never be called with no server */
   assert(s != NULL);
 
+  /* check if we have reached maximum of sockets */
   if (upstream_sockets >= max_sockets) {
-    log_msg(LOG_WARNING, "Socket limit reached. Dropping new queries");
+    if (!dropping)
+      log_msg(LOG_WARNING, "Socket limit reached. Dropping new queries");
     return NULL;
   }
-  
-  if ((q=(query_t *) allocate(sizeof(q))) == NULL)
+
+  dropping=0;
+  /* allocate */
+  if ((q=(query_t *) allocate(sizeof(query_t))) == NULL)
     return NULL;
 
-  q->next = q;
+  /* return an emtpy circular list */
+  q->next = (struct _query *)q;
+
   /* we specify both domain and server */
   /* the dummy queries will use server but no domain is attatched */
   q->domain = d;
   q->srv = s;
 
+  /* set the default time to live value */
+  q->ttl = forward_timeout;
+  
   /* open a new socket */
   if ((q->sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
     log_msg(LOG_ERR, "query_create: Couldn't open socket");
     free(q);
     return NULL;
   } else upstream_sockets++;
-  
+
+  /* bind to random source port */
+#ifdef RANDOM_SRC
+  memset(&my_addr, 0, sizeof(my_addr));
+  my_addr.sin_family = AF_INET;
+  my_addr.sin_addr.s_addr = INADDR_ANY;
+  my_addr.sin_port = htons( myrand(65536-1024)+1024 );
+  if (bind(q->sock, (struct sockaddr *)&my_addr, 
+	   sizeof(struct sockaddr)) == -1) {
+    log_msg(LOG_WARNING, "bind: %s", strerror(errno));
+  }
+#endif
+
+  /* add the socket to the master FD set */
+  FD_SET(q->sock, &fdmaster);
+  if (q->sock > maxsock) maxsock = q->sock;
+
+  /* get an unused QID */
+  q->my_qid = qid_get();
   return q;
 }
 
 query_t *query_destroy(query_t *q) {
   /* close the socket and return mem */
+  qid_return(q->my_qid);
+
+  /* unset the socket */
+  FD_CLR(q->sock, &fdmaster);
   close(q->sock);
+
   upstream_sockets--;
   free(q);
   return NULL;
@@ -91,20 +129,24 @@ query_t *query_destroy(query_t *q) {
 /* Get a new query */
 query_t *query_get_new(domnode_t *dom, srvnode_t *srv) {
   query_t *q;
-
+  assert(srv != NULL);
   /* if there are no prepared queries waiting for us, lets create one */
-  if ((q=srv->newquery) == NULL)
-    q = query_create(dom, srv);
+  if ((q=srv->newquery) == NULL) {
+    if ((q=query_create(dom, srv)) == NULL) return NULL;
+  }
   srv->newquery = NULL;
+  q->domain=dom;
+  q->srv = srv;
   return q;
 }
 
 
-/* get qid, rewrite and add to list */
-query_t *query_add(query_t *q, const struct sockaddr_in* client, char* msg, 
+/* get qid, rewrite and add to list. Retruns the query before the added  */
+query_t *query_add(domnode_t *dom, srvnode_t *srv, 
+		   const struct sockaddr_in* client, char* msg, 
 		   unsigned len) {
-  query_t *p;
 
+  query_t *q, *p, *oldtail;
   unsigned short client_qid = *((unsigned short *)msg);
   time_t now = time(NULL);
 
@@ -115,44 +157,102 @@ query_t *query_add(query_t *q, const struct sockaddr_in* client, char* msg,
   for (p=&qlist; p->next != &qlist; p = p->next) {
     if (p->next->client_qid == client_qid) {
       /* we found the qid in the list */
-      *((unsigned short *)msg) = p->my_qid;
-      p->client_time = now;
-      log_debug("Query %i from client already in list. Count=%i", client_qid,
-		p->client_count++);
-      return q;
+      *((unsigned short *)msg) = p->next->my_qid;
+      p->next->client_time = now;
+      log_debug(2, "Query %i from client already in list. Count=%i", 
+		client_qid, p->next->client_count++);
+      return p;
     }
   }
+
+  if ((q=query_get_new(dom, srv))==NULL) {
+    /* if we could not allocate any new query, return with NULL */
+    return NULL;
+  }
+
   q->client_qid = client_qid;
   memcpy(&(q->client), client, sizeof(struct sockaddr_in));
   q->client_time = now;
   q->client_count = 1;
 
   /* set new qid from random generator */
-  *((unsigned short *)msg) = htons(q->my_qid = qid_get());
+  *((unsigned short *)msg) = htons(q->my_qid);
 
   /* add the query to the list */
   q->next = qlist_tail->next;
   qlist_tail->next = q;
 
   /* new query is new tail */
+  oldtail = qlist_tail;
   qlist_tail = q;
-
-  log_debug("Query client qid=%i, my qid=%i added", 
-	    q->client_qid,
-	    q->my_qid);
-  return q;
+  return oldtail;
 
 }
 
+/* remove query after */
+query_t *query_delete_next(query_t *q) {
+  query_t *tmp = q->next;
 
-#ifdef DEBUG
-void query_dump_list(void) {
-  query_t *p;
-
-  for (p=&qlist; p->next != &qlist; p=p->next) {
-    log_debug("myqid=%i, client_qid=%i", p->my_qid, p->client_qid);
+  /* unlink tmp */
+  q->next = q->next->next;
+ 
+  /* if this was the last query in the list, we need to update the tail */
+  if (qlist_tail == tmp) {
+    qlist_tail = q;
   }
 
+  /* destroy query */
+  query_destroy(tmp);
+  return q;
 }
 
-#endif
+
+/* remove old unanswered queries */
+void query_timeout(time_t age) {
+  int count=0;
+  time_t now = time(NULL);
+  query_t *q;
+  
+  for (q=&qlist; q->next != &qlist; q = q->next) {
+    if (q->next->client_time < (now - q->next->ttl)) {
+      count++;
+      query_delete_next(q);
+    }
+  }
+  if (count) log_debug(1, "query_timeout: removed %d entries", count);
+}
+
+int query_count(void) {
+  int count=0;
+  time_t now = time(NULL);
+  query_t *q;
+  
+  for (q=&qlist; q->next != &qlist; q = q->next) {
+    count++;
+  }
+  return count;
+}
+
+
+
+void query_dump_list(void) {
+  query_t *p;
+  for (p=&qlist; p->next != &qlist; p=p->next) {
+    log_debug(1, "myqid=%i, client_qid=%i", p->next->my_qid, 
+	      p->next->client_qid);
+  }
+}
+
+/* print statics about the query list and open sockets */
+void query_stats(time_t interval) {
+  time_t now = time(NULL);
+  int count;
+  static time_t last=0;
+  if (last + interval < now) {
+    last = now;
+    log_debug(1, "Open sockets: %i, active queries: %i", upstream_sockets, 
+	      (count=query_count()));
+    if (count) query_dump_list();
+  }
+  
+}
