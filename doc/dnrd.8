@@ -15,6 +15,7 @@ dnrd \- proxy name server
 .RB "[\|" \-k | \-\-kill "\|]"
 .RB "[\|" \-l | \-\-log "\|]"
 .RB "[\|" \-m \ ( off | hosts )| \-\-master= ( off | hosts ")]" 
+.RB "[\|" \-M \ \fIN\fB | \-\-max\-sock=\fIN\fB "\|]"
 .RB "[\|" \-r \ \fIN\fB | \-\-retry=\fIN\fB "\|]"
 .RB "[\|" \-s\ \fIipaddr (: \fIdomain )| \-\-server=\fIipaddr (: \fIdomain )]
 .RB "[\|" \-t \ \fIN\fB | \-\-timeout=\fIN\fB "\|]"
@@ -126,6 +127,12 @@ causes dnrd to act as the primary server for hosts in
 .I /etc/hosts
 regardless of whether it could find
 .IR /etc/dnrd/master .
+
+.TP
+.BI \-M\  N
+.TP
+.BI \-\-max\-sock= N
+Set the maximum allowed open sockets. Default is 200.
 
 .TP
 .BI \-r\  N

@@ -52,6 +52,7 @@ static struct option long_options[] =
     {"ignore",       0, 0, 'i'},
     {"kill",         0, 0, 'k'},
     {"log",          0, 0, 'l'},
+    {"max-sock",     1, 0, 'M'},
 #ifndef EXCLUDE_MASTER
     {"master",       1, 0, 'm'},
 #endif
@@ -66,9 +67,9 @@ static struct option long_options[] =
 #endif /* __GNU_LIBRARY__ */
 
 #ifndef EXCLUDE_MASTER
-const char short_options[] = "a:bc:dhiklm:r:s:t:u:v";
+const char short_options[] = "a:bc:dhiklmM:r:s:t:u:v";
 #else
-const char short_options[] = "a:bc:dhikl:r:s:t:u:v";
+const char short_options[] = "a:bc:dhiklM:r:s:t:u:v";
 #endif
 
 /*
@@ -96,6 +97,7 @@ static void give_help()
 #ifndef EXCLUDE_MASTER
     printf("    -m, --master=MASTERMODE\n");
 #endif
+    printf("    -M, --max-sock=N          Set maximum number of open sockets to N\n");
     printf("    -r, --retry=N             Set retry interval to N seconds\n");
     printf("    -s, --server=IPADDR(:domain)\n"
 	   "                              "
@@ -202,6 +204,12 @@ int parse_args(int argc, char **argv)
 	      break;
 	  }
 #endif
+	  case 'M': {
+	    max_sockets = atoi(optarg);
+	    log_debug(1, "Setting maximum number of open sockets to %i", 
+		      max_sockets);
+	    break;
+	  }
 	  case 'r': {
 	    if ((reactivate_interval = atoi(optarg)))
 	      log_debug(1, "Setting retry interval to %i seconds.", 
