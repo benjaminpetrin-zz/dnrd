@@ -81,6 +81,7 @@ struct dnssrv_t {
 extern const char*         version;   /* the version number for this program */
 extern const char*         progname;  /* the name of this program */
 extern int                 opt_debug; /* debugging option */
+extern int                 opt_windows; /* windows (cygwin) mode option */
 extern const char*         pid_file; /* File containing current daemon's PID */
 extern int                 isock;     /* for communication with clients */
 extern int                 tcpsock;   /* same as isock, but for tcp requests */

@@ -47,6 +47,7 @@
  * These are all the global variables.
  */
 int                 opt_debug = OPT_DEBUG;
+int                 opt_windows = 0;
 int                 opt_serv = 0;
 const char*         progname = 0;
 

@@ -33,6 +33,7 @@
 #include <grp.h>
 #include <pwd.h>
 #include <dirent.h>
+#include <limits.h>
 
 #include "relay.h"
 #include "cache.h"
@@ -43,6 +44,9 @@
 #include "lib.h"
 #include "qid.h"
 #include "query.h"
+
+static int is_writeable (const struct stat* st);
+static int user_groups_contain (gid_t file_gid);
 
 /*
  * main() - startup the program.
@@ -64,7 +68,9 @@ int main(int argc, char *argv[])
 #endif
     struct servent    *servent;   /* Let's be good and find the port numbers
 				     the right way */
+#ifndef __CYGWIN__
     struct passwd     *pwent;
+#endif
     DIR               *dirp;
     struct dirent     *direntry;
     struct stat        st;
@@ -186,7 +192,9 @@ int main(int argc, char *argv[])
     /* init query list */
     query_init();
 
+#ifndef __CYGWIN__
     pwent = getpwnam("nobody");
+#endif
 
     /*
      * Change our root and current working directories to
@@ -201,6 +209,12 @@ int main(int argc, char *argv[])
     }
 
     rslt = stat(dnrd_root, &st);
+#ifdef __CYGWIN__
+    if (is_writeable (&st)) {
+	log_msg(LOG_ERR, "The %s directory must not be writeable", dnrd_root);
+	cleanexit(-1);
+    }
+#else
     if (st.st_uid != 0) {
 	log_msg(LOG_ERR, "The %s directory must be owned by root", dnrd_root);
 	cleanexit(-1);
@@ -210,6 +224,7 @@ int main(int argc, char *argv[])
 		"The %s directory should only be user writable", dnrd_root);
 	cleanexit(-1);
     }
+#endif
 
     while ((direntry = readdir(dirp)) != NULL) {
 
@@ -233,11 +248,19 @@ int main(int argc, char *argv[])
 		    dnrd_root);
 	    cleanexit(-1);
 	}
+#ifdef __CYGWIN__
+	if (is_writeable (&st)) {
+	    log_msg(LOG_ERR, "No files in %s may be writeable",
+		    dnrd_root);
+	    cleanexit(-1);
+	}
+#else
 	if (st.st_uid != 0) {
 	    log_msg(LOG_ERR, "All files in %s must be owned by root",
 		    dnrd_root);
 	    cleanexit(-1);
 	}
+#endif
     }
     closedir(dirp);
 
@@ -272,6 +295,7 @@ int main(int argc, char *argv[])
 	    cleanexit(-1);
 	}
     }
+#ifndef __CYGWIN__
     else if (!pwent) {
 	log_msg(LOG_ERR, "Couldn't become the \"nobody\" user.  Please use "
 		"the \"-uid\" option.\n"
@@ -282,6 +306,7 @@ int main(int argc, char *argv[])
 	log_msg(LOG_ERR, "couldn't switch to gid %i", pwent->pw_gid);
 	cleanexit(-1);
     }
+#endif
 
     if (daemonuid != 0) {
 	if (setuid(daemonuid) < 0) {
@@ -289,6 +314,7 @@ int main(int argc, char *argv[])
 	    cleanexit(-1);
 	}
     }
+#ifndef __CYGWIN__
     else if (!pwent) {
 	log_msg(LOG_ERR, "Couldn't become the \"nobody\" user.  Please use "
 		"the \"-uid\" option.\n"
@@ -299,6 +325,7 @@ int main(int argc, char *argv[])
 	log_msg(LOG_ERR, "couldn't switch to uid %i", pwent->pw_uid);
 	cleanexit(-1);
     }
+#endif
 
 
     /*
@@ -324,7 +351,7 @@ int main(int argc, char *argv[])
     /*
      * Now it's time to become a daemon.
      */
-    if (!opt_debug) {
+    if (!opt_windows && !opt_debug) {
 	pid_t pid = fork();
 	if (pid < 0) {
 	    log_msg(LOG_ERR, "%s: Couldn't fork\n", progname);
@@ -356,3 +383,37 @@ int main(int argc, char *argv[])
     exit(0); /* to make compiler happy */
 }
 
+static is_writeable (const struct stat* st)
+{
+    if (st->st_uid == getuid ())
+        return 1;
+
+    if ((user_groups_contain (st->st_gid)) &&
+        ((st->st_mode & S_IWGRP) != 0))
+	return 1;
+
+    if ((st->st_mode & S_IWOTH) != 0)
+	return 1;
+
+    return 0;
+}
+static int user_groups_contain (gid_t file_gid)
+{
+    int igroup;
+    gid_t user_gids[NGROUPS_MAX];
+    int ngroups = getgroups (NGROUPS_MAX, &user_gids[0]);
+
+    if (ngroups < 0)
+    {
+	log_msg(LOG_ERR, "Couldn't get user's group list");
+	cleanexit(-1);
+    }
+
+    for (igroup = 0 ; igroup < ngroups ; ++igroup)
+    {
+    	if (user_gids[igroup] == file_gid)
+	    return 1;
+    }
+
+    return 0;
+}
