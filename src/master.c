@@ -332,7 +332,7 @@ int read_hosts(char *filename, char *domain)
 
     log_msg(LOG_WARNING,
 	    "Using /etc/hosts will be removed in a future version."
-	    " Please use only the %s/master file or use --master=off.", 
+	    " Please use only the %s/master file or use -m off.", 
 	    dnrd_root);
     log_debug(1, "initialising from /etc/hosts, domain= %s",
 	      *domain == 0? "<none>": domain);
