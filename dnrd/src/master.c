@@ -327,6 +327,11 @@ int read_hosts(char *filename, char *domain)
 	return (1);
     }
 
+    log_msg(LOG_WARNING, "Using hosts from /etc/hosts. Use master instead");
+    log_msg(LOG_WARNING, "SIGHUP will not work as expected");
+    log_debug(1, "initialising from /etc/hosts, domain= %s",
+	      *domain == 0? "<none>": domain);
+
     count = dbc;
     while (fgets(line, sizeof(line), fp) != NULL) {
 	p = skip_ws((char *)noctrln(line, sizeof(line)));
@@ -355,7 +360,7 @@ int read_configuration(char *filename)
 {
     int	count;
     char *p, word[100], ipnum[100], line[300];
-    char domain[40];
+    char domain[256];
     FILE *fp;
     
     if ((fp = fopen(filename, "r")) == NULL) {
@@ -736,9 +741,6 @@ static int _master_init(void)
 	    }
 
 	    fclose (fp);
-
-	    log_debug(1, "initialising from /etc/hosts, domain= %s",
-		      *domain == 0? "<none>": domain);
 	    read_hosts("/etc/hosts", domain);
 	}
     }
