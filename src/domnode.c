@@ -161,7 +161,8 @@ srvnode_t *next_active(domnode_t *d) {
       log_debug("Setting server %s for domain %s",
 		inet_ntoa(s->addr.sin_addr), cname2asc(d->domain));
     } else {
-      log_msg(LOG_NOTICE, "Setting server %s for domain %s");
+      log_msg(LOG_NOTICE, "Setting server %s for domain %s",
+		inet_ntoa(s->addr.sin_addr), cname2asc(d->domain));
     }
   } else 
     log_msg(LOG_WARNING, "No active servers for domain %s", 

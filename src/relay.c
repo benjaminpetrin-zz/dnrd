@@ -37,7 +37,7 @@
 #include "master.h"
 #include "dns.h"
 
-/* prepare the dns packet for a not foud reply */
+/* prepare the dns packet for a not found reply */
 char *set_notfound(char *msg, const int len) {
   if (len < 3) return NULL;
   /* Set flags QR and AA */
@@ -128,11 +128,14 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
       else if (now - d->current->send_time > forward_timeout) {
 	deactivate_current(d);
       }
-      
-      dnsquery_add(fromaddrp, msg, *len);
-      log_debug("Forwarding the query to DNS server %s",
-		inet_ntoa(d->current->addr.sin_addr));
+      if (d->current) {
+	log_debug("Forwarding the query to DNS server %s",
+		  inet_ntoa(d->current->addr.sin_addr));
+      } else {
+	log_debug("All servers deactivated.");
+      }
     }
+    dnsquery_add(fromaddrp, msg, *len);
     *dptr = d;
     return 1;
 }
@@ -142,9 +145,11 @@ static void reactivate_servers(int interval) {
   static int last_try = 0;
   domnode_t *d = domain_list;
   
+  if (!last_try) last_try = now;
   /* check for reactivate servers */
   if (interval + last_try > now ) {
     last_try = now;
+
     
     if (!no_srvlist(d->srvlist)) return;
     do {
