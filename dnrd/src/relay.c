@@ -47,6 +47,7 @@ static int    send_count = 0;
  *
  * Abstract: Switch to the next active DNS server
  */
+/*
 static srvnode_t *server_switch(domnode_t *p) {
   char ip[20];
   p->current = p->current->next;
@@ -57,6 +58,7 @@ static srvnode_t *server_switch(domnode_t *p) {
 	    p->domain ? p->domain : "default" );
   p->current->send_count = 0;
 }
+*/
 
 /* prepare the dns packet for a not foud reply */
 char *set_notfound(char *msg, const int len) {
@@ -145,20 +147,24 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
     }
 
     /* Send to a server until it "times out". */
-    {
+    if (d->current) {
       time_t now = time(NULL);
-      if (d->current && (d->current->send_time != now)) {
+      if ((d->current->send_time == 0)) {
+	log_debug("Setting sent_time=%i for %s",
+		  now, cname2asc(d->domain));
 	d->current->send_time = now;
-	if (++d->current->send_count > 5) {
-	  deactivate_current(d);
-	}
+      } 
+      else if (now - d->current->send_time > forward_timeout) {
+	log_debug("send_time=%i, now=%i, timeout=%i",
+		  d->current->send_time, now, forward_timeout);
+	deactivate_current(d);
       }
-      *dptr = d;
       
       dnsquery_add(fromaddrp, msg, *len);
       if (d->current) log_debug("Forwarding the query to DNS server %s",
 				inet_ntoa(d->current->addr.sin_addr));
     }
+    *dptr = d;
     return 1;
 }
 
@@ -188,7 +194,7 @@ void run()
 	while ((s=s->next) != d->srvlist) {
 	  if (maxsock < s->sock) maxsock = s->sock;
 	  FD_SET(s->sock, &fdmask);
-	  s->send_time  = time(NULL);
+	  s->send_time = 0;
 	  s->send_count = 0;
 	}
       }
@@ -196,14 +202,14 @@ void run()
     maxsock++;
 
     while(1) {
-	tout.tv_sec  = 60 * 5; /* five miutes */
+	tout.tv_sec  = select_timeout;
 	tout.tv_usec = 0;
 
 	fds = fdmask;
 
 	/* Wait for input or timeout */
 	retn = select(maxsock, &fds, 0, 0, &tout);
-
+	
 	/* Expire lookups from the cache */
 	cache_expire();
 
@@ -219,7 +225,7 @@ void run()
 	    continue;
 	}
 	else if (retn == 0) {
-	    continue;  /* nothing to do */
+	  continue;  /* nothing to do */
 	}
 
 	/* Check for replies to DNS queries */

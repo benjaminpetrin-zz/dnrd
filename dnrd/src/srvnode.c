@@ -30,6 +30,8 @@
 srvnode_t *alloc_srvnode(void) {
   srvnode_t *p = allocate(sizeof(srvnode_t));
   p->inactive = -1;
+  p->send_time = 0;
+  p->send_count = 0;
   /* actually we return a new emty list... */
   return p->next=p;
 }
