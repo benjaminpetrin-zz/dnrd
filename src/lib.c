@@ -28,7 +28,13 @@
 #define _GNU_SOURCE
 #include <string.h>
 #include <ctype.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/select.h>
 #include <unistd.h>
+#include <time.h> 
+#include <signal.h>
+
 
 #include "lib.h"
 #include "common.h"
@@ -234,5 +240,28 @@ int usleep( usec )              /* returns 0 if ok, else -1 */
   delay.tv_usec = usec % 1000000L;
   
   return select( 0, (long *)0, (long *)0, (long *)0, &delay );
+}
+#endif
+
+#ifndef HAVE_PSELECT
+int pselect(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+	    const struct timespec *timeout, const sigset_t *sigmask) {
+  int ret;
+  struct timeval tv, *ptv;
+  sigset_t oldsigs;
+
+  if (timeout != NULL) {
+    tv.tv_sec = timeout->tv_sec;
+    tv.tv_usec = timeout->tv_nsec / 1000000;
+    ptv = &tv;
+  } else
+    ptv = NULL;
+
+  if (sigmask != NULL)
+    sigprocmask(SIG_SETMASK, sigmask, &oldsigs);
+  ret = select(n, readfds, writefds, exceptfds, ptv);
+  if (sigmask != NULL)
+    sigprocmask(SIG_SETMASK, &oldsigs, NULL);
+  return (ret);
 }
 #endif

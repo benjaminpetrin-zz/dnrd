@@ -27,6 +27,10 @@
 #include <config.h>
 #endif
 #include <stdlib.h>
+#include <time.h>
+#include <signal.h>
+#include <unistd.h>
+
 
 extern char *program;
 extern int verbose;
@@ -52,6 +56,11 @@ size_t strnlen(const char *s, size_t maxlen);
 
 #ifndef HAVE_USLEEP
 int usleep(long usec);
+#endif
+
+#ifndef HAVE_PSELECT
+int pselect(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+	    const struct timespec *timeout, const sigset_t *sigmask);
 #endif
 
 #endif
