@@ -1,3 +1,10 @@
+version 2.13
+------------
+ - Natanael Copa <n@tanael.org>
+ - support for "unlimited" number of forward servers and domains
+ - support for load balancing (with -b option)
+ - new logic to disable/reenable forward servers that times out
+
 version 2.12
 ------------
 Natanael Copa <n@tanael.org>
