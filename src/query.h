@@ -28,6 +28,7 @@
 #ifndef QUERY_H
 #define QUERY_H
 
+#include <sys/socket.h>
 #include "srvnode.h"
 #include "domnode.h"
 
@@ -40,11 +41,12 @@ typedef struct _query {
   unsigned short client_qid; /* the qid from the client */
   struct sockaddr_in client; /* */
 
-  int send_count; /* number of retries */
-  time_t send_time; /* time of last sent packet */
+  /*  int send_count; * number of retries */
+  /*  time_t send_time; * time of last sent packet */
   time_t client_time; /* last time we got this query from client */
   int client_count; /* number of times we got this same request */
 
+  time_t ttl; /* time to live for this query */
 
   struct _query     *next; /* ptr to next query */
 
@@ -56,9 +58,11 @@ void query_init(void);
 query_t *query_create(domnode_t *d, srvnode_t *s);
 query_t *query_destroy(query_t *q);
 query_t *query_get_new(domnode_t *dom, srvnode_t *srv);
-
-query_t *query_add(query_t *q, const struct sockaddr_in* client, char* msg, 
+query_t *query_add(domnode_t *dom, srvnode_t *srv, const struct sockaddr_in* client, char* msg, 
 		   unsigned len);
+query_t *query_delete_next(query_t *q);
+void query_timeout(time_t age);
+void query_stats(time_t interval);
 
 
 #endif

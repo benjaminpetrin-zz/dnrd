@@ -154,7 +154,7 @@ static int get_objectname(unsigned char *msg, unsigned const char *limit,
 	    offset = ((len & ~0xc0) << 8) + **here;
 	    if ((p = &msg[offset]) >= limit) return(-1);
 	    if (p == *here-1) {
-	      log_debug("looping ptr");
+	      log_msg(LOG_WARNING, "looping ptr");
 	      return(-2);
 	    }
 
@@ -263,14 +263,14 @@ int dump_dnspacket(char *type, unsigned char *packet, int len)
   dnsheader_t *x;
   unsigned char *limit;
 
-  if (opt_debug < 2) return 0;
+  if (opt_debug < 4) return 0;
 
   if ((x = decode_header(packet, len)) == NULL ) {
     return (-1);
   }
   limit = x->packet + len;
 
-  if (x->u & MASK_Z) log_debug("Z is set");
+  if (x->u & MASK_Z) log_debug(2, "Z is set");
 
   fprintf(stderr, "\n");
   fprintf(stderr, "- -- %s\n", type);
@@ -373,7 +373,7 @@ unsigned char *parse_query(rr_t *y, unsigned char *msg, int len)
      * is zero, we just give up */
 
     if (ntohs(((dnsheader_t *)msg)->qdcount) == 0 ) {
-      log_debug("QDCOUNT was zero");
+      log_debug(1, "QDCOUNT was zero");
       return(0);
     }
 

@@ -70,13 +70,21 @@ sem_t               dnrd_sem;  /* Used for all thread synchronization */
 int                 reactivate_interval = REACTIVATE_INTERVAL;
 
 /* The path where we chroot. All config files are relative this path */
-char chroot_path[512] = CHROOT_PATH;
+char                chroot_path[512] = CHROOT_PATH;
 
-char config_file[] = CHROOT_PATH "/" CONFIG_FILE;
+char                config_file[] = CHROOT_PATH "/" CONFIG_FILE;
 
-domnode_t *domain_list;
+domnode_t           *domain_list;
 /* turn this on to skip cache hits from responses of inactive dns servers */
 int                 ignore_inactive_cache_hits = 0; 
+
+/* highest socket number */
+int                 maxsock;
+
+/* the fd set. query modifies this so we make it global */
+fd_set              fdmaster;
+
+
 
 /*
  * This is the address we listen on.  It gets initialized to INADDR_ANY,
@@ -211,11 +219,11 @@ void log_msg(int type, const char *fmt, ...)
  * Abstract: If debugging is turned on, this will send the message
  *           to syslog with LOG_DEBUG priority.
  */
-void log_debug(const char *fmt, ...)
+void log_debug(int level, const char *fmt, ...)
 {
     va_list ap;
     
-    if (!opt_debug) return;
+    if (opt_debug < level) return;
 
     va_start(ap, fmt);
     if (gotterminal) {
@@ -244,7 +252,7 @@ void cleanexit(int status)
     /* Only let one process run this code) */
     sem_wait(&dnrd_sem);
 
-    log_debug("Shutting down...\n");
+    log_debug(1, "Shutting down...\n");
     if (isock >= 0) close(isock);
 #ifdef ENABLE_TCP
     if (tcpsock >= 0) close(tcpsock);

@@ -97,15 +97,15 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
     if (opt_debug) {
 	char      cname_buf[256];
 	sprintf_cname(&msg[12], *len-12, cname_buf, 256);
-	log_debug("Received DNS query for \"%s\"", cname_buf);
+	log_debug(3, "Received DNS query for \"%s\"", cname_buf);
 	if (dump_dnspacket("query", msg, *len) < 0)
-	  log_debug("Format error");
+	  log_debug(3, "Format error");
     }
    
 #ifndef EXCLUDE_MASTER
     /* First, check to see if we are master server */
     if ((replylen = master_lookup(msg, *len)) > 0) {
-	log_debug("Replying to query as master");
+	log_debug(2, "Replying to query as master");
 	*len = replylen;
 	return 0;
     }
@@ -113,7 +113,7 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
 
     /* Next, see if we have the answer cached */
     if ((replylen = cache_lookup(msg, *len)) > 0) {
-	log_debug("Replying to query with cached answer.");
+	log_debug(3, "Replying to query with cached answer.");
 	*len = replylen;
 	return 0;
     }
@@ -123,7 +123,7 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
 
     if (no_srvlist(d->srvlist)) {
       /* there is no servers for this domain, reply with "Server failure" */
-	log_debug("Replying to query with \"Server failure\"");
+	log_debug(2, "Replying to query with \"Server failure\"");
 	if (!set_srvfail(msg, *len)) return -1;
 	return 0;
     }
@@ -141,10 +141,10 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
     }
 
     if (d->current) {
-	log_debug("Forwarding the query to DNS server %s",
+	log_debug(3, "Forwarding the query to DNS server %s",
 		  inet_ntoa(d->current->addr.sin_addr));
     } else {
-      log_debug("All servers deactivated. Replying with \"Server failure\"");
+      log_debug(3, "All servers deactivated. Replying with \"Server failure\"");
       if (!set_srvfail(msg, *len)) return -1;
       return 0;
     }
@@ -185,9 +185,7 @@ static void reactivate_servers(int interval) {
  */
 void run()
 {
-  int                maxsock;
   struct timeval     tout;
-  fd_set             fdmaster;
   fd_set             fdread;
   int                retn;
   domnode_t          *d = domain_list;
@@ -237,7 +235,9 @@ void run()
     }
     else if (retn != 0) {
       for (q = &qlist; q->next != &qlist; q = q->next) {
-	if (FD_ISSET(q->sock, &fdread)) udp_handle_reply(q);
+	if (FD_ISSET(q->next->sock, &fdread)) {
+	  udp_handle_reply(q);
+	}
       }
 
 #ifdef ENABLE_TCP
@@ -248,13 +248,12 @@ void run()
       if (FD_ISSET(isock, &fdread)) {
 	q = udp_handle_request();
 	if (q != NULL) {
-	  FD_SET(q->sock, &fdmaster);
-	  if (q->sock > maxsock) maxsock = q->sock;
 	}
       }
     } else {
-	  log_debug("nothing happens");
+      /* idle */
     }
+    
     /* ok, we are done with replies and queries, lets do some
 	   maintenance work */
     
@@ -265,25 +264,18 @@ void run()
     master_reinit();
 #endif
     /* Remove old unanswered queries */
-    //	dnsquery_timeout(60);
+    query_timeout(20);
     
     /* create new query/socket for next incomming request */
-    do {
-      if ((s=d->srvlist)) {
-	while ((s=s->next) != d->srvlist) {
-	  if (s->newquery == NULL) {
-	    if( (s->newquery = query_get_new(d, s)) == NULL) {
-	      log_debug("Could not create newquery");
-	    } else {
-	      log_debug("created new querysocket for %s in domain %s",
-			inet_ntoa(s->addr.sin_addr), 	  
-			cname2asc(d->domain));
-	    }
-	  }
-	}
-      }
-    } while ((d=d->next) != domain_list);
 
-    
+    d=domain_list;
+    do {
+      if ((s=d->srvlist)) 
+	while ((s=s->next) != d->srvlist)
+	  if (s->newquery == NULL) 
+	    s->newquery = query_get_new(d, s);
+    } while ((d=d->next) != domain_list);
+    /* print som query statestics */
+    query_stats(10);
   }
 }

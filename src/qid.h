@@ -10,5 +10,6 @@
 unsigned short int qid_get(void);
 unsigned short int qid_return(unsigned short int qid);
 void qid_init_pool(void);
+int myrand(int max);
 
 #endif

@@ -204,10 +204,10 @@ int parse_args(int argc, char **argv)
 #endif
 	  case 'r': {
 	    if ((reactivate_interval = atoi(optarg)))
-	      log_debug("Setting retry interval to %i seconds.", 
+	      log_debug(1, "Setting retry interval to %i seconds.", 
 			reactivate_interval);
 	    else 
-	      log_debug("Retry=0. Will never deactivate servers.");
+	      log_debug(1, "Retry=0. Will never deactivate servers.");
 	    break;
 	  }
 	  case 's': {
@@ -219,10 +219,10 @@ int parse_args(int argc, char **argv)
 	      *sep = 0;
 	      if ( (p=search_domnode(domain_list, s)) == NULL) {
 		p=add_domain(domain_list, load_balance, s, 200);
-		log_debug("Added domain %s %s load balancing", sep+1, 
+		log_debug(1, "Added domain %s %s load balancing", sep+1, 
 			  load_balance ? "with" : "without");
 	      } else {
-		log_debug("Could not add domain %s ", sep+1);
+		log_debug(1, "Could not add domain %s ", sep+1);
 	      }
 	    } else p=domain_list;
 	    if (!add_srv(last_srvnode(p->srvlist), optarg)) {
@@ -230,12 +230,12 @@ int parse_args(int argc, char **argv)
 		      progname, optarg);
 	      exit(-1);
 	    } else {
-	      log_debug("Server %s added to domain %s", optarg, 
+	      log_debug(1, "Server %s added to domain %s", optarg, 
 			sep ? sep+1:"(default)");
 	    }
 	    if (p->roundrobin != load_balance) {
 	      p->roundrobin =load_balance;
-	      log_debug("Turned on load balancing for domain %s",
+	      log_debug(1, "Turned on load balancing for domain %s",
 			cname2asc(p->domain));
 	    }
 	    if (sep) *sep = ':';
@@ -243,10 +243,10 @@ int parse_args(int argc, char **argv)
 	  }
 	  case 't': {
 	    if ((forward_timeout = atoi(optarg)))
-	      log_debug("Setting timeout value to %i seconds.", 
+	      log_debug(1, "Setting timeout value to %i seconds.", 
 			forward_timeout);
 	    else 
-	      log_debug("Timeout=0. Servers will never timeout.");
+	      log_debug(1, "Timeout=0. Servers will never timeout.");
 	    break;
 	  }
 	  case 'u': {
@@ -272,7 +272,7 @@ int parse_args(int argc, char **argv)
 
 	  case 'p': {
 	    strncpy(chroot_path, optarg, sizeof(chroot_path));
-	    log_debug("Using %s as chroot");
+	    log_debug(1, "Using %s as chroot");
 	    break;
 	  }
 	  case ':': {

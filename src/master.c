@@ -273,7 +273,7 @@ static dnsrec_t *add_authority(char *domain, const int maxlen)
     rec = alloc_dnsrec(domain, maxlen);
     rec->type = DNS_AUTHORITY;
     add_record(rec);
-    log_debug("added authority for %s", domain);
+    log_debug(1, "added authority for %s", domain);
 
     return (rec);
 }
@@ -353,7 +353,7 @@ int read_hosts(char *filename, char *domain)
     }
 	    
     fclose (fp);
-    log_debug("%s: %d records", filename, dbc - count);
+    log_debug(1, "%s: %d records", filename, dbc - count);
 
     return (0);
 }
@@ -366,7 +366,7 @@ int read_configuration(char *filename)
     FILE *fp;
     
     if ((fp = fopen(filename, "r")) == NULL) {
-	log_debug("no master configuration: %s", filename);
+	log_debug(1, "no master configuration: %s", filename);
 	return (1);
     }
 
@@ -419,7 +419,7 @@ int read_configuration(char *filename)
     }
 	    
     fclose (fp);
-    log_debug("%s: %d records", filename, dbc - count);
+    log_debug(1, "%s: %d records", filename, dbc - count);
 
     return (0);
 }
@@ -700,7 +700,7 @@ static int _master_init(void)
 {
     if (master_onoff == 0) return (0);
 
-    log_debug("initialising master DNS database");
+    log_debug(1, "initialising master DNS database");
 
     add_nameip("localhost", sizeof("localhost"), "127.0.0.1");
     add_dns("0.0.127.in-addr.arpa", sizeof("0.0.127.in-addr.arpa"),
@@ -737,7 +737,7 @@ static int _master_init(void)
 
 	    fclose (fp);
 
-	    log_debug("initialising from /etc/hosts, domain= %s",
+	    log_debug(1, "initialising from /etc/hosts, domain= %s",
 		      *domain == 0? "<none>": domain);
 	    read_hosts("/etc/hosts", domain);
 	}
@@ -761,7 +761,7 @@ static int _master_init(void)
 	}
     }
 
-    log_debug("%d records in master DNS database", dbc);
+    log_debug(1, "%d records in master DNS database", dbc);
     master_initialised = 1;
 
     return (0);
@@ -816,7 +816,7 @@ int master_lookup(unsigned char *msg, int len)
 	    dnsheader_t *x;
 	    
 	    query.name[k] = '.';
-	    log_debug("master: found PTR %s\n", query.name);
+	    log_debug(2, "master: found PTR %s\n", query.name);
 
 	    x = begin_assembly(&query);
 	    compile_objectname(x);
@@ -920,7 +920,7 @@ int master_lookup(unsigned char *msg, int len)
     if (authority_lookup(domain) != NULL) {
 	dnsheader_t *x;
 
-	log_debug("master: found AUTHORITY for %s\n", domain);
+	log_debug(2, "master: found AUTHORITY for %s\n", domain);
 
 	x = begin_assembly(&query);
 	x->ancount = 0;
