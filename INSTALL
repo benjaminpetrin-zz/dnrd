@@ -1,18 +1,13 @@
 
 BUILDING DNRD
 -------------
-dnrd can be built by using either make or cons.
+To build dnrd use:
 
-CONS is a make replacement.  It has many features that make does not
-possess, like automatic dependency checking, and the use of MD5 checksums
-to determine when files need to be rebuilt (no more "make clean" to make
-sure that your change gets re-compiled).  You can get CONS from
-http://members.home.com/garsh/cons
+./configure
+make
+make install
 
-To build dnrd, either type "cons" in the directory containing the Construct
-file, or "make" in the src directory.  The binary is placed in the "final"
-directory using cons, or in the src directory using make.  You may copy this
-file to /usr/local/sbin, or some other place of your choosing.
+You might need to be root to do the 'make install'.
 
 Type "dnrd -h" for a description of all options.
 
