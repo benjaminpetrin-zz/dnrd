@@ -2,7 +2,8 @@
 
     dnrd works now also as a DNS master if not turned off with the
     `--master=off' command line switch.  Normally it creates it's database
-    from the /etc/dnrd/master file.  This may contain the following directives:
+    from the @DNRD_ROOT@/master file.  This may contain the following
+    directives:
     
     	domain <domain> [<dns> ...] [+auth]
 
@@ -51,7 +52,7 @@
       will always work on the dnrd server machine.
 
 
-    If no /etc/dnrd/master is found or `--master=hosts' is given on the
+    If no @DNRD_ROOT@/master is found or `--master=hosts' is given on the
     command line only the /etc/hosts using the default domain from
     /etc/resolv.conf as default domain.
 
