@@ -1,6 +1,7 @@
-version 2.17.3
+version 2.18
 ------------
 Natanael Copa <n@tanael.org>
+ - Added a blacklist feature
  - Fix so SIGHUP now rereads the masterfile properly
  - Fix signal handling and replaced select with pselect
  - Fix tiny memory leak in argument parsing
