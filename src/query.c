@@ -77,7 +77,7 @@ int dnsquery_add(const struct sockaddr_in* client, char* msg, unsigned len)
     dnsquery *ptr;
     dnsquery *query;
 
-    memcpy(&client_qid, msg, 2);
+    memcpy(&client_qid, msg, sizeof(client_qid));
     
     /* If entry already exists, then don't actually add it again */
     for (ptr = head; ptr != 0; ptr = ptr->next) {
