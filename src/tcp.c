@@ -21,6 +21,9 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#ifndef EXCLUDE_TCP
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -40,7 +43,6 @@
 #include "cache.h"
 #include "pthread.h"
 #include "lib.h"
-
 
 typedef struct tcp_handle_info {
     int	               connect;
@@ -100,7 +102,7 @@ static void *tcp_handler(void *dummy)
     int	               rc, bytes;
     int                maxsock;
     //    int                server[MAX_SERV];
-    char	       buffer[4096];
+    char	       buffer[4096]; /* FIXME: do we want this on the stack?*/
     struct timeval     tov;
     fd_set	       connection, available;
     unsigned short     tcpsize;
@@ -110,6 +112,9 @@ static void *tcp_handler(void *dummy)
     srvnode_t *s;
 
     free(arg);
+
+    log_debug("[%d] Exiting thread", getpid());
+    pthread_exit(0);
     
     do {
       if ((s=d->srvlist))
@@ -217,10 +222,12 @@ static void *tcp_handler(void *dummy)
 		log_debug("[%d] tcp read error %s", getpid(), strerror(errno));
 		break;
 	    }
-	    retn = handle_query(&client, &buffer[2], &bytes, &dptr);
-
+	    if ((retn = handle_query(&client, buffer + 2, &bytes, &dptr))<0) {
+	      /* bogus query */
+	      break;
+	    }
 	    /* If we can reply locally (master, cache, no servers), do so. */
-	    if (retn == 0) {
+	    else if (retn == 0) {
 		unsigned short len = htons((unsigned short)bytes);
 		memcpy(buffer, &len, sizeof(len));
 		if (write(connect, buffer, bytes + 2) != (bytes + 2)) break;
@@ -230,7 +237,7 @@ static void *tcp_handler(void *dummy)
 	     * Forward DNS request to the appropriate server.
 	     * Open a socket if one doesn't already exist.
 	     */
-	    else {
+	    else if (retn == 1) {
 	      s = dptr->current;
 	      if (s->tcp == -1) {
 		s->tcp = ip_open(s->addr, 53);
@@ -243,10 +250,10 @@ static void *tcp_handler(void *dummy)
 		  maxsock = s->tcp + 1;
 		}
 		FD_SET(s->tcp, &connection);
-		}
-		if (write(s->tcp, buffer, bytes + 2) != (bytes + 2)) {
-		  break;
-		}
+	      }
+	      if (write(s->tcp, buffer, bytes + 2) != (bytes + 2)) {
+		break;
+	      }
 	    }
 	}
 	
@@ -265,6 +272,7 @@ static void *tcp_handler(void *dummy)
     } while ((d=d->next) != domain_list);
 
     close(connect);
+    log_debug("[%d] Exiting thread", getpid());
     pthread_exit(0);
     /* NOTREACHED */
     return (void *)0;
@@ -277,6 +285,8 @@ static void *tcp_handler(void *dummy)
  * A thread is used instead of a process so that any DNS replies can
  * be placed in cache of the parent process.
  */
+
+
 void handle_tcprequest()
 {
     tcp_handle_t *arg;
@@ -288,11 +298,16 @@ void handle_tcprequest()
     arg->connect = accept(tcpsock, (struct sockaddr *) &(arg->client), 
 			  &(arg->len));
     if (arg->connect < 0) {
-	log_msg(LOG_ERR, "accept error: %m");
+	log_msg(LOG_ERR, "accept error for TCP connection");
+	free(arg);
 	return;
     }
 
+    log_debug("creating a thread (parent=%d)", getpid());
     if (pthread_create(&t, NULL, tcp_handler, (void *)arg)) {
 	log_msg(LOG_ERR, "Couldn't spawn thread to handle tcp connection");
+	free(arg);
     }
+
 }
+#endif
