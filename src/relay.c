@@ -130,7 +130,14 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
 	return 0;
     }
 
-    if (d->roundrobin) set_current(d, next_active(d));
+    if (d->roundrobin) {
+      set_current(d, next_active(d));
+    } else {
+      /* find the first active server */
+      d->current=NULL;
+      d->current=next_active(d);
+    }
+
     /* Send to a server until it "times out". */
     if (d->current) {
       time_t now = time(NULL);
@@ -171,11 +178,6 @@ static void reactivate_servers(int interval) {
   last_try = now;
   do {
     retry_srvlist(d, interval );
-    if (!d->roundrobin) {
-      /* find the first active server in serverlist */
-      d->current=NULL;
-      d->current=next_active(d);
-    }
   } while ((d = d->next) != domain_list);  
 }
 
