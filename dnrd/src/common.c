@@ -23,6 +23,7 @@
 #endif
 
 #include "common.h"
+#include "lib.h"
 #include <stdarg.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -79,6 +80,39 @@ struct sockaddr_in recv_addr = { AF_INET, 53, { { {0, 0, 0, 0} } } };
 struct sockaddr_in recv_addr = { AF_INET, 53, { INADDR_ANY } };
 #endif
 
+/* check if a pid is running 
+ * from the unix faq
+ * http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC18
+ */
+
+int isrunning(int pid) {
+  if (kill(pid, 0) ) {
+    if (errno==EPERM) { 
+      return 1;
+    } else return 0;
+  } else {
+    return 1;
+  }
+}
+
+/* wait_for_exit()
+ *
+ * In: pid     - the process id to wait for
+ *     timeout - maximum time to wait in 1/10 secs
+ *
+ * Returns: 1 if it died in before timeout
+ *
+ * Abstract: Check if a process is running and wait til it does not
+ */
+int wait_for_exit(int pid, int timeout) {
+  while (timeout--) {
+    if (! isrunning(pid)) return 1;
+    usleep(10000);
+  }
+  /* ouch... we timed out */
+  return 0;
+}
+
 /*
  * kill_current()
  *
@@ -104,6 +138,10 @@ int kill_current()
     if ((retn = (fscanf(filep, "%i%*s", &pid) == 1))) {
 	if (kill(pid, SIGTERM)) {
 	    log_msg(LOG_ERR, "Couldn't kill dnrd: %s", strerror(errno));
+	}
+	/* dnrd gets 4 seconds to die or we give up */
+	if (!wait_for_exit(pid, 400)) {
+	  log_msg(LOG_ERR, "The dnrd process didn't die within 4 seconds");
 	}
     }
     fclose(filep);
