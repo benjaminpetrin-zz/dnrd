@@ -187,7 +187,7 @@ srvnode_t *deactivate_current(domnode_t *d) {
     log_msg(LOG_NOTICE, "Deactivating DNS server %s",
 	      inet_ntoa(d->current->addr.sin_addr));
   }
-  return next_active(d);
+  return set_current(d, next_active(d));
 }
 
 
