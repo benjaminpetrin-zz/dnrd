@@ -23,6 +23,8 @@ dnrd - proxy name server
 
 [<B>-c</B>&nbsp;(<B>off</B>|[<B></B><I>low</I>:]<B></B><I>high</I>)|<B>--cache=</B>(<B>off</B>|[<B></B><I>low</I>:]<B></B><I>high</I>)]
 
+[<B>-b</B>|<B>--load-balance</B>]
+
 [<B>-d</B>|<B>--debug</B>]
 
 [<B>-h</B>|<B>--help</B>]
@@ -41,8 +43,8 @@ dnrd - proxy name server
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-This manual page documents version 1.5 of dnrd .
-dnrd is a proxying nameserver.  It forwards DNS queries to the appropriate
+<B>dnrd</B> is a proxying nameserver. It forwards DNS queries to the appropriate
+
 nameserver, but can also act as the primary nameserver for a few machines.
 Proxying is configured on the command line using the 
 <B>-s</B>
@@ -51,7 +53,6 @@ option.  By default,
 dnrd will act as the primary nameserver for hosts found in
 <I>/etc/hosts</I>.
 
-<P>
 <P>
 <A NAME="lbAE">&nbsp;</A>
 <H2>OPTIONS</H2>
@@ -65,6 +66,15 @@ dnrd will act as the primary nameserver for hosts found in
 <DD>
 Bind only to the interface with the specified address.  This is a security
 feature.
+<P>
+<DT><B>-b</B>
+
+<DD>
+<DT><B>--load-balance</B>
+
+<DD>
+If several forward server is specified with -s the requests are load
+balanced among the servers in a round robin scheme.
 <P>
 <DT><B>-c</B>&nbsp;(<B>off</B>|[<B></B><I>low</I>:]<B></B><I>high</I>)
 
@@ -181,6 +191,14 @@ Prints out the version number
 <P>
 </DL>
 <A NAME="lbAF">&nbsp;</A>
+<H2>BUGS</H2>
+
+<P>
+
+Even if it is possible to bind dnrd to one single interface it is not
+possible to run several dnrd processes on the same host.
+<P>
+<A NAME="lbAG">&nbsp;</A>
 <H2>FILES</H2>
 
 <P>
@@ -210,7 +228,7 @@ The currently-running dnrd process' pid is placed into this file.
 It is needed to allow new dnrd processes to find and kill the currently
 running process.
 <P>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>AUTHOR</H2>
 
 <P>
@@ -229,13 +247,14 @@ file included with the source code.
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">OPTIONS</A><DD>
-<DT><A HREF="#lbAF">FILES</A><DD>
-<DT><A HREF="#lbAG">AUTHOR</A><DD>
+<DT><A HREF="#lbAF">BUGS</A><DD>
+<DT><A HREF="#lbAG">FILES</A><DD>
+<DT><A HREF="#lbAH">AUTHOR</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 20:56:49 GMT, July 02, 2004
+Time: 18:45:16 GMT, July 07, 2004
 </BODY>
 </HTML>

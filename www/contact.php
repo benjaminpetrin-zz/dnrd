@@ -8,19 +8,16 @@ require("menu.php");
 
 <div id="content">
 
-<h2><a name="support">Contact Information</a></h2>
+<h2><a name="Contact Info">Contact Information</a></h2>
 
-<p>
-Yes there is a mailing list.  You can send email to the list at
-<a href="mailto:dnrd@egroups.com">dnrd@egroups.com</a>.  To subscribe to
-the list, send an email to
-<a href="mailto:dnrd-subscribe@egroups.com">dnrd-subscribe@egroups.com</a>.
-An archive of the list is available at
-<a href="http://www.egroups.com/group/dnrd/">http://www.egroups.com/group/dnrd</a>.
-Notice that the mailing list is supported by advertisements.
+<p>For questions about DNRD use the <a
+href="http://lists.sourceforge.net/lists/listinfo/dnrd-user">dnrd-user</a>
+mailing list.</p>
+
+<p>Comments and bugreports about this site can be sent to <a href="http://sourceforge.net/sendmessage.php?touser=1006097">ncopa at users.sourceforge.net</a>
 </p>
 
-
+<br><br><br>
 </div>
 
 <? require("footer.php"); ?>

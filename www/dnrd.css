@@ -1,9 +1,12 @@
 body 
 {
-  margin :  10% 15% 10% 15%;
+  margin :  7% 15% 7% 15%;
   padding :0;
 //  border: 1px solid #eeeeee;
-  background-color : #ffffff;
+  background-color : #fff;
+  border-style: solid;
+  border-width: 1px; 
+  border-color: #fefefe;
   color : #000000;
   }
 
@@ -29,8 +32,8 @@ h2
 
 #content 
 { 
- padding: 0 12em 0 10%;
-// background-color: #cccccc;
+ padding: 0 12em 2em 10%;
+ background-color: #fff;
   }
 
 h1, h2, h3, h4, h5, h6

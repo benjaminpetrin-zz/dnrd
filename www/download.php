@@ -10,18 +10,19 @@ require("menu.php");
 <div id="content">
 
 
-<h2><a name="download">Download</a></h2>
+<h2><a name="Download">Download</a></h2>
 
 <p>
-Klick <a href="http://prdownloads.sourceforge.net/dnrd/dnrd-2.13_rc1.tar.gz?download">here</a> to get the lastest release of dnrd.
+Latest release of dnrd is <a href="http://prdownloads.sourceforge.net/dnrd/dnrd-2.13.tar.gz?download">2.13</a>.
 </p>
 
 <p>
-Klick <a href="http://sourceforge.net/project/showfiles.php?group_id=72">here</a> to get older versions.
+Use Sourceforges <a href="http://sourceforge.net/project/showfiles.php?group_id=72">file release system</a> to get other versions.
 </p>
 
-<h3>CVS</h3>
-<p>The latest development is available through cvs.</p>
+<h3><a name="CVS">CVS</a></h3>
+<p>The latest development is available through <a
+href="http://sourceforge.net/project/admin/cvs.php?group_id=72">cvs</a>.</p>
 
 <p>It is also possible to browse the CVS over <a
 href="http://cvs.sourceforge.net/viewcvs.py/dnrd">web</a></p>
