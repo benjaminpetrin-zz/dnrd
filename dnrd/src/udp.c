@@ -312,7 +312,7 @@ int udp_send_dummy(srvnode_t *s) {
   /* should not happen */
   assert(s != NULL);
 
-  if (query_add(NULL, s, &srcaddr, dnsbuf, sizeof(dnsbuf)) != NULL) {
+  if ((q=query_add(NULL, s, &srcaddr, dnsbuf, sizeof(dnsbuf))) != NULL) {
     int rc;
     q = q->next; /* query add returned the query 1 before in list */
     /* don't let those queries live too long */
