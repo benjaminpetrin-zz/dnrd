@@ -111,7 +111,7 @@ static dnsrec_t	**dbv =		NULL;
 
 static char *mkstring(string_t *string, const char *name, const int maxlen)
 {
-    string->string = (char *)strndup(name, maxlen);
+    string->string = (char *)strdup(name);
     strnlwr(string->string, maxlen);
     string->code   = get_stringcode(string->string);
 

@@ -22,7 +22,7 @@
 
 
 
-
+#include <stdlib.h>
 #include <sys/types.h>
 #include "srvnode.h"
 #include "lib.h"

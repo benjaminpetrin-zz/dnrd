@@ -18,10 +18,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "args.h"
-#include "common.h"
-#include "lib.h"
-#include "cache.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,6 +29,12 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <pwd.h>
+
+#include "args.h"
+#include "common.h"
+#include "lib.h"
+#include "cache.h"
+
 
 /*
  * Definitions for both long and short forms of our options.

@@ -23,8 +23,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "query.h"
-#include "common.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -34,6 +32,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #endif /* DEBUG */
+#include "query.h"
+#include "common.h"
 
 /*
  * This is the data structure used to store DNS queries that haven't been
