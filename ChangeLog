@@ -1,10 +1,16 @@
 version 2.11
 ------------
 Natanael Copa <n@tanael.org>
-- New build using autoconf and automake
-- Fixed potensial overflows inqueries. Might still exist some,
-  specially in server replies.
 - Natanael is taking over the project.
+- New build using autoconf and automake
+- Fixed potensial overflows in queries. Might still exist some,
+  specially in server replies. At least it fixes 
+  http://www.securiteam.com/unixfocus/5DP0P0U61G.html
+- added patch to let dnrd answer on short hostnames.
+  (http://groups.yahoo.com/group/dnrd/message/231)
+- added some of the patches from the frebsd freshports.
+  (http://www.freshports.org/dns/dnrd/)
+- fixed memory leak. (http://groups.yahoo.com/group/dnrd/message/241)
 
 version  2.10
 -------------

@@ -290,6 +290,18 @@ char *get_hostname(char **from, char *domain, char *name, int size)
 	word[len-1] = 0;
 	snprintf (name, size, "%s%s%s", word, domain[0] ? "." : "", domain);
     }
+    /* patch from maillinglist
+       http://groups.yahoo.com/group/dnrd/message/231 
+
+       This is to let dnrd resolve short hostnames in master file so a
+       dialup line won't open a connection.
+    */
+    else if ((len = strlen(word)) > 0 && word[len-1] == '.') {
+      word[len-1] = 0;
+      size--;
+      copy_string(name, word, size);
+    }
+
     else if (strchr(word, '.') == NULL) {
 	snprintf (name, size, "%s%s%s", word, domain[0] ? "." : "", domain);
     }
