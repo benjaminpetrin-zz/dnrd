@@ -13,6 +13,9 @@
 #
 domain quietsche-entchen.de dns um1.pce.de +auth
 
+# withut any hostname the ip will be assigned to quietsche-entchen.de
+194.77.140.1
+
 194.77.140.12	dns.quietsche-entchen.de
 194.77.140.11	gw giotto
 194.77.140.10	bind k400
@@ -34,3 +37,7 @@ domain pce.de
 194.77.140.1	um1
 
 
+#
+# Define a domain without any hosts. This is kind of Ad blocker
+#
+domain doubleclick.net auth+
