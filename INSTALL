@@ -9,7 +9,23 @@ make install
 
 You might need to be root to do the 'make install'.
 
+Use gmake instead of make on FreeBSD and OpenBSD.
+
 Type "dnrd -h" for a description of all options.
+
+
+
+BUILDING FROM CVS
+-----------------
+
+If you downloaded the cvs version you will need to run
+
+aclocal
+autoheader
+automake -a
+autoconf
+
+before running ./configure
 
 
 
