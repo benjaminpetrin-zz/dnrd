@@ -29,8 +29,9 @@
 #include "lib.h"
 #include "common.h"
 
+/*
 #define	DEBUG(x)		
-
+*/
 
 void *allocate(size_t size)
 {
