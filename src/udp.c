@@ -105,7 +105,7 @@ void udp_handle_request()
     }
 
     /* do some basic checking */
-    if (! check_query(len, msg)) return;
+    if (check_query(msg, len) < 0) return;
 
     /* Determine how query should be handled */
     if ((fwd = handle_query(&from_addr, msg, &len, &dptr)) < 0)
@@ -207,11 +207,15 @@ void udp_handle_reply(srvnode_t *srv)
     struct sockaddr_in from_addr;
     unsigned           addr_len;
 
-    if ((len = dnsrecv(srv, msg, maxsize)) <0)
-      return; /* recv error */
+    if ((len = dnsrecv(srv, msg, maxsize)) < 0)
+      {
+	log_debug("dnsrecv failed: %i", len);
+	return; /* recv error */
+      }
     
     /* do basic checking */
-    if (! check_reply(len, msg)) return;
+    /* we have already done some checking. Is this necessary? */
+    if (check_reply(srv, msg, len) < 0) return;
 
     if (opt_debug) {
 	char buf[256];
