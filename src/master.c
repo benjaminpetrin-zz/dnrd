@@ -23,6 +23,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#define _GNU_SOURCE
 #include <string.h>
 #include <ctype.h>
 
@@ -108,10 +109,10 @@ static dnsrec_t	**dbv =		NULL;
 	 * mkstring() simply fills a string_t structure.
 	 */
 
-static char *mkstring(string_t *string, char *name)
+static char *mkstring(string_t *string, const char *name, const int maxlen)
 {
-    string->string = strdup(name);
-    strlwr(string->string);
+    string->string = (char *)strndup(name, maxlen);
+    strnlwr(string->string, maxlen);
     string->code   = get_stringcode(string->string);
 
     return (string->string);
@@ -123,7 +124,7 @@ static char *mkstring(string_t *string, char *name)
  * structure.  They return their DNS-type identifier on
  * success and 0 otherwise.
  */
-static int create_nameip(nameip_t *nameip, char *ip)
+static int create_nameip(nameip_t *nameip, const int maxnamelen, char *ip)
 {
     struct in_addr ipnum;
 
@@ -139,7 +140,7 @@ static int create_nameip(nameip_t *nameip, char *ip)
 		    (nameip->ipnum & 0x0000ff00 << 8) |
 		    (nameip->ipnum & 0x000000ff << 24));
 
-    mkstring(&nameip->arpa, inet_ntoa(ipnum));
+    mkstring(&nameip->arpa, inet_ntoa(ipnum), maxnamelen);
     
     return (DNS_NAMEIP);
 }
@@ -178,12 +179,12 @@ static int free_dnsrec(dnsrec_t *rec)
     return (0);
 }
 
-static dnsrec_t *alloc_dnsrec(char *name)
+static dnsrec_t *alloc_dnsrec(char *name, const int maxlen)
 {
     dnsrec_t *rec;
 
     rec = allocate(sizeof(dnsrec_t));
-    mkstring(&rec->object, name);
+    mkstring(&rec->object, name, maxlen);
 
     return (rec);
 }
@@ -229,12 +230,12 @@ static dnsrec_t *add_record(dnsrec_t *rec)
     return (rec);
 }
 
-static dnsrec_t *add_nameip(char *name, char *ipnum)
+static dnsrec_t *add_nameip(char *name, const int maxlen, char *ipnum)
 {
     dnsrec_t *rec;
     
-    rec = alloc_dnsrec(name);
-    if ((rec->type = create_nameip(&rec->u.nameip, ipnum)) != 0) {
+    rec = alloc_dnsrec(name, maxlen);
+    if ((rec->type = create_nameip(&rec->u.nameip, maxlen, ipnum)) != 0) {
 	add_record(rec);
 	return (rec);
     }
@@ -243,23 +244,24 @@ static dnsrec_t *add_nameip(char *name, char *ipnum)
     return (NULL);
 }
 
-static dnsrec_t *add_dns(char *domain, char *dns)
+static dnsrec_t *add_dns(char *domain, const int maxdomainlen, 
+			 char *dns, const int maxdnslen)
 {
     dnsrec_t *rec;
     
-    rec = alloc_dnsrec(domain);
-    mkstring(&rec->u.dns, dns);
+    rec = alloc_dnsrec(domain, maxdomainlen);
+    mkstring(&rec->u.dns, dns, maxdnslen);
     rec->type = DNS_DNS;
     add_record(rec);
 
     return (rec);
 }
 
-static dnsrec_t *add_authority(char *domain)
+static dnsrec_t *add_authority(char *domain, const int maxlen)
 {
     dnsrec_t *rec;
     
-    rec = alloc_dnsrec(domain);
+    rec = alloc_dnsrec(domain, maxlen);
     rec->type = DNS_AUTHORITY;
     add_record(rec);
     log_debug("added authority for %s", domain);
@@ -286,7 +288,7 @@ char *get_hostname(char **from, char *domain, char *name, int size)
     if (*word == '+') {	/* Not a hostname but an option. */
 	copy_string(name, word, size);
     }
-    else if ((len = strlen(word)) > 0  &&  word[len-1] == '+') {
+    else if ((len = strnlen(word, sizeof(word))) > 0  &&  word[len-1] == '+') {
 	word[len-1] = 0;
 	snprintf (name, size, "%s%s%s", word, domain[0] ? "." : "", domain);
     }
@@ -296,7 +298,7 @@ char *get_hostname(char **from, char *domain, char *name, int size)
        This is to let dnrd resolve short hostnames in master file so a
        dialup line won't open a connection.
     */
-    else if ((len = strlen(word)) > 0 && word[len-1] == '.') {
+    else if ((len = strnlen(word, sizeof(word))) > 0 && word[len-1] == '.') {
       word[len-1] = 0;
       size--;
       copy_string(name, word, size);
@@ -325,7 +327,7 @@ int read_hosts(char *filename, char *domain)
 
     count = dbc;
     while (fgets(line, sizeof(line), fp) != NULL) {
-	p = skip_ws(noctrl(line));
+	p = skip_ws((char *)noctrln(line, sizeof(line)));
 	if (*p == 0  ||  *p == '#') continue;
 
 	if (isdigit((int)(*p))) {
@@ -336,7 +338,7 @@ int read_hosts(char *filename, char *domain)
 	     */
 	    get_word(&p, ipnum, sizeof(ipnum));
 	    while (*get_hostname(&p, domain, word, sizeof(word)) != 0) {
-		add_nameip(word, ipnum);
+		add_nameip(word, sizeof(word), ipnum);
 	    }
 	}
     }
@@ -361,7 +363,7 @@ int read_configuration(char *filename)
 
     count = dbc;
     while (fgets(line, sizeof(line), fp) != NULL) {
-	p = skip_ws(noctrl(line));
+	p = skip_ws(noctrln(line,sizeof(line) ));
 	if (*p == 0  ||  *p == '#') continue;
 
 	if (isdigit((int)(*p))) {
@@ -372,7 +374,7 @@ int read_configuration(char *filename)
 	     */
 	    get_word(&p, ipnum, sizeof(ipnum));
 	    while (*get_hostname(&p, domain, word, sizeof(word)) != 0)
-		    add_nameip(word, ipnum);
+		    add_nameip(word, sizeof(word), ipnum);
 	}
 	else if (strcmp(get_word(&p, word, sizeof(word)), "domain") == 0) {
 	    get_word(&p, domain, sizeof(domain));
@@ -380,10 +382,10 @@ int read_configuration(char *filename)
 
 	    while (*get_hostname(&p, domain, word, sizeof(word)) != 0) {
 		if (strcmp(word, "+auth") == 0) {
-		    add_authority(domain);
+		    add_authority(domain, sizeof(domain));
 		}
 		else {
-		    add_dns(domain, word);
+		    add_dns(domain, sizeof(domain),  word, sizeof(word));
 		}
 	    }
 	}
@@ -691,8 +693,9 @@ static int _master_init(void)
 
     log_debug("initialising master DNS database");
 
-    add_nameip("localhost", "127.0.0.1");
-    add_dns("0.0.127.in-addr.arpa", "localhost");
+    add_nameip("localhost", sizeof("localhost"), "127.0.0.1");
+    add_dns("0.0.127.in-addr.arpa", sizeof("0.0.127.in-addr.arpa"),
+	    "localhost", sizeof("localhost"));
     
     if ((strcmp(master_param, "hosts") == 0) ||
 	(read_configuration(config) != 0)) {
@@ -713,7 +716,7 @@ static int _master_init(void)
 	     */
 
 	    while (fgets(line, sizeof(line), fp) != NULL) {
-		p = skip_ws(noctrl(line));
+		p = skip_ws(noctrln(line,sizeof(line)));
 		if (*p == 0  ||  *p == '#') continue;
 
 		get_word(&p, word, sizeof(word));
@@ -734,16 +737,16 @@ static int _master_init(void)
     if (auto_authority != 0) {
 	int	i;
 	char	*domain, arpaname[200];
-
+	
+	
 	for (i = 0; i < dbc; i++) {
 	    if (dbv[i]->type == DNS_NAMEIP) {
 		snprintf (arpaname, sizeof(arpaname) - 2, "%s%s",
 			  dbv[i]->u.nameip.arpa.string, ARPADOMAIN);
 		if ((domain = strchr(arpaname, '.')) == NULL) continue;
-
 		domain++;
 		if (authority_lookup(domain) == 0) {
-		    add_authority(domain);
+		    add_authority(domain,sizeof(arpaname)-(arpaname-domain));
 		}
 	    }
 	}
