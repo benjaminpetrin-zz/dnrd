@@ -1,6 +1,8 @@
-What if started without a terminal in the first place?  Detect it and start
-syslogging right away.
+Optimize cache to find hostnames quicker.
 
-Several potential buffer overflows exist.  Fix them.
+Support for a dnrd.conf file.
+
+Fix TCP support.
 
 Reproduce some of the examples found in INSTALL in the man page.
+
