@@ -41,6 +41,8 @@ domains.</li>
 
 <li>TCP support</li>
 
+<li>DNS blacklist support</li>
+
 </ul>
 
 </div>
