@@ -48,6 +48,7 @@ static struct option long_options[] =
     {"load-balance", 0, 0, 'b'},
     {"cache",        1, 0, 'c'},
     {"debug",        0, 0, 'd'},
+    {"windows",      0, 0, 'w'},
     {"help",         0, 0, 'h'},
     {"ignore",       0, 0, 'i'},
 #ifdef ENABLE_PIDFILE
@@ -80,7 +81,7 @@ static struct option long_options[] =
 #define PIDPARM 
 #endif
  
-const char short_options[] = "a:bc:dhi" PIDPARM "l" MASTERPARM "M:r:R:s:t:u:v";
+const char short_options[] = "a:bc:dwhi" PIDPARM "l" MASTERPARM "M:r:R:s:t:u:v";
 
 /*
  * give_help()
@@ -101,6 +102,8 @@ static void give_help()
 "    -c, --cache=off|[LOW:]HIGH\n"
 "                            Turn off cache or tune the low/high water marks\n"
 "    -d, --debug             Turn on debugging - run in foreground.\n"
+"    -w, --windows           Specialize for Win32/Cygwin: "
+"                            run in foreground, etc.\n"
 "    -h, --help              Print this message, then exit.\n"
 "    -i, --ignore            Ignore cache for disabled servers\n"
 #ifdef ENABLE_PIDFILE
@@ -217,6 +220,10 @@ int parse_args(int argc, char **argv)
 	  }
 	  case 'd': {
 	      opt_debug++;
+	      break;
+	  }
+	  case 'w': {
+	      opt_windows++;
 	      break;
 	  }
 	  case 'h': {
