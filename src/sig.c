@@ -33,7 +33,7 @@ void sig_handler(int signo)
 {
   switch(signo) {
   case SIGUSR1:
-    opt_debug = opt_debug ? 0 : 1;
+    opt_debug = opt_debug ? 0 : 3;
     break;
 #ifndef EXCLUDE_MASTER
   case SIGHUP:
