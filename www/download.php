@@ -13,7 +13,7 @@ require("menu.php");
 <h2><a name="Download">Download</a></h2>
 
 <p>
-Latest release of dnrd is <a href="http://prdownloads.sourceforge.net/dnrd/dnrd-2.14.tar.gz?download">2.14</a>.
+Latest release of dnrd is <a href="http://prdownloads.sourceforge.net/dnrd/dnrd-2.15.tar.gz?download">2.15</a>.
 </p>
 
 <p>
