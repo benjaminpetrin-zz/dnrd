@@ -47,7 +47,7 @@ static struct option long_options[] =
     {"address",      1, 0, 'a'},
     {"load-balance", 0, 0, 'b'},
     {"cache",        1, 0, 'c'},
-    {"debug",        0, 0, 'd'},
+    {"debug",        1, 0, 'd'},
     {"help",         0, 0, 'h'},
     {"ignore",       0, 0, 'i'},
 #ifdef ENABLE_PIDFILE
@@ -89,7 +89,7 @@ static struct option long_options[] =
 #endif
  
 const char short_options[] = 
-    "a:bc:dhi" PIDPARM "l" MASTERPARM "M:r:R:s:t:" UIDPARM "v";
+    "a:bc:d:hi" PIDPARM "l" MASTERPARM "M:r:R:s:t:" UIDPARM "v";
 
 /*
  * give_help()
@@ -109,6 +109,8 @@ static void give_help()
 "    -b, --load-balance      Round-Robin load balance forwarding servers\n"
 "    -c, --cache=off|[LOW:]HIGH\n"
 "                            Turn off cache or tune the low/high water marks\n"
+"    -d, --debug=LEVEL       Set the debugging level and run in foreground.\n"
+"                            Level 0 means no debugging at all.\n"
 "    -d, --debug             Turn on debugging - run in foreground.\n"
 "    -h, --help              Print this message, then exit.\n"
 "    -i, --ignore            Ignore cache for disabled servers\n"
@@ -143,7 +145,8 @@ static void give_help()
 "    -b        Round-Robin load balance forwarding servers\n"
 "    -c off|[LOW:]HIGH\n"
 "              Turn off caching or tune the low/high water marks"
-"    -d        Turn on debugging - run in foreground.\n"
+"    -d LEVEL  Set the debugging level and run in foreground. Level 0 means\n"
+"              debugging at all.\n"
 "    -h        Print this message, then exit.\n"
 "    -i        Ignore cache for disabled servers\n"
 #ifdef ENABLE_PIDFILE
@@ -229,8 +232,8 @@ int parse_args(int argc, char **argv)
 	      break;
 	  }
 	  case 'd': {
-	      opt_debug++;
-	      break;
+	    opt_debug = atoi(optarg);
+	    break;
 	  }
 	  case 'h': {
 	      give_help();

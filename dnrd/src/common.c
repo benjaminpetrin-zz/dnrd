@@ -46,7 +46,8 @@
 /*
  * These are all the global variables.
  */
-int                 opt_debug = OPT_DEBUG;
+unsigned char
+       opt_debug = OPT_DEBUG;
 int                 opt_serv = 0;
 const char*         progname = 0;
 
@@ -169,9 +170,7 @@ int kill_current()
 	exit(-1);
     }
     if ((retn = (fscanf(filep, "%i%*s", &pid) == 1))) {
-	if (kill(pid, SIGTERM)) {
-	    log_msg(LOG_ERR, "Couldn't kill dnrd: %s", strerror(errno));
-	}
+        kill(pid, SIGTERM);
 	/* dnrd gets 4 seconds to die or we give up */
 	if (!wait_for_exit(pid, 400)) {
 	  log_msg(LOG_ERR, "The dnrd process didn't die within 4 seconds");
