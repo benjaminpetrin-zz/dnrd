@@ -34,6 +34,9 @@
  * Detailed descriptions of these functions appear in query.c
  */
 
+/* initialize the qid pool */
+void qid_init_pool(void);
+
 /* Add a DNS query to our list */
 int dnsquery_add(const struct sockaddr_in* client, char* msg, unsigned len);
 

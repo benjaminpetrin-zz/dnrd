@@ -56,6 +56,39 @@ static dnsquery *     head = 0;
 static dnsquery *     tail = 0;
 static unsigned short qidcount = 0;
 
+#define QID_POOL_SIZE 65536
+
+static unsigned short int qid_pool[QID_POOL_SIZE];
+static int pool_ptr = QID_POOL_SIZE - 1;
+
+int myrand(int max) {
+  return (int)((float)max * rand() / (RAND_MAX+1.0));
+}
+
+void qid_init_pool(void) {
+  int i;
+  for (i=0; i<QID_POOL_SIZE; i++)
+    qid_pool[i] = i;
+  srand(time(0));
+}
+
+unsigned short int qid_get(void) {
+  unsigned short int t;
+  int i = myrand(pool_ptr+1);
+  if (pool_ptr == 0)
+    log_debug("return_qid: qid pool is empty.");
+  t = qid_pool[i];
+  /* shrink the pool */
+  qid_pool[i] = qid_pool[pool_ptr-- % QID_POOL_SIZE];
+  return(t);
+}
+
+unsigned short int qid_return(unsigned short int qid) {
+  if ((pool_ptr+1) == QID_POOL_SIZE) 
+    log_debug("return_qid: qid pool is already full.");
+  return (qid_pool[++pool_ptr % QID_POOL_SIZE] = qid);
+}
+
 /*
  * dnsquery_add() - add a DNS query to our list.
  *
@@ -89,7 +122,7 @@ int dnsquery_add(const struct sockaddr_in* client, char* msg, unsigned len)
 
     /* Create the new dnsquery entry */
     query = (dnsquery*)allocate(sizeof(dnsquery));
-    query->local_qid = htons(qidcount++);
+    query->local_qid = htons(qid_get());
     query->client_qid = client_qid;
     query->next = 0;
     memcpy(&(query->client), client, sizeof(struct sockaddr_in));
@@ -131,6 +164,8 @@ int dnsquery_find(char* reply, struct sockaddr_in* client)
 	if (qid == ptr->local_qid) {
 	    memcpy(client, &(ptr->client), sizeof(struct sockaddr_in));
 	    memcpy(reply, &(ptr->client_qid), 2);
+	    /* return the qid number to the qid pool */
+	    qid_return(ntohs(ptr->local_qid));
 	    last ? (last->next = ptr->next) : (head = ptr->next);
 	    if (tail == ptr) tail = last;
 	    free(ptr);
@@ -160,6 +195,8 @@ int dnsquery_timeout(time_t age)
     tval = time(0) - age;
 
     for (ptr = head; (ptr != 0) && (ptr->recvtime < tval); ptr = head) {
+      /* return the qid number to the qid pool */
+      qid_return(ntohs(ptr->local_qid));
 	head = ptr->next;
 	if (tail == ptr) tail = 0;
 	free(ptr);

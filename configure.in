@@ -1,9 +1,9 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(dnrd, [2.15], [dnrd-user@lists.sourceforge.net])
+AC_INIT(dnrd, [2.16_pre1], [dnrd-user@lists.sourceforge.net])
 AC_CANONICAL_SYSTEM
 
 AM_CONFIG_HEADER(src/config.h)
-AM_INIT_AUTOMAKE(dnrd,2.15)
+AM_INIT_AUTOMAKE(dnrd,2.16_pre1)
 
 dnl Checks for programs.
 AC_PROG_CC
