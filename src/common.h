@@ -34,6 +34,10 @@
 #define CHROOT_PATH "/etc/dnrd"
 #endif 
 
+#ifndef CONFIG_FILE
+#define CONFIG_FILE "dnrd.conf"
+#endif
+
 /* Set the default timeout value for select in seconds */
 #ifndef SELECT_TIMEOUT
 #define SELECT_TIMEOUT 1
@@ -84,6 +88,7 @@ extern char		   master_param[200];
 extern sem_t               dnrd_sem;  /* Used for all thread synchronization */
 
 extern char                chroot_path[512];
+extern char                config_file[];
 extern domnode_t           *domain_list;
 
 extern int                 reactivate_interval;
