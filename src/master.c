@@ -43,7 +43,8 @@
 #include "lib.h"
 #include "master.h"
 
-#define	MASTER_CONFIG		DNRD_ROOT "/master"
+#define	MASTER_CONFIG		"master"
+#define MASTER_BLACKLIST        "blacklist"
 #define	PACKET_ASSEMBLYSIZE	600
 #define	ARPADOMAIN		".in-addr.arpa"
 
@@ -93,7 +94,8 @@ unsigned char master_reload	= 0;
 
 static int master_onoff		= 1;
 static int master_initialised	= 0;
-static char config[200]		= MASTER_CONFIG;
+static char config[]		= DNRD_ROOT "/" MASTER_CONFIG;
+static char blacklist[]         = DNRD_ROOT "/" MASTER_BLACKLIST;
 
 static int auto_authority	= 1;
 
@@ -695,6 +697,30 @@ static int compile_dnsrecords(dnsheader_t *x, char *object)
 }
 
 
+/* 
+ * read_blaclist()
+ *
+ * Reads the blacklist and adds authorities for all the blacklisted hosts.
+ */
+int read_blacklist(const char *filename) {
+  FILE *f;
+  static char buf[256];
+
+  if ( (f=fopen(filename, "r")) == NULL) {
+    log_debug(1, "no blacklist: %s", filename);
+    return (1);
+  }
+  log_msg(LOG_NOTICE, "Reading blacklist %s", filename);
+  while (fgets(buf, sizeof(buf), f) != NULL) {
+    char *p=strchr(buf, '#');
+    if (p != NULL) *p='\0'; /* ignore comments */
+    if ((p = strchr(buf, '\r')) != NULL) *p='\0'; /* so we can read dos files*/
+    if ((p = strchr(buf, '\n')) != NULL) *p='\0';
+    if (buf[0]) add_authority(buf, sizeof(buf));
+  } 
+}
+
+
 /*
  * master_init()
  *
@@ -711,6 +737,8 @@ static int _master_init(void)
     add_dns("0.0.127.in-addr.arpa", sizeof("0.0.127.in-addr.arpa"),
 	    "localhost", sizeof("localhost"));
     
+    read_blacklist(blacklist);
+		       
     if ((strcmp(master_param, "hosts") == 0) ||
 	(read_configuration(config) != 0)) {
 	char	domain[80];
@@ -979,7 +1007,6 @@ int master_dontknow(unsigned char *msg, int len, unsigned char *answer)
     return (x->len);
 }
 
-
 /*
  * master_reinit()
  *
@@ -1028,7 +1055,8 @@ int master_init(void)
      * the path of our config file so that future re-reads will continue to
      * work.
      */
-    strcpy(config, "master");
+    strcpy(config, MASTER_CONFIG);
+    strcpy(blacklist, MASTER_BLACKLIST);
 
     return (0);
 }
