@@ -1,3 +1,13 @@
+version 2.14
+------------
+Natanael Copa <n@tanael.org>
+ - Fixed memory heap corrution bug, causing dnrd crash on debian stable.
+ - Fixed bugs related to deactivating forward servers.
+ - Added timeout/retry tuning options (-r/--retry and -t/--timeout)
+ - Added "ignore cache for inactive servers" (-i/--ignore)
+ - Cleaned up code so dnrd compile without warnings.
+ - Possibility to exclude the master lookups during compile (-DEXCLUDE_MASTER)
+	
 version 2.13
 ------------
 Natanael Copa <n@tanael.org>
@@ -9,7 +19,7 @@ version 2.12
 ------------
 Natanael Copa <n@tanael.org>
  - Fixed buffer overflow.
- - Removied unused code that caused memory leak in 2.10
+ - Removed unused code that caused memory leak in 2.10
 
 version 2.11
 ------------
