@@ -1,6 +1,16 @@
+version 2.17.2
+--------------
+Natanael Copa <n@tanael.org>
+ - Fix a random buffer overflow.
+	
+version 2.17.1
+--------------
+Natanael Copa <n@tanael.org>
+ - Fix build on FreeBSD
+	
 version 2.17
 ------------
-Natanael Copa
+Natanael Copa <n@tanael.org>
  - Complete rewrite of query.c. Now dnrd uses one socket pr query
  - Random source ports by default
  - Added -M/--max-sock option for tuning maximum open sockets.

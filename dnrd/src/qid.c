@@ -41,7 +41,7 @@ void qid_init_pool(void) {
 
 unsigned short int qid_get(void) {
   unsigned short int t;
-  int i = myrand(pool_ptr+1);
+  int i = myrand(pool_ptr) % QID_POOL_SIZE;
   /*
   if (pool_ptr == 0)
   log_debug("return_qid: qid pool is empty.");*/
