@@ -36,7 +36,7 @@
 
 /* Set the default timeout value for select in seconds */
 #ifndef SELECT_TIMEOUT
-#define SELECT_TIMEOUT 2
+#define SELECT_TIMEOUT 1
 #endif
 
 /* Set the default timeout value for forward DNS. If we get no
@@ -46,13 +46,13 @@
  * should be >= SELECT_TIMEOUT
  */
 #ifndef FORWARD_TIMEOUT
-#define FORWARD_TIMEOUT 5
+#define FORWARD_TIMEOUT 3
 #endif
 
 /* only check if any server are to be reactivated every
  * REACTIVATE_INTERVAL seconds
  */
-#define REACTIVATE_INTERVAL 10
+#define REACTIVATE_INTERVAL 5
 
 struct dnssrv_t {
   int                    sock;      /* for communication with server */
