@@ -34,8 +34,12 @@
 #include "common.h"
 #include "tcp.h"
 #include "udp.h"
-#include "master.h"
 #include "dns.h"
+#include "domnode.h"
+
+#ifndef EXCLUDE_MASTER
+#include "master.h"
+#endif
 
 /* time interval to retry a deactivated server */
 #define SINGLE_RETRY 10
@@ -100,12 +104,14 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
     }
 
    
+#ifndef EXCLUDE_MASTER
     /* First, check to see if we are master server */
     if ((replylen = master_lookup(msg, *len)) > 0) {
 	log_debug("Replying to query as master");
 	*len = replylen;
 	return 0;
     }
+#endif
 
     /* Next, see if we have the answer cached */
     if ((replylen = cache_lookup(msg, *len)) > 0) {
@@ -152,7 +158,7 @@ static void reactivate_servers(int interval) {
   time_t now=time(NULL);
   static int last_try = 0;
   domnode_t *d = domain_list;
-  srvnode_t *s;
+  /*  srvnode_t *s;*/
   
   if (!last_try) last_try = now;
   /* check for reactivate servers */
@@ -183,7 +189,7 @@ void run()
     fd_set             fdmask;
     fd_set             fds;
     int                retn;
-    int                i, j;
+    /*    int                i, j;*/
     domnode_t *d = domain_list;
     srvnode_t *s;
 
@@ -215,8 +221,10 @@ void run()
 	/* Expire lookups from the cache */
 	cache_expire();
 
+#ifndef EXCLUDE_MASTER
 	/* Reload the master database if neccessary */
 	master_reinit();
+#endif
 
 	/* Remove old unanswered queries */
 	dnsquery_timeout(60);
@@ -236,7 +244,7 @@ void run()
 	/* Check for replies to DNS queries */
 	d=domain_list;
 	do {
-	  if (s=d->srvlist) {
+	  if ((s=d->srvlist)) {
 	    while ((s=s->next) != d->srvlist)
 	      if (FD_ISSET(s->sock, &fds)) handle_udpreply(s);
 	  }

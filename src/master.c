@@ -20,6 +20,7 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 */
+#ifndef EXCLUDE_MASTER
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -35,10 +36,13 @@
 
 #include "common.h"
 #include "dns.h"
-#include "master.h"
 #include "lib.h"
 
+#ifndef EXCLUDE_MASTER
+#include "master.h"
 #define	MASTER_CONFIG		CHROOT_PATH "/master"
+#endif
+
 #define	PACKET_ASSEMBLYSIZE	600
 
 
@@ -1029,3 +1033,4 @@ int master_init(void)
     return (0);
 }
 
+#endif

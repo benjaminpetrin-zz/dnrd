@@ -51,7 +51,9 @@ static struct option long_options[] =
     {"help",         0, 0, 'h'},
     {"kill",         0, 0, 'k'},
     {"log",          0, 0, 'l'},
+#ifndef EXCLUDE_MASTER
     {"master",       1, 0, 'm'},
+#endif
     {"server",       1, 0, 's'},
     {"uid",          1, 0, 'u'},
     {"version",      0, 0, 'v'},
@@ -60,7 +62,11 @@ static struct option long_options[] =
 };
 #endif /* __GNU_LIBRARY__ */
 
+#ifndef EXCLUDE_MASTER
 const char short_options[] = "a:bc:dhklm:s:u:v";
+#else
+const char short_options[] = "a:bc:dhkl:s:u:v";
+#endif
 
 /*
  * give_help()
@@ -83,7 +89,9 @@ static void give_help()
     printf("    -h, --help                Print this message, then exit.\n");
     printf("    -k, --kill                Kill a running daemon.\n");
     printf("    -l, --log                 Send all messages to syslog.\n");
+#ifndef EXCLUDE_MASTER
     printf("    -m, --master=MASTERMODE\n");
+#endif
     printf("    -s, --server=IPADDR(:domain)\n"
 	   "                              "
 	   "Set the DNS server.  You can specify an\n"
@@ -129,7 +137,7 @@ int parse_args(int argc, char **argv)
 {
   static int load_balance = 0;
     int c;
-    int gotdomain = 0;
+    /*    int gotdomain = 0;*/
 
     progname = strrchr(argv[0], '/');
     if (!progname) progname = argv[0];
@@ -178,10 +186,12 @@ int parse_args(int argc, char **argv)
 	      gotterminal = 0;
 	      break;
 	  }
+#ifndef EXCLUDE_MASTER
 	  case 'm': {
 	      copy_string(master_param, optarg, sizeof(master_param));
 	      break;
 	  }
+#endif
 	  case 's': {
 	    domnode_t *p;
 	    char *s,*sep = strchr(optarg, (int)':');
@@ -189,13 +199,12 @@ int parse_args(int argc, char **argv)
 	    if (sep) { /* is a domain specified? */
 	      s = make_cname(strnlwr(sep+1,200),200);
 	      *sep = 0;
-	      if (!(p=search_domnode(domain_list, s))) {
+	      if ( (p=search_domnode(domain_list, s)) == NULL) {
 		p=add_domain(domain_list, load_balance, s, 200);
 		log_debug("Added domain %s %s load balancing", sep+1, 
 			  load_balance ? "with" : "without");
 	      }
 	    } else p=domain_list;
-
 	    if (!add_srv(last_srvnode(p->srvlist), optarg)) {
 	      log_msg(LOG_ERR, "%s: Bad ip address \"%s\"\n",
 		      progname, optarg);

@@ -39,6 +39,7 @@
 #include "relay.h"
 #include "cache.h"
 #include "pthread.h"
+#include "lib.h"
 
 
 typedef struct tcp_handle_info {
@@ -103,7 +104,6 @@ static void *tcp_handler(void *dummy)
     struct timeval     tov;
     fd_set	       connection, available;
     unsigned short     tcpsize;
-    int                i;
     int	               connect = arg->connect;
     struct sockaddr_in client  = arg->client;
     domnode_t *d =domain_list;
@@ -112,7 +112,7 @@ static void *tcp_handler(void *dummy)
     free(arg);
     
     do {
-      if (s=d->srvlist)
+      if ((s=d->srvlist))
 	while ((s=s->next) != d->srvlist) s->tcp = -1;
     } while ((d=d->next) != domain_list);
     /*
@@ -163,7 +163,7 @@ static void *tcp_handler(void *dummy)
 */
 	d=domain_list;
 	do {
-	  if (s=d->srvlist) 
+	  if ((s=d->srvlist)) 
 	    while ((s=s->next) != d->srvlist) {
 	      if (s->tcp == -1) continue;
 	      if (FD_ISSET(s->tcp, &available)) {
@@ -259,7 +259,7 @@ static void *tcp_handler(void *dummy)
     */
     d=domain_list;
     do {
-      if (s=d->srvlist)
+      if ((s=d->srvlist))
 	while ((s=s->next) != d->srvlist) 
 	  if (s->tcp != -1) close(s->tcp);
     } while ((d=d->next) != domain_list);
@@ -282,7 +282,7 @@ void handle_tcprequest()
     tcp_handle_t *arg;
     pthread_t t;
 
-    arg = (tcp_handle_t *)malloc(sizeof(tcp_handle_t));
+    arg = (tcp_handle_t *)allocate(sizeof(tcp_handle_t));
     arg->len = sizeof(arg->client);
 
     arg->connect = accept(tcpsock, (struct sockaddr *) &(arg->client), 

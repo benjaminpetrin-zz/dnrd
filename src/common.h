@@ -62,15 +62,6 @@ struct dnssrv_t {
   
 };
 
-/*
-typedef struct _dnsdomain {
-  int                 sock[MAX_SERV];
-  struct sockaddr_in  addr[MAX_SERV];
-  char* domain;
-  int current;
-  int count;
-} dnsdomain_t;
-*/
 
 extern const char*         version;   /* the version number for this program */
 extern const char*         progname;  /* the name of this program */

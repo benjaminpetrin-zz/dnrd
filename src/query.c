@@ -34,6 +34,7 @@
 #endif /* DEBUG */
 #include "query.h"
 #include "common.h"
+#include "lib.h"
 
 /*
  * This is the data structure used to store DNS queries that haven't been
@@ -87,7 +88,7 @@ int dnsquery_add(const struct sockaddr_in* client, char* msg, unsigned len)
     }
 
     /* Create the new dnsquery entry */
-    query = (dnsquery*)malloc(sizeof(dnsquery));
+    query = (dnsquery*)allocate(sizeof(dnsquery));
     query->local_qid = htons(qidcount++);
     query->client_qid = client_qid;
     query->next = 0;

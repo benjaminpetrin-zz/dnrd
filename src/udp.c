@@ -24,11 +24,15 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <assert.h>
 #include "common.h"
 #include "relay.h"
 #include "cache.h"
 #include "query.h"
+
+#ifndef EXCLUDE_MASTER
 #include "master.h"
+#endif
 
 /*
  * dnssend()						22OCT99wzk
@@ -69,7 +73,6 @@ void handle_udprequest()
     char               msg[maxsize+4];/* Do we really want this on the stack?*/
     struct sockaddr_in from_addr;
     int                fwd;
-    int	               i, thisdns, processed;
     domnode_t          *dptr;
 
     /* Read in the message */
@@ -107,6 +110,7 @@ void handle_udprequest()
       deactivate_current(dptr);
     }
 
+#ifndef EXCLUDE_MASTER
     if (dptr->current == NULL) {
 	int	packetlen;
 	char	packet[maxsize+4];
@@ -135,6 +139,8 @@ void handle_udprequest()
 	    }
 	}
     }
+#endif
+
 }
 
 /*
@@ -245,10 +251,10 @@ int send_dummy(srvnode_t *s) {
   };
   
   /* send the packet */
-  if (s == NULL) {
-    /* should not happen */
-    return;
-  }
+
+  /* should not happen */
+  assert(s != NULL);
+
   log_debug("Sending dummy id=%i",  (unsigned short int) dnsbuf[0]++ );
   return dnssend(s, &dnsbuf, sizeof(dnsbuf));
 }

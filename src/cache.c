@@ -111,8 +111,7 @@ static cache_t *create_cx(dnsheader_t *x, rr_t *query)
 {
     cache_t	*cx;
 
-    cx = malloc(sizeof(cache_t));
-    memset(cx, 0, sizeof(cache_t));
+    cx = allocate(sizeof(cache_t));
 
     cx->name = strdup(query->name);
     cx->code = get_stringcode(cx->name);
@@ -233,7 +232,7 @@ int cache_dnspacket(void *packet, int len)
 int cache_lookup(void *packet, int len)
 {
     unsigned int code;
-    dnsheader_t *x;
+    /*    dnsheader_t *x;*/
     rr_t	query;
     cache_t	*cx = NULL;
 

@@ -28,8 +28,6 @@
 /* The main loop */
 void run();
 
-static srvnode_t *server_switch(domnode_t *p);
-
 /* Determine what to do with a DNS request */
 int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len, domnode_t **dptr);
 

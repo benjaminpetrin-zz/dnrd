@@ -22,6 +22,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#define _GNU_SOURCE
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
@@ -36,12 +37,10 @@
 void *allocate(size_t size)
 {
     void	*p;
-
     if ((p = malloc(size)) == NULL) {
 	log_msg(LOG_ALERT, "memory allocation error");
 	exit (1);
     }
-
     memset(p, 0, size);
     return (p);
 }

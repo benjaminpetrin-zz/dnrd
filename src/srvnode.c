@@ -24,8 +24,16 @@
 
 #include <stdlib.h>
 #include <sys/types.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <string.h>
+#include <assert.h>
+
 #include "srvnode.h"
 #include "lib.h"
+#include "common.h"
 
 srvnode_t *alloc_srvnode(void) {
   srvnode_t *p = allocate(sizeof(srvnode_t));
@@ -52,6 +60,7 @@ srvnode_t *init_srvlist(void) {
  * returns the new node
  */
 srvnode_t *ins_srvnode (srvnode_t *list, srvnode_t *p) {
+  assert(list!=NULL);
   p->next = list->next;
   list->next = p;
   return p;
@@ -61,6 +70,7 @@ srvnode_t *ins_srvnode (srvnode_t *list, srvnode_t *p) {
  * returns the deleted node 
  */
 srvnode_t *del_srvnode_after(srvnode_t *list) {
+  assert(list!=NULL);
   srvnode_t *p = list->next;
   list->next = p->next;
   return p;
@@ -82,6 +92,7 @@ srvnode_t *clear_srvlist(srvnode_t *head) {
   while (p->next != head) {
     destroy_srvnode(del_srvnode_after(p));
   }
+  return (head);
 }
 
 /* destroys the server list, including the head */
@@ -92,28 +103,29 @@ srvnode_t *destroy_srvlist(srvnode_t *head) {
 }
 
 
-/* add a server. If head==NULL, return a new list */
-srvnode_t *add_srv(srvnode_t *head, char *ipaddr) {
+/* add a server.*/
+srvnode_t *add_srv(srvnode_t *head, const char *ipaddr) {
   srvnode_t *p;
   struct sockaddr_in addr;
 
+  /* head should never be NULL. a new list is allocated with newdomnode */
+  assert(head != NULL);
   if (!inet_aton(ipaddr, &addr.sin_addr)) {
     return NULL;
   }
   p = alloc_srvnode();
   memcpy(&p->addr.sin_addr, &addr.sin_addr, sizeof(p->addr.sin_addr));
   p->inactive = 0;
-  if (head) {
-    ins_srvnode(head, p);
-  }
+  ins_srvnode(head, p);
   return p;
 }
 
 /* returns the last srvnode in the list */
 srvnode_t *last_srvnode(srvnode_t *head) {
   srvnode_t *p = head;
-  if (p)
-    while (p->next != head) p = p->next;
+  /* head should always be != NULL */
+  assert(p != NULL);
+  while (p->next != head) p = p->next;
   return p;
 }
 

@@ -21,9 +21,17 @@
 */
 
 #include <stdlib.h>
-#include "domnode.h"
+#include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <time.h>
+#include <assert.h>
+
 #include "lib.h"
 #include "common.h"
+#include "udp.h"
+#include "domnode.h"
 
 /* Allocate a domain node */
 domnode_t *alloc_domnode(void) {
@@ -82,6 +90,7 @@ domnode_t *empty_domlist(domnode_t *head) {
   while (p->next != head) {
     destroy_domnode(del_domnode(p));
   }
+  return (head);
 }
 
 /* destroys the domain list, including the head */
@@ -93,19 +102,12 @@ domnode_t *destroy_domlist(domnode_t *head) {
 
 
 /* add a domain */
+/* note: cname must be allocated! */
 domnode_t *add_domain(domnode_t *list, const int load_balance, 
-		      char *name, const int maxlen) {
+		      char *cname, const int maxlen) {
   domnode_t *p;
-  char *cname;
   p = alloc_domnode();
-  /* in case the domain is NULL */ 
-  if (name) {
-    /* allocate strnlen +1 incase there is no ending \0 */
-    p->domain = allocate(strnlen(name, maxlen)+2);
-    strncpy(p->domain, name, maxlen);
-  } else {
-    p->domain = NULL;
-  }
+  p->domain = cname;
   p->roundrobin = load_balance;
   ins_domnode(list, p);
   return p;
@@ -192,44 +194,26 @@ srvnode_t *deactivate_current(domnode_t *d) {
 
 
 /* reactivate all dns servers */
-srvnode_t *reactivate_srvlist(domnode_t *d) {
-  time_t now = time(NULL);
+void reactivate_srvlist(domnode_t *d) {
   srvnode_t *s;
-  if (!d) return (NULL);
+  assert(!d); /* should never be called with NULL */ 
   s = d->srvlist;
   while ((s = s->next) && (s != d->srvlist)) {
     s->inactive = 0;
     s->send_time = 0;
   }
-  
 }
 
 /* reactivate servers that have been inactive for delay seconds */
-srvnode_t *retry_srvlist(domnode_t *d, const int delay) {
+void retry_srvlist(domnode_t *d, const int delay) {
   time_t now = time(NULL);
   srvnode_t *s;
-  if (!d) return (NULL);
+  assert(!d); /* should never happen */
   s = d->srvlist;
   while ((s = s->next) && (s != d->srvlist))
     if (s->inactive && (now - s->inactive) > delay ) {
       s->inactive=now;
       send_dummy(s);
-      /*
-      s->send_time = 0;
-      s->inactive = 0;
-      log_debug("Reactivating server %s",
-		inet_ntoa(s->addr.sin_addr));
-      if (d->current == NULL)  set_current(d, s);
-      */
     }
 }
 
-#ifdef DEBUG
-/*
-void dump_domlist(domnode_t *head) {
-  domnode_t *p=head;
-
-  do
-    }
-*/
-#endif

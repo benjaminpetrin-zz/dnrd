@@ -46,7 +46,7 @@ srvnode_t *del_srvnode_after(srvnode_t *list);
 srvnode_t *destroy_srvnode(srvnode_t *p);
 srvnode_t *clear_srvlist(srvnode_t *head);
 srvnode_t *destroy_srvlist(srvnode_t *head);
-srvnode_t *add_srv(srvnode_t *head, char *ipaddr);
+srvnode_t *add_srv(srvnode_t *head, const char *ipaddr);
 srvnode_t *last_srvnode(srvnode_t *head);
 int no_srvlist(srvnode_t *head);
 
