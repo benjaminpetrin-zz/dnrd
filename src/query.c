@@ -39,9 +39,10 @@
 
 query_t qlist; /* the active query list */
 static query_t *qlist_tail;
+static unsigned long total_queries=0;
+static unsigned long total_timeouts=0;
 
-
-int max_sockets = 30;
+int max_sockets = 200;
 int upstream_sockets = 0; /* number of upstream sockets */
 
 static int dropping = 0; /* dropping new packets */
@@ -122,6 +123,7 @@ query_t *query_destroy(query_t *q) {
   close(q->sock);
 
   upstream_sockets--;
+  total_queries++;
   free(q);
   return NULL;
 }
@@ -220,6 +222,7 @@ void query_timeout(time_t age) {
     }
   }
   if (count) log_debug(1, "query_timeout: removed %d entries", count);
+  total_timeouts += count;
 }
 
 int query_count(void) {
@@ -238,7 +241,8 @@ int query_count(void) {
 void query_dump_list(void) {
   query_t *p;
   for (p=&qlist; p->next != &qlist; p=p->next) {
-    log_debug(1, "myqid=%i, client_qid=%i", p->next->my_qid, 
+    log_debug(2, "srv=%s, myqid=%i, client_qid=%i", 
+	      inet_ntoa(p->next->srv->addr.sin_addr), p->next->my_qid, 
 	      p->next->client_qid);
   }
 }
@@ -250,8 +254,9 @@ void query_stats(time_t interval) {
   static time_t last=0;
   if (last + interval < now) {
     last = now;
-    log_debug(1, "Open sockets: %i, active queries: %i", upstream_sockets, 
-	      (count=query_count()));
+    log_debug(1, "Open sockets: %i, active: %i, count: %i, timeouts: %i", 
+	      upstream_sockets, count=query_count(), total_queries, 
+	      total_timeouts);
     if (count) query_dump_list();
   }
   
