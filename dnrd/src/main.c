@@ -19,13 +19,6 @@
  */
 
 #include <sys/types.h>
-#include "relay.h"
-#include "cache.h"
-#include "common.h"
-#include "args.h"
-#include "sig.h"
-#include "master.h"
-#include "domnode.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -41,6 +34,15 @@
 #include <pwd.h>
 #include <dirent.h>
 
+#include "relay.h"
+#include "cache.h"
+#include "common.h"
+#include "args.h"
+#include "sig.h"
+#include "master.h"
+#include "domnode.h"
+#include "lib.h"
+
 /*
  * main() - startup the program.
  *
@@ -55,7 +57,7 @@
  */
 int main(int argc, char *argv[])
 {
-    int                i;
+  /*    int                i;*/
     FILE              *filep;
     struct servent    *servent;   /* Let's be good and find the port numbers
 				     the right way */
@@ -179,8 +181,10 @@ int main(int argc, char *argv[])
     /* Initialise our cache */
     cache_init();
 
+#ifndef EXCLUDE_MASTER
     /* Initialise out master DNS */
     master_init();
+#endif
 
     pwent = getpwnam("nobody");
 

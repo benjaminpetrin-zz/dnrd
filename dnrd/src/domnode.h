@@ -50,11 +50,13 @@ domnode_t *search_domnode(domnode_t *head, const char *name);
 domnode_t *search_subdomnode(domnode_t *head, const char *name, 
 			     const int maxlen);
 
+srvnode_t *set_current(domnode_t *d, srvnode_t *s);
+
 srvnode_t *next_active(domnode_t *d);
 srvnode_t *deactivate_current(domnode_t *d);
 
-srvnode_t *reactivate_srvlist(domnode_t *d);
-srvnode_t *retry_srvlist(domnode_t *d, const int delay);
+void reactivate_srvlist(domnode_t *d);
+void retry_srvlist(domnode_t *d, const int delay);
 
 
 

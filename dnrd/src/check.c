@@ -48,5 +48,5 @@
  */
 
 static int valid_dnspacket(int len, void *msg) {
-  
+  return 0;
 }

@@ -77,11 +77,16 @@ domnode_t *domain_list;
  * which means we listen on all local addresses.  Both the address and
  * the port can be changed through command-line options.
  */
+/*
 #if defined(__sun__)
 struct sockaddr_in recv_addr = { AF_INET, 53, { { {0, 0, 0, 0} } } };
 #else
 struct sockaddr_in recv_addr = { AF_INET, 53, { INADDR_ANY } };
 #endif
+*/
+
+/* init recv_addr in main.c instead of here */ 
+struct sockaddr_in recv_addr;
 
 /* check if a pid is running 
  * from the unix faq
@@ -228,7 +233,7 @@ void log_debug(const char *fmt, ...)
  */
 void cleanexit(int status)
 {
-    int i;
+  /*    int i;*/
 
     /* Only let one process run this code) */
     sem_wait(&dnrd_sem);
@@ -260,10 +265,14 @@ void cleanexit(int status)
  */
 char* make_cname(const char *text, const int maxlen)
 {
+  /* this kind of code can easily contain buffer overflow. 
+     I have checked it and double checked it so I believe it does not.
+     Natanael */
     const char *tptr = text;
     const char *end = text;
-    char *cname = (char*)malloc(strnlen(text, maxlen) + 2);
+    char *cname = (char*)allocate(strnlen(text, maxlen) + 2);
     char *cptr = cname;
+
     while (*end != 0) {
 	size_t diff;
 	end = strchr(tptr, '.');
@@ -282,6 +291,8 @@ char* make_cname(const char *text, const int maxlen)
     assert((unsigned)(cptr - cname) == strnlen(text, maxlen) + 1);
     return cname;
 }
+
+
 
 void sprintf_cname(const char *cname, int namesize, char *buf, int bufsize)
 {

@@ -41,12 +41,12 @@ static int get_objectname(unsigned char *msg, unsigned const char *limit,
 			  int k);
 */
 
+/*
 static int get_objname(unsigned char buf[], const int bufsize, int *here,
 		      char name[], const int namelen) {
-  int count=1000;
   if (*here > bufsize) return 0;
-  
 }
+*/
 
 int free_packet(dnsheader_t *x)
 {
@@ -59,10 +59,10 @@ static dnsheader_t *alloc_packet(void *packet, int len)
 {
     dnsheader_t *x;
 
-    x = malloc(sizeof(dnsheader_t));
-    memset(x, 0, sizeof(dnsheader_t));
+    x = allocate(sizeof(dnsheader_t));
+    /*    memset(x, 0, sizeof(dnsheader_t));*/
 
-    x->packet = malloc(len + 2);
+    x->packet = allocate(len + 2);
     x->len    = len;
     memcpy(x->packet, packet, len);
 
