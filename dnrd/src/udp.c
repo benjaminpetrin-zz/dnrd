@@ -18,17 +18,17 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "common.h"
-#include "relay.h"
-#include "cache.h"
-#include "query.h"
-#include "master.h"
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include "common.h"
+#include "relay.h"
+#include "cache.h"
+#include "query.h"
+#include "master.h"
 
 /*
  * dnssend()						22OCT99wzk

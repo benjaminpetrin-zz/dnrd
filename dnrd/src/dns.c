@@ -376,11 +376,13 @@ unsigned char *parse_query(rr_t *y, unsigned char *msg, int len)
       return(0);
     }
 
+    /*
     if (ntohs(((dnsheader_t *)msg)->u) & MASK_QR ) {
       log_debug("QR bit set. This is a reponse?");
       return(0);
     }
-    
+    */
+
     y->flags = ntohs(((short int *) msg)[1]);
 
     here = &msg[PACKET_DATABEGIN];

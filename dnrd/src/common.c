@@ -18,8 +18,9 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "config.h"
-#include "common.h"
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include <stdarg.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -31,6 +32,8 @@
 #include <assert.h>
 #include <string.h>
 #include <errno.h>
+#include "common.h"
+#include "lib.h"
 
 #ifdef DEBUG
 #define OPT_DEBUG 1
@@ -56,7 +59,7 @@ int                 serv_act = 0;
 int                 serv_cnt = 0;
 uid_t               daemonuid = 0;
 gid_t               daemongid = 0;
-const char*         version = PACKAGE_VERSION;
+const char*         version = VERSION;
 int                 gotterminal = 1; /* 1 if attached to a terminal */
 sem_t               dnrd_sem;  /* Used for all thread synchronization */
 
@@ -70,6 +73,40 @@ struct sockaddr_in recv_addr = { AF_INET, 53, { { {0, 0, 0, 0} } } };
 #else
 struct sockaddr_in recv_addr = { AF_INET, 53, { INADDR_ANY } };
 #endif
+
+
+/* check if a pid is running 
+ * from the unix faq
+ * http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC18
+ */
+
+int isrunning(int pid) {
+  if (kill(pid, 0) ) {
+    if (errno==EPERM) { 
+      return 1;
+    } else return 0;
+  } else {
+    return 1;
+  }
+}
+
+/* wait_for_exit()
+ *
+ * In: pid     - the process id to wait for
+ *     timeout - maximum time to wait in 1/100 secs
+ *
+ * Returns: 1 if it died in before timeout
+ *
+ * Abstract: Check if a process is running and wait til it does not
+ */
+int wait_for_exit(int pid, int timeout) {
+  while (timeout--) {
+    if (! isrunning(pid)) return 1;
+    usleep(10000);
+  }
+  /* ouch... we timed out */
+  return 0;
+}
 
 /*
  * kill_current()
@@ -96,6 +133,10 @@ int kill_current()
     if ((retn = (fscanf(filep, "%i%*s", &pid) == 1))) {
 	if (kill(pid, SIGTERM)) {
 	    log_msg(LOG_ERR, "Couldn't kill dnrd: %s", strerror(errno));
+	}
+	/* dnrd gets 4 seconds to die or we give up */
+	if (!wait_for_exit(pid, 400)) {
+	  log_msg(LOG_ERR, "The dnrd process didn't die within 4 seconds");
 	}
     }
     fclose(filep);
@@ -231,12 +272,6 @@ char* make_cname(const char *text)
     return cname;
 }
 
-size_t _strnlen(const char *s, size_t maxlen) {
-  size_t len=0;
-  while (*s++ && len<maxlen) len++;
-  return (len);
-}
-
 void sprintf_cname(const char *cname, int namesize, char *buf, int bufsize)
 {
   const char *s = cname; /*source pointer */
@@ -244,7 +279,7 @@ void sprintf_cname(const char *cname, int namesize, char *buf, int bufsize)
 
   if (cname == NULL) return;
     
-  if ((_strnlen(cname, namesize)+1) > (unsigned)bufsize) {
+  if ((strnlen(cname, namesize)+1) > (unsigned)bufsize) {
     if (bufsize > 11) {
       sprintf(buf, "(too long)");
     }
