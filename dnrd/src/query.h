@@ -28,17 +28,15 @@
 #include <sys/types.h>
 #include <time.h>
 #include <netinet/in.h>
+#include "domnode.h"
 
 /*
  * These are function used for manipulating DNS queries.
  * Detailed descriptions of these functions appear in query.c
  */
 
-/* initialize the qid pool */
-void qid_init_pool(void);
-
 /* Add a DNS query to our list */
-int dnsquery_add(const struct sockaddr_in* client, char* msg, unsigned len);
+int dnsquery_add(domnode_t *d, const struct sockaddr_in* client, char* msg, unsigned len);
 
 /* Find the client to which this DNS reply should be sent */
 int dnsquery_find(char* reply, struct sockaddr_in* client);

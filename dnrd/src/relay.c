@@ -49,12 +49,23 @@
 
 /* prepare the dns packet for a not found reply */
 char *set_notfound(char *msg, const int len) {
-  if (len < 3) return NULL;
+  if (len < 4) return NULL;
   /* FIXME: host to network should be called here */
   /* Set flags QR and AA */
   msg[2] |= 0x84;
   /* Set flags RA and RCODE=3 */
   msg[3] = 0x83;
+  return msg;
+}
+
+/* prepare the dns packet for a Server Failure reply */
+char *set_srvfail(char *msg, const int len) {
+  if (len < 4) return NULL;
+  /* FIXME: host to network should be called here */
+  /* Set flags QR and AA */
+  msg[2] |= 0x84;
+  /* Set flags RA and RCODE=3 */
+  msg[3] = 0x82;
   return msg;
 }
 
@@ -136,26 +147,21 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
     /* Send to a server until it "times out". */
     if (d->current) {
       time_t now = time(NULL);
-      if ((d->current->send_time == 0)) {
-	d->current->send_time = now;
-      } 
-      else if (now - d->current->send_time > forward_timeout) {
+      if ((d->current->send_time != 0)
+	  && (now - d->current->send_time > forward_timeout)) {
 	deactivate_current(d);
       }
-      if (d->current) {
+    }
+
+    if (d->current) {
 	log_debug("Forwarding the query to DNS server %s",
 		  inet_ntoa(d->current->addr.sin_addr));
-      } else {
-	log_debug("All servers deactivated. Replying with \"entry not found\"");
-	if (!set_notfound(msg, *len)) return -1;
-	return 0;
-      }
-
     } else {
-	log_debug("All servers deactivated. Replying with \"entry not found\"");
-	if (!set_notfound(msg, *len)) return -1;
-	return 0;
+      log_debug("All servers deactivated. Replying with \"Server failure\"");
+      if (!set_srvfail(msg, *len)) return -1;
+      return 0;
     }
+
     *dptr = d;
     return 1;
 }
