@@ -70,8 +70,8 @@ srvnode_t *ins_srvnode (srvnode_t *list, srvnode_t *p) {
  * returns the deleted node 
  */
 srvnode_t *del_srvnode_after(srvnode_t *list) {
-  assert(list!=NULL);
   srvnode_t *p = list->next;
+  assert(list!=NULL);
   list->next = p->next;
   return p;
 }
