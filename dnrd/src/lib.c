@@ -56,27 +56,25 @@ void *reallocate(void *p, size_t size)
 }
 
 
-char *strlwr(char *string)
+char *strnlwr(char *string, const int maxlen)
 {
-    unsigned int c;
-    unsigned char *p;
+    int i;
 
-    p = string;
-    while ((c = *p) != 0) {
-	*p++ = tolower(c);
+    if (!string) return NULL;
+    for (i=0; (i<=maxlen) && (string[i] != 0); i++) {
+	string[i] = tolower(string[i]);
     }
 
     return (string);
 }	
 
-char *strupr(char *string)
+char *strnupr(char *string, const int maxlen)
 {
-    unsigned int c;
-    unsigned char *p;
+    int i;
 
-    p = string;
-    while ((c = *p) != 0) {
-	*p++ = toupper(c);
+    if (!string) return NULL;
+    for (i=0; (i<=maxlen) && string[i]; i++) {
+	string[i] = toupper(string[i]);
     }
 
     return (string);
@@ -94,7 +92,7 @@ char *skip_ws(char *string)
     return (string);
 }
 
-char *noctrl(char *buffer)
+char *noctrln(char *buffer, const int maxlen)
 {
     int	len, i;
     unsigned char *p;
@@ -103,7 +101,7 @@ char *noctrl(char *buffer)
 	return (NULL);
     }
 
-    len = strlen(p);
+    len = strnlen(p, maxlen);
     for (i=len-1; i>=0; i--) {
 	if (p[i] <= 32) {
 	    p[i] = '\0';
@@ -168,16 +166,16 @@ char *get_quoted(char **from, int delim, char *to, int max)
 
 char *copy_string(char *y, char *x, int len)
 {
-    x = skip_ws(x);
-    noctrl(x);
+    char *z = skip_ws(x);
+    noctrln(z, len - (x-z));
 
     len -= 2;
-    if (strlen(x) >= len) {
-	x[len] = 0;
+    if (strlen(z) >= len) {
+	z[len] = 0;
     }
 
-    if (y != x) {
-	strcpy(y, x);
+    if (y != z) {
+	strcpy(y, z);
     }
 	    
     return (y);

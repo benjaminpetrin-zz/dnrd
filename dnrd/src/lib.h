@@ -32,11 +32,11 @@ extern int verbose;
 void *allocate(size_t size);
 void *reallocate(void *p, size_t size);
 
-char *strlwr(char *string);
-char *strupr(char *string);
+char *strnlwr(char *string, const int maxlen);
+char *strnupr(char *string, const int maxlen);
 
 char *skip_ws(char *string);
-char *noctrl(char *buffer);
+char *noctrln(char *buffer, const int maxlen);
 char *get_word(char **from, char *to, int maxlen);
 char *get_quoted(char **from, int delim, char *to, int max);
 char *copy_string(char *y, char *x, int len);
