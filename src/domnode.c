@@ -141,6 +141,24 @@ domnode_t *search_subdomnode(domnode_t *head, const char *name,
   return head;
 }
 
+/* wrapper for setting current server */
+srvnode_t *set_current(domnode_t *d, srvnode_t *s) {
+  if (d == NULL) return NULL;
+  if (s) {
+    if (d->roundrobin) {
+      log_debug("Setting server %s for domain %s",
+		inet_ntoa(s->addr.sin_addr), cname2asc(d->domain));
+    } else {
+      log_msg(LOG_NOTICE, "Setting server %s for domain %s",
+		inet_ntoa(s->addr.sin_addr), cname2asc(d->domain));
+    }
+  } else 
+    log_msg(LOG_WARNING, "No active servers for domain %s", 
+	    cname2asc(d->domain));
+  return (d->current = s);
+}
+
+
 /* switch to next active server
    Returns: NULL - if there are no active servers in list
             the next active server otherwise
@@ -155,19 +173,7 @@ srvnode_t *next_active(domnode_t *d) {
   }
   for (s=start->next; s->inactive && s != start; s = s->next);
   if (s->inactive) s=NULL;
-    
-  if (s) {
-    if (d->roundrobin) {
-      log_debug("Setting server %s for domain %s",
-		inet_ntoa(s->addr.sin_addr), cname2asc(d->domain));
-    } else {
-      log_msg(LOG_NOTICE, "Setting server %s for domain %s",
-		inet_ntoa(s->addr.sin_addr), cname2asc(d->domain));
-    }
-  } else 
-    log_msg(LOG_WARNING, "No active servers for domain %s", 
-	    cname2asc(d->domain));
-  return (d->current = s);
+  return set_current(d, s);
 }
 
 /* deactivate current server
@@ -189,8 +195,11 @@ srvnode_t *reactivate_srvlist(domnode_t *d) {
   srvnode_t *s;
   if (!d) return (NULL);
   s = d->srvlist;
-  while ((s = s->next) && (s != d->srvlist))
+  while ((s = s->next) && (s != d->srvlist)) {
     s->inactive = 0;
+    s->send_time = 0;
+  }
+  
 }
 
 /* reactivate servers that have been inactive for delay seconds */
@@ -200,8 +209,18 @@ srvnode_t *retry_srvlist(domnode_t *d, const int delay) {
   if (!d) return (NULL);
   s = d->srvlist;
   while ((s = s->next) && (s != d->srvlist))
-    if (s->inactive && s->inactive + delay > now)
+    if (s->inactive && (now - s->inactive) > delay ) {
+      s->inactive=now;
+      send_dummy(s);
+      /*
+      s->send_time = 0;
       s->inactive = 0;
+      log_debug("Reactivating server %s",
+		inet_ntoa(s->addr.sin_addr));
+      if (d->current == NULL)  set_current(d, s);
+      */
+    }
+
 }
 
 #ifdef DEBUG

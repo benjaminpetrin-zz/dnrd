@@ -28,4 +28,8 @@ void handle_udprequest();
 /* Call this to handle upd DNS replies */
 void handle_udpreply(srvnode_t *srv);
 
+/* send a reactivation packet */
+int send_dummy(srvnode_t *s);
+
+
 #endif /* _DNRD_UDP_H_ */

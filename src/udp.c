@@ -197,18 +197,16 @@ void handle_udpreply(srvnode_t *srv)
 	log_debug("Received DNS reply for \"%s\"", buf);
     }
     if (len > 0) {
-      /* this server is obviously alive, we reset the counters */
-      srv->send_count = 0;
-      srv->send_time = 0;
 
       dump_dnspacket("reply", msg, len);
-      cache_dnspacket(msg, len);
-      log_debug("Forwarding the reply to the host");
       addr_len = sizeof(struct sockaddr_in);
       if (!dnsquery_find(msg, &from_addr)) {
-	log_debug("ERROR: couldn't find the original query");
+	if (!srv->inactive)
+	  log_debug("ERROR: couldn't find the original query");
       }
       else {
+	cache_dnspacket(msg, len);
+	log_debug("Forwarding the reply to the host");
 	if (sendto(isock, msg, len, 0,
 		   (const struct sockaddr *)&from_addr,
 		   addr_len) != len) {
@@ -216,5 +214,41 @@ void handle_udpreply(srvnode_t *srv)
 	}
 	
       }
+      
+      /* this server is obviously alive, we reset the counters */
+      srv->send_count = 0; /* this is not used anymore? */
+      srv->send_time = 0;
+      srv->inactive = 0;
     }
+}
+
+
+/* send a dummy packet to a deactivated server to check if its back*/
+int send_dummy(srvnode_t *s) {
+  static unsigned char dnsbuf[] = {
+  /* HEADER */
+
+    0x00, 0x00, /* ID */
+    0x00, 0x00, /* QR|OC|AA|TC|RD -  RA|Z|RCODE  */
+    0x00, 0x01, /* QDCOUNT */
+    0x00, 0x00, /* ANCOUNT */
+    0x00, 0x00, /* NSCOUNT */
+    0x00, 0x00, /* ARCOUNT */
+    
+    /* QNAME */
+    9, 'l','o','c','a','l','h','o','s','t',0,
+    /* QTYPE */
+    0x00,0x01,   /* A record */
+    
+    /* QCLASS */
+    0x00,0x01   /* IN */
+  };
+  
+  /* send the packet */
+  if (s == NULL) {
+    /* should not happen */
+    return;
+  }
+  log_debug("Sending dummy id=%i",  (unsigned short int) dnsbuf[0]++ );
+  return dnssend(s, &dnsbuf, sizeof(dnsbuf));
 }
