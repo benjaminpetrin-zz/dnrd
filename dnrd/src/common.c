@@ -56,6 +56,10 @@ const char*         pid_file = "/var/run/dnrd.pid";
 #endif
 int                 isock = -1;
 int                 tcpsock = -1;
+int                 select_timeout = SELECT_TIMEOUT;
+
+int                 forward_timeout = FORWARD_TIMEOUT;
+
 /*
 struct dnssrv_t     dns_srv[MAX_SERV];
 int                 serv_act = 0;
@@ -66,6 +70,7 @@ gid_t               daemongid = 0;
 const char*         version = PACKAGE_VERSION;
 int                 gotterminal = 1; /* 1 if attached to a terminal */
 sem_t               dnrd_sem;  /* Used for all thread synchronization */
+
 
 /* The path where we chroot. All config files are relative this path */
 char chroot_path[512] = CHROOT_PATH;
@@ -203,7 +208,7 @@ void log_msg(int type, const char *fmt, ...)
 void log_debug(const char *fmt, ...)
 {
     va_list ap;
-
+    
     if (!opt_debug) return;
 
     va_start(ap, fmt);
@@ -325,4 +330,17 @@ void sprintf_cname(const char *cname, int namesize, char *buf, int bufsize)
     }
     *d=0;
   }
+}
+
+/* convert cname to ascii and return a static buffer */
+char *cname2asc(const char *cname) {
+  static char buf[256];
+  /* Note: we don't really check the size of the incomming cname. but
+     according to RFC 1035 a name must not be bigger than 255 octets.
+   */
+  if (cname) 
+    sprintf_cname(cname, sizeof(buf), buf, sizeof(buf));
+  else
+    strncpy(buf, "(default)", sizeof(buf));
+  return buf;
 }
