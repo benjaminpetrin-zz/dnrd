@@ -236,7 +236,14 @@ void run()
 
     /* Handle errors */
     if (retn < 0) {
+	    if (errno == EINTR) {
+#ifndef EXCLUDE_MASTER
+    /* Reload the master database if neccessary */
+    master_reinit();
+#endif
+	    } else {
       log_msg(LOG_ERR, "select returned %s", strerror(errno));
+	    }
       continue;
     }
     else if (retn != 0) {
@@ -265,10 +272,6 @@ void run()
     
     /* Expire lookups from the cache */
     cache_expire();
-#ifndef EXCLUDE_MASTER
-    /* Reload the master database if neccessary */
-    master_reinit();
-#endif
     /* Remove old unanswered queries */
     query_timeout(20);
     
