@@ -20,11 +20,12 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 */
-#ifndef EXCLUDE_MASTER
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#ifndef EXCLUDE_MASTER
 
 #include <stdlib.h>
 #include <stdio.h>
