@@ -41,6 +41,7 @@
 #define OPT_DEBUG 0
 #endif /* DEBUG */
 
+
 /*
  * These are all the global variables.
  */
@@ -62,6 +63,14 @@ gid_t               daemongid = 0;
 const char*         version = PACKAGE_VERSION;
 int                 gotterminal = 1; /* 1 if attached to a terminal */
 sem_t               dnrd_sem;  /* Used for all thread synchronization */
+
+/* The path where we chroot. All config files are relative this path */
+char chroot_path[512] = CHROOT_PATH;
+
+int  domain_act = 0;
+int  domain_cnt = 0;
+dnsdomain_t dnsdomains[MAX_DOMAINS];
+
 
 /*
  * This is the address we listen on.  It gets initialized to INADDR_ANY,
