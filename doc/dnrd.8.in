@@ -9,7 +9,7 @@ dnrd \- proxy name server
 .RB [ \-a \ \fRlocaladdress\fR\ | \ \-\-address=\fIlocaladdress\fR] 
 .RB [ \-b \ \fR| \ \-\-load\-balance\fR]
 .RB [ \-c \ \fR( \fIoff\fR|[\fIlow:\fR]\fIhigh\fR)\ | \ \-\-cache=\fR(\fIoff\fR|[\fIlow:\fR]\fIhigh \fR)]
-.RB [ \-d \ \fR| \ \-\-debug \fR]
+.RB [ \-d \ \fILEVEL\ \fR| \ \-\-debug=\fILEVEL\fR]
 .RB [ \-h \ \fR| \ \-\-help \fR]
 .RB [ \-i \ \fR| \ \-\-ignore \fR]
 .RB [ \-k \ \fR| \ \-\-kill \fR]
@@ -80,16 +80,15 @@ and
 water\-marks of 800 and 1000 respectively.
 
 .TP 
-.B \-d \fIN
+.B \-d \fILEVEL
 .TP 
-.B \-\-debug \fIN
+.B \-\-debug=\fILEVEL
 This turns on debugging level
-.I N\fR.
+.I LEVEL\fR.
 The
 .B dnrd 
 process will not fork into the background and print out debugging
-information in the current console. Supported debug levels are
-.I 1\fR\-\fI4\fR.
+information in the current console. Supported debug levels are 1-4
 The higher level, the more debug info is printed.
 .sp
 The
@@ -98,9 +97,7 @@ option can be used to force dnrd to run in the background and log
 debug info to syslog.
 .sp
 Sending signal SIGUSR1 will toggle the debug level between level
-.I 0
-(no debugging) and level
-.I 3\fR.
+0 (no debugging) and level 3.
 
 .TP 
 .B \-h
