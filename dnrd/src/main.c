@@ -183,6 +183,9 @@ int main(int argc, char *argv[])
     /* Initialise our cache */
     cache_init();
 
+    /* init the qid pool */
+    qid_init_pool();
+
 #ifndef EXCLUDE_MASTER
     /* Initialise out master DNS */
     master_init();
