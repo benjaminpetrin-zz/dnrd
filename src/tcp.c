@@ -96,7 +96,7 @@ static void *tcp_handler(void *dummy)
     tcp_handle_t      *arg = (tcp_handle_t *)dummy;
     int	               rc, bytes;
     int                maxsock;
-    int                server[MAX_SERV];
+    //    int                server[MAX_SERV];
     char	       buffer[4096];
     struct timeval     tov;
     fd_set	       connection, available;
@@ -104,12 +104,20 @@ static void *tcp_handler(void *dummy)
     int                i;
     int	               connect = arg->connect;
     struct sockaddr_in client  = arg->client;
+    domnode_t *d =domain_list;
+    srvnode_t *s;
 
     free(arg);
-
+    
+    do {
+      if (s=d->srvlist)
+	while ((s=s->next) != d->srvlist) s->tcp = -1;
+    } while ((d=d->next) != domain_list);
+    /*
     for(i = 0; i < MAX_SERV; i++) {
 	server[i] = -1;
     }
+    */
 
     maxsock = connect + 1;
     FD_ZERO(&connection);
@@ -133,6 +141,7 @@ static void *tcp_handler(void *dummy)
 	}
 
 	/* Forward replies from DNS server to client */
+	/*  
 	for(i = 0; i < serv_cnt; i++) {
 	    if (server[i] == -1) continue;
 	    if (FD_ISSET(server[i], &available)) {
@@ -149,12 +158,36 @@ static void *tcp_handler(void *dummy)
 		}
 	    }
 	}
+*/
+	d=domain_list;
+	do {
+	  if (s=d->srvlist) 
+	    while ((s=s->next) != d->srvlist) {
+	      if (s->tcp == -1) continue;
+	      if (FD_ISSET(s->tcp, &available)) {
+		log_debug("[%d] Received tcp reply.  Forwarding...", getpid());
+		if ((bytes = read(s->tcp, buffer, sizeof(buffer))) <= 0) {
+		  child_die = 1;
+		  break;
+		}
+		dump_dnspacket("reply", buffer + 2, bytes - 2);
+		cache_dnspacket(buffer + 2, bytes - 2);
+		if (write(connect, buffer, bytes) != bytes) {
+		  child_die = 1;
+		  break;
+		}
+	      }
+	    }
+	  if (child_die) break;
+	} while ((d=d->next) != domain_list);
+	  
 	if (child_die) break;
 
 	/* Forward requests from client to DNS server */
 	if (FD_ISSET(connect, &available)) {
 	    int retn;
-	    unsigned srvridx;
+	    domnode_t *dptr;
+	    
 
 	    bytes = read(connect, &tcpsize, sizeof(tcpsize));
 	    /* check for connection close */
@@ -182,7 +215,7 @@ static void *tcp_handler(void *dummy)
 		log_debug("[%d] tcp read error %s", getpid(), strerror(errno));
 		break;
 	    }
-	    retn = handle_query(&client, &buffer[2], &bytes, &srvridx);
+	    retn = handle_query(&client, &buffer[2], &bytes, &dptr);
 
 	    /* If we can reply locally (master, cache, no servers), do so. */
 	    if (retn == 0) {
@@ -196,30 +229,39 @@ static void *tcp_handler(void *dummy)
 	     * Open a socket if one doesn't already exist.
 	     */
 	    else {
-		if (server[srvridx] == -1) {
-		    server[srvridx] = ip_open(dns_srv[srvridx].addr, 53);
-		    if (server[srvridx] < 0) {
-			log_msg(LOG_ERR, "[%d] Can't connect to server",
-				getpid());
-			break;
-		    }
-		    if (server[srvridx] > (maxsock - 1)) {
-			maxsock = server[srvridx] + 1;
-		    }
-		    FD_SET(server[srvridx], &connection);
+	      s = dptr->current;
+	      if (s->tcp == -1) {
+		s->tcp = ip_open(s->addr, 53);
+		if (s->tcp < 0) {
+		  log_msg(LOG_ERR, "[%d] Can't connect to server",
+			  getpid());
+		  break;
 		}
-		if (write(server[srvridx], buffer, bytes + 2) != (bytes + 2)) {
-		    break;
+		if (s->tcp > (maxsock - 1)) {
+		  maxsock = s->tcp + 1;
+		}
+		FD_SET(s->tcp, &connection);
+		}
+		if (write(s->tcp, buffer, bytes + 2) != (bytes + 2)) {
+		  break;
 		}
 	    }
 	}
-
+	
     }
     /* The child process is done.  It can now die */
     log_debug("[%d] Closing tcp connection", getpid());
-    for(i = 0; i < MAX_SERV; i++) {
+    /*    for(i = 0; i < MAX_SERV; i++) {
 	if (server[i] != -1) close(server[i]);
     }
+    */
+    d=domain_list;
+    do {
+      if (s=d->srvlist)
+	while ((s=s->next) != d->srvlist) 
+	  if (s->tcp != -1) close(s->tcp);
+    } while ((d=d->next) != domain_list);
+
     close(connect);
     pthread_exit(0);
     /* NOTREACHED */

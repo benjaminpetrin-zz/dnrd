@@ -25,6 +25,7 @@
 #include "args.h"
 #include "sig.h"
 #include "master.h"
+#include "domnode.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -63,6 +64,10 @@ int main(int argc, char *argv[])
     struct dirent     *direntry;
     struct stat        st;
     int                rslt;
+    domnode_t *p;
+    srvnode_t *s;
+
+
 
     /*
      * Setup signal handlers.
@@ -89,6 +94,9 @@ int main(int argc, char *argv[])
     recv_addr.sin_family = AF_INET;
     recv_addr.sin_port = htons(53);
 
+
+    /* create the domain list */
+    domain_list = alloc_domnode();
     /*
      * Parse the command line.
      */
@@ -289,15 +297,20 @@ int main(int argc, char *argv[])
     /*
      * Setup our DNS query forwarding socket.
      */
-    for (i = 0; i < serv_cnt; i++) {
-	if ((dns_srv[i].sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    p=domain_list;
+    do {
+      s=p->srvlist;
+      while ((s=s->next) != p->srvlist) {
+	if ((s->sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 	    log_msg(LOG_ERR, "osock: Couldn't open socket");
 	    cleanexit(-1);
 	}
-
-	dns_srv[i].addr.sin_family = AF_INET;
-	dns_srv[i].addr.sin_port   = htons(53);
-    }
+	s->addr.sin_family = AF_INET;
+	s->addr.sin_port   = htons(53);
+      }
+      /* set the first server as current */
+      p->current = p->srvlist->next;
+    } while ((p=p->next) != domain_list);
 
     /*
      * Now it's time to become a daemon.

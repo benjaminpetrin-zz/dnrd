@@ -37,23 +37,25 @@
 #include "master.h"
 #include "dns.h"
 
+/*
 static time_t send_time  = 0;
 static int    send_count = 0;
+*/
 
 /*
  * server_switch()
  *
  * Abstract: Switch to the next DNS server
  */
-static void server_switch() {
-    if (serv_cnt >= 2) {
-	serv_act = (serv_act+1) % serv_cnt;
-	log_debug("Switching to DNS Server #%d", serv_act+1);
-    }
-    else {
-	serv_act = 0;
-    }
-    send_count = 0;
+static srvnode_t *server_switch(domnode_t *p) {
+  char ip[20];
+  p->current = p->current->next;
+  if (p->current == p->srvlist) p->current = p->current->next;
+
+  log_debug("Switching to DNS Server #%s for %s", 
+	    inet_ntoa(p->current->addr.sin_addr),
+	    p->domain ? p->domain : "default" );
+  p->current->send_count = 0;
 }
 
 /*
@@ -64,10 +66,11 @@ static void server_switch() {
  * In/Out:  msg       - the query on input, the reply on output.
  *          len       - length of the query/reply
  *
- * Out:     srvidx    - index of the server to which to forward the query
+ * Out:     dptr      - dptr->current contains the server to which to forward the query
  *
- * Returns:  1 if the query should be forwarded to the srvidx server
- *           0 if msg now contains the reply
+ * Returns:  -1 if the query is bogus
+ *           1  if the query should be forwarded to the srvidx server
+ *           0  if msg now contains the reply
  *
  * Takes a single DNS query and determines what to do with it.
  * This is common code used for both TCP and UDP.
@@ -75,10 +78,12 @@ static void server_switch() {
  * Assumptions: There is only one request per message.
  */
 int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
-		 unsigned *srvidx)
+		 domnode_t **dptr)
+
 {
     int       replylen;
     short int * flagp = &((short int *)msg)[1]; /* pointer to flags */
+    domnode_t *d;
 
     if (opt_debug) {
 	char      cname_buf[80];
@@ -119,8 +124,11 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
 	return 0;
     }
 
-    /* If there are no servers, reply with "entry not found" */
-    if (serv_cnt == 0) {
+    /* get the server list for this domain */
+    d=search_subdomnode(domain_list, &msg[12], *len);
+
+    if (d->current->next == d->current) {
+      /* there is no servers for this domain, reply with "entry not found" */
 	log_debug("Replying to query with \"entry not found\"");
 	/* Set flags QR and AA */
 	msg[2] |= 0x84;
@@ -129,32 +137,18 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
 	return 0;
     }
 
-    /* If domain names are specified, pick the correct server */
-    if (dns_srv[0].domain != NULL) {
-	dnsquery_add(fromaddrp, msg, *len);
-	for (*srvidx = 0; *srvidx < serv_cnt - 1; (*srvidx)++) {
-	    if (!strcmp(dns_srv[*srvidx].domain, &msg[12] + strlen(&msg[12]) -
-			strlen(dns_srv[*srvidx].domain))) {
-		break;
-	    }
-	}
-	log_debug("Forwarding the query to DNS server %s",
-		  inet_ntoa(dns_srv[*srvidx].addr.sin_addr));
-	return 1;
-    }
-
-    /* Default case.  Send to a server until it "times out". */
+    /* Send to a server until it "times out". */
     {
 	time_t t = time(NULL);
-	if (send_time != t) {
-	    send_time = t;
-	    if (++send_count > 5) server_switch();
+	if (d->current->send_time != t) {
+	    d->current->send_time = t;
+	    if (++d->current->send_count > 5) server_switch(d);
 	}
-	*srvidx = serv_act;
+	*dptr = d;
 
 	dnsquery_add(fromaddrp, msg, *len);
 	log_debug("Forwarding the query to DNS server %s",
-		  inet_ntoa(dns_srv[*srvidx].addr.sin_addr));
+		  inet_ntoa(d->current->addr.sin_addr));
     }
     return 1;
 }
@@ -173,19 +167,24 @@ void run()
     fd_set             fds;
     int                retn;
     int                i, j;
+    domnode_t *d = domain_list;
+    srvnode_t *s;
 
     FD_ZERO(&fdmask);
     FD_SET(isock,   &fdmask);
     FD_SET(tcpsock, &fdmask);
     maxsock = (tcpsock > isock) ? tcpsock : isock;
-    for (i = 0; i < serv_cnt; i++) {
-	if (maxsock < dns_srv[i].sock) maxsock = dns_srv[i].sock;
-	FD_SET(dns_srv[i].sock, &fdmask);
-    }
+    do {
+      if ((s=d->srvlist)) {
+	while ((s=s->next) != d->srvlist) {
+	  if (maxsock < s->sock) maxsock = s->sock;
+	  FD_SET(s->sock, &fdmask);
+	  s->send_time  = time(NULL);
+	  s->send_count = 0;
+	}
+      }
+    } while ((d=d->next) != domain_list);
     maxsock++;
-
-    send_time  = time(NULL);
-    send_count = 0;
 
     while(1) {
 	tout.tv_sec  = 60 * 5; /* five miutes */
@@ -215,13 +214,17 @@ void run()
 	}
 
 	/* Check for replies to DNS queries */
-	for (i = serv_act, j = 0; j < serv_cnt; j++) {
-	    if (FD_ISSET(dns_srv[i].sock, &fds)) {
-		handle_udpreply(i);
-		if (i == serv_act) send_count = 0;
+	d=domain_list;
+	do {
+	  if (s=d->srvlist) {
+	    while ((s=s->next) != d->srvlist) {
+	      if (FD_ISSET(s->sock, &fds)) {
+		handle_udpreply(s);
+		if (s == d->current) s->send_count = 0;
+	      }
 	    }
-	    i = (i + 1) % serv_cnt;
-	}
+	  }
+	} while ((d=d->next) != domain_list);
 
 	/* Check for incoming TCP requests */
 	if (FD_ISSET(tcpsock, &fds)) handle_tcprequest();

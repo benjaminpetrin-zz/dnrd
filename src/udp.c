@@ -38,16 +38,16 @@
  *
  * Returns:  The return code from sendto().
  */
-static int dnssend(int k, void *msg, int len)
+static int dnssend(srvnode_t *s, void *msg, int len)
 {
     int	rc;
 
-    rc = sendto(dns_srv[k].sock, msg, len, 0,
-		(const struct sockaddr *) &dns_srv[k].addr,
+    rc = sendto(s->sock, msg, len, 0,
+		(const struct sockaddr *) &s->addr,
 		sizeof(struct sockaddr_in));
     if (rc != len) {
 	log_msg(LOG_ERR, "sendto error: %s: %m",
-		inet_ntoa(dns_srv[k].addr.sin_addr));
+		inet_ntoa(s->addr.sin_addr));
 	return (rc);
     }
 
@@ -68,8 +68,9 @@ void handle_udprequest()
     const int          maxsize = 512; /* According to RFC 1035 */
     char               msg[maxsize+4];/* Do we really want this on the stack?*/
     struct sockaddr_in from_addr;
-    int                fwd, srvr;
+    int                fwd;
     int	               i, thisdns, processed;
+    domnode_t          *dptr;
 
     /* Read in the message */
     addr_len = sizeof(struct sockaddr_in);
@@ -85,7 +86,7 @@ void handle_udprequest()
     }
 
     /* Determine how query should be handled */
-    if ((fwd = handle_query(&from_addr, msg, &len, &srvr)) < 0)
+    if ((fwd = handle_query(&from_addr, msg, &len, &dptr)) < 0)
       return; /* if its bogus, just ignore it */
 
     /* If we already know the answer, send it and we're done */
@@ -99,13 +100,19 @@ void handle_udprequest()
 
     /* If we have domains associated with our servers, send it to the
        appropriate server as determined by srvr */
-    if (dns_srv[0].domain != NULL) {
-	dnssend(srvr, msg, len);
+    if (dptr->current != NULL) {
+	dnssend(dptr->current, msg, len);
 	return;
     }
 
     /* 1 or more redundant servers.  Cycle through them as needed */
     processed = 0;
+    //undeclared...    s=dptr->current;
+    /*
+    while ( (dnssend(dptr->current, msg, len) != len) && dptr->
+	    
+    */
+    /*
     thisdns   = serv_act;
     for (i = 0; i < serv_cnt; i++) {
 	if (dnssend(serv_act, msg, len) == len) {
@@ -118,6 +125,7 @@ void handle_udprequest()
 	}
 	thisdns = (thisdns + 1) % serv_cnt;
     }
+    */
 
     if (processed == 0) {
 	int	packetlen;
@@ -158,26 +166,26 @@ void handle_udprequest()
  * Returns:  A positove number indicating of the bytes received, -1 on a
  *           recvfrom error and 0 if the received message is too large.
  */
-static int dnsrecv(int k, void *msg, int len)
+static int dnsrecv(srvnode_t *s, void *msg, int len)
 {
     int	rc, fromlen;
     struct sockaddr_in from;
 
     fromlen = sizeof(struct sockaddr_in);
-    rc = recvfrom(dns_srv[k].sock, msg, len, 0,
+    rc = recvfrom(s->sock, msg, len, 0,
 		  (struct sockaddr *) &from, &fromlen);
 
     if (rc == -1) {
 	log_msg(LOG_ERR, "recvfrom error: %s: %m",
-		inet_ntoa(dns_srv[k].addr.sin_addr));
+		inet_ntoa(s->addr.sin_addr));
 	return (-1);
     }
     else if (rc > len) {
 	log_msg(LOG_NOTICE, "packet too large: %s",
-		inet_ntoa(dns_srv[k].addr.sin_addr));
+		inet_ntoa(s->addr.sin_addr));
 	return (0);
     }
-    else if (memcmp(&from.sin_addr, &dns_srv[k].addr.sin_addr,
+    else if (memcmp(&from.sin_addr, &s->addr.sin_addr,
 		    sizeof(from.sin_addr)) != 0) {
 	log_msg(LOG_WARNING, "unexpected server: %s",
 		inet_ntoa(from.sin_addr));
@@ -194,7 +202,7 @@ static int dnsrecv(int k, void *msg, int len)
  * know the correct reply via master, caching, etc.), or forwarding them to
  * an appropriate DNS server.
  */
-void handle_udpreply(int srvidx)
+void handle_udpreply(srvnode_t *srv)
 {
     const int          maxsize = 512; /* According to RFC 1035 */
     char               msg[maxsize+4];/* Do we really want this on the stack?*/
@@ -202,7 +210,7 @@ void handle_udpreply(int srvidx)
     struct sockaddr_in from_addr;
     unsigned           addr_len;
 
-    len = dnsrecv(srvidx, msg, maxsize);
+    len = dnsrecv(srv, msg, maxsize);
     if (opt_debug) {
 	char buf[80];
 	sprintf_cname(&msg[12], len-12, buf, 80);
