@@ -243,7 +243,7 @@ int parse_args(int argc, char **argv)
 		log_debug(1, "Added domain %s %s load balancing", sep+1, 
 			  load_balance ? "with" : "without");
 	      } else {
-		log_debug(1, "Could not add domain %s ", sep+1);
+		free(s);
 	      }
 	    } else p=domain_list;
 	    if (!add_srv(last_srvnode(p->srvlist), optarg)) {
