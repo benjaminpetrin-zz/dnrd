@@ -247,39 +247,28 @@ int cache_lookup(void *packet, int len)
 
     /*
      * The query could be in the cache.  Let's take the packet ...
-     */
-    x = parse_packet(packet, len);
-    /* get_dnsquery(x, &query); */
-
-    /* this fixes a memory leak. 
-     * http://groups.yahoo.com/group/dnrd/message/241
-     */
-    free_packet(x);
-    x = NULL;
-
-    /*
      * ... and search our cache for this request.
      */
     code = get_stringcode(query.name);
     for (cx = cachelist; cx != NULL; cx = cx->next) {
-	if (cx->code == code  &&
-	    cx->type == query.type  &&
-	    cx->class == query.class  &&
-	    strcasecmp(cx->name, query.name) == 0) {
+      if (cx->code == code  &&
+	  cx->type == query.type  &&
+	  cx->class == query.class  &&
+	  strcasecmp(cx->name, query.name) == 0) {
+	
+	log_debug("cache: found %s, type= %d, class: %d, ans= %d\n",
+		  cx->name, cx->type, cx->class, cx->p->ancount);
 
-	    log_debug("cache: found %s, type= %d, class: %d, ans= %d\n",
-		      cx->name, cx->type, cx->class, cx->p->ancount);
-
-	    if (cx->positive > 0) {
-		cx->lastused = time(NULL);
-		cx->expires  = cx->lastused + CACHE_TIME;
-	    }
-
-	    memcpy(packet + 2, cx->p->packet + 2, cx->p->len - 2);
-	    cache_hits++;
-
-	    return (cx->p->len);
+	if (cx->positive > 0) {
+	  cx->lastused = time(NULL);
+	  cx->expires  = cx->lastused + CACHE_TIME;
 	}
+
+	memcpy(packet + 2, cx->p->packet + 2, cx->p->len - 2);
+	cache_hits++;
+
+	return (cx->p->len);
+      }
     }
 
     cache_misses++;
