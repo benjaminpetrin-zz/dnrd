@@ -76,7 +76,7 @@ srvnode_t *destroy_srvnode(srvnode_t *p) {
 
 /* emties a linked server list. returns the head */
 srvnode_t *clear_srvlist(srvnode_t *head) {
-  srvnode_t *p;
+  srvnode_t *p=head;
   while (p->next != head) {
     destroy_srvnode(del_srvnode_after(p));
   }
