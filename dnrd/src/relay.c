@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
+#include <signal.h>
 
 #include "query.h"
 #include "relay.h"
@@ -39,6 +40,7 @@
 #include "udp.h"
 #include "dns.h"
 #include "domnode.h"
+#include "sig.h"
 
 #ifndef EXCLUDE_MASTER
 #include "master.h"
@@ -203,14 +205,10 @@ void srv_stats(time_t interval) {
  */
 void run()
 {
-  struct timeval     tout;
+  struct timespec    tout;
   fd_set             fdread;
   int                retn;
-  /*
-  domnode_t          *d = domain_list;
-  srvnode_t          *s;
-  */
-    /*    int                i, j;*/
+  sigset_t          orig_sigmask; 
 
   FD_ZERO(&fdmaster);
   FD_SET(isock,   &fdmaster);
@@ -221,14 +219,16 @@ void run()
   maxsock = isock;
 #endif
 
+  init_sig_handler(&orig_sigmask);
+
   while(1) {
     query_t *q;
     tout.tv_sec  = select_timeout;
-    tout.tv_usec = 0;
+    tout.tv_nsec = 0;
     fdread = fdmaster;
     
     /* Wait for input or timeout */
-    retn = select(maxsock+1, &fdread, 0, 0, &tout);
+    retn = pselect(maxsock+1, &fdread, 0, 0, &tout, &orig_sigmask);
     
     /* reactivate servers */
     if (reactivate_interval != 0) 
