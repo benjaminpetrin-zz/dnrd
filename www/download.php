@@ -11,42 +11,20 @@ require("menu.php");
 
 
 <h2><a name="download">Download</a></h2>
+
 <p>
-The latest version of DNRD is <a href="archive/dnrd-2.10.tar.gz">2.10</a>.
+Klick <a href="http://prdownloads.sourceforge.net/dnrd/dnrd-2.13_rc1.tar.gz?download">here</a> to get the lastest release of dnrd.
 </p>
 
 <p>
-A list of <a href="mirrors.html">mirrors</a> is available.
+Klick <a href="http://sourceforge.net/project/showfiles.php?group_id=72">here</a> to get older versions.
 </p>
 
-<p>
-Old versions of DNRD can be found <a href="archive">here</a>.  You may view the
-<a href="HISTORY">ChangeLog</a> to see what each version added.
-</p>
+<h3>CVS</h3>
+<p>The latest development is available through cvs.</p>
 
-<p>
-DNRD is registered with <a href="http://www.freshmeat.net">Freshmeat</a>.
-The appindex record can be found
-<a href="http://freshmeat.net/projects/dnrd">here</a>.
-</p>
-
-<p>
-DNRD is now available as a Debian
-<a href="http://cgi.debian.org/cgi-bin/search_packages.pl?keywords=dnrd&searchon=names&version=all&release=all">package</a>.
-</p>
-
-<p>
-<a href="mailto:tfilip@jagor.srce.hr">Tomislav Filipcic</a> was kind enough
-to create an <a href="archive/dnrd-2.8-1.i386.rpm">i386 RPM</a>
-for DNRD, including a
-<a href="archive/dnrd-2.8-1.src.rpm">source RPM</a>.
-</p>
-
-<p>
-Although a Makefile is included, you may wish to grab a copy of
-<a href="http://members.home.com/garsh/cons">CONS</a>
-in order to build it.
-</p>
+<p>It is also possible to browse the CVS over <a
+href="http://cvs.sourceforge.net/viewcvs.py/dnrd">web</a></p>
 
 </div>
 <? require("footer.php"); ?>

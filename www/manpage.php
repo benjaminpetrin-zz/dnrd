@@ -1,13 +1,12 @@
-<?
-require("header.php");
-require("menu.php");
-?>
-<h1>Domain Name Relay Daemon</h1>
+Content-type: text/html
 
-<? menu("Documentation"); ?>
+<HTML><HEAD><TITLE>Manpage of DNRD</TITLE>
+</HEAD><BODY>
+<H1>DNRD</H1>
+Section: Domain Name Relay Daemon (8)<BR>Updated: Domain Name Relay Daemon<BR><A HREF="#index">Index</A>
+<A HREF="http://localhost/cgi-bin/man/man2html">Return to Main Contents</A><HR>
 
-<div id="content">
-
+<A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
 dnrd - proxy name server
@@ -223,6 +222,20 @@ Other contributors are listed in the HISTORY
 file included with the source code.
 <P>
 
-</div>
-
-<? require("footer.php"); ?>
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">OPTIONS</A><DD>
+<DT><A HREF="#lbAF">FILES</A><DD>
+<DT><A HREF="#lbAG">AUTHOR</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 20:56:49 GMT, July 02, 2004
+</BODY>
+</HTML>
