@@ -49,6 +49,7 @@ static struct option long_options[] =
     {"cache",        1, 0, 'c'},
     {"debug",        0, 0, 'd'},
     {"help",         0, 0, 'h'},
+    {"ignore",       0, 0, 'i'},
     {"kill",         0, 0, 'k'},
     {"log",          0, 0, 'l'},
 #ifndef EXCLUDE_MASTER
@@ -63,9 +64,9 @@ static struct option long_options[] =
 #endif /* __GNU_LIBRARY__ */
 
 #ifndef EXCLUDE_MASTER
-const char short_options[] = "a:bc:dhklm:s:u:v";
+const char short_options[] = "a:bc:dhiklm:s:u:v";
 #else
-const char short_options[] = "a:bc:dhkl:s:u:v";
+const char short_options[] = "a:bc:dhikl:s:u:v";
 #endif
 
 /*
@@ -87,6 +88,7 @@ static void give_help()
     printf("    -d, --debug               "
 	   "Turn on debugging - run in foreground.\n");
     printf("    -h, --help                Print this message, then exit.\n");
+    printf("    -i, --ignore              Ignore cache for disabled servers\n");
     printf("    -k, --kill                Kill a running daemon.\n");
     printf("    -l, --log                 Send all messages to syslog.\n");
 #ifndef EXCLUDE_MASTER
@@ -174,6 +176,10 @@ int parse_args(int argc, char **argv)
 	      give_help();
 	      exit(0);
 	      break;
+	  }
+	  case 'i' : {
+	    ignore_inactive_cache_hits = 1; 
+	    break;
 	  }
 	  case 'k': {
 	      if (!kill_current()) {

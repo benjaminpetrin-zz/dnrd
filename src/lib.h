@@ -23,7 +23,9 @@
 #ifndef	_LIB_INCLUDED
 #define	_LIB_INCLUDED
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 extern char *program;
 extern int verbose;

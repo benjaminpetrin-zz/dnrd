@@ -26,7 +26,7 @@
 extern char cache_param[256];
 
 /* Interface for DNS cache */
-int cache_dnspacket(void *packet, int len);
+int cache_dnspacket(void *packet, int len, srvnode_t *server);
 int cache_lookup(void *packet, int len);
 int cache_expire(void);
 int cache_init(void);

@@ -82,6 +82,7 @@ extern char                chroot_path[512];
 extern domnode_t           *domain_list;
 
 extern int                 reactivate_interval;
+extern int                 ignore_inactive_cache_hits; 
 
 
 /* kill any currently running copies of dnrd */
