@@ -37,6 +37,10 @@
 #include "master.h"
 #include "dns.h"
 
+/* time interval to retry a deactivated server */
+#define SINGLE_RETRY 10
+
+
 /* prepare the dns packet for a not found reply */
 char *set_notfound(char *msg, const int len) {
   if (len < 3) return NULL;
@@ -46,6 +50,8 @@ char *set_notfound(char *msg, const int len) {
   msg[3] = 0x83;
   return msg;
 }
+
+
 
 /*
  * handle_query()
@@ -140,28 +146,30 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
     return 1;
 }
 
+/* Check if any deactivated server are back online again */
+
 static void reactivate_servers(int interval) {
   time_t now=time(NULL);
   static int last_try = 0;
   domnode_t *d = domain_list;
+  srvnode_t *s;
   
   if (!last_try) last_try = now;
   /* check for reactivate servers */
-  if (interval + last_try > now ) {
-    last_try = now;
-
-    
-    if (!no_srvlist(d->srvlist)) return;
-    do {
-      if (!next_active(d)) {
-	log_debug("Reactivating all servers for %s", cname2asc(d->domain));
-	reactivate_srvlist(d);
-      } else {
-	retry_srvlist(d, 30);
-      }
-    } while ((d = d->next) != domain_list);
-  }
-  
+  if ( (now - last_try < interval) || no_srvlist(d->srvlist)  ) 
+    return;
+ 
+  last_try = now;
+  do {
+    if (! (s=d->current)) {
+      log_debug("Reactivating all servers for %s", cname2asc(d->domain));
+      reactivate_srvlist(d);
+    } else {
+      /*	log_debug("server %s is active", 
+		inet_ntoa(s->addr.sin_addr)); */
+      retry_srvlist(d, SINGLE_RETRY);
+    }
+  } while ((d = d->next) != domain_list);  
 }
 
 /*

@@ -86,7 +86,7 @@ typedef struct _cache {
 } cache_t;
 
 
-char	cache_param[200]	= "";
+char	cache_param[256]	= "";
 int	cache_onoff		= 1;
 long	cache_highwater		= CACHE_HIGHWATER;
 long	cache_lowwater		= CACHE_LOWWATER;
