@@ -143,6 +143,7 @@ int parse_args(int argc, char **argv)
 {
   static int load_balance = 0;
     int c;
+    domnode_t *dhead = domain_list;
     /*    int gotdomain = 0;*/
 
     progname = strrchr(argv[0], '/');
@@ -216,7 +217,7 @@ int parse_args(int argc, char **argv)
 	      s = make_cname(strnlwr(sep+1,200),200);
 	      *sep = 0;
 	      if ( (p=search_domnode(domain_list, s)) == NULL) {
-		p=add_domain(domain_list, load_balance, s, 200);
+		dhead=(p=add_domain(dhead, load_balance, s, 200));
 		log_debug("Added domain %s %s load balancing", sep+1, 
 			  load_balance ? "with" : "without");
 	      }
