@@ -96,6 +96,7 @@ static void give_help()
 #ifndef EXCLUDE_MASTER
     printf("    -m, --master=MASTERMODE\n");
 #endif
+    printf("    -r, --retry=N             Set retry interval to N seconds\n");
     printf("    -s, --server=IPADDR(:domain)\n"
 	   "                              "
 	   "Set the DNS server.  You can specify an\n"
@@ -107,6 +108,7 @@ static void give_help()
 	   "                              "
 	   "(Can be used more than once for multiple or\n"
 	   "                              backup servers)\n");
+    printf("    -t, --timeout=N           Set forward DNS server timeout to N\n");
     printf("    -u, --uid=ID              "
 	   "Username or numeric id to switch to\n");
     /*

@@ -1,4 +1,4 @@
-.TH DNRD 8 "Domain Name Relay Daemon" "DNRD v2.13" "Domain Name Relay Daemon"
+.TH DNRD 8 "Domain Name Relay Daemon" "DNRD v2.14" "Domain Name Relay Daemon"
 .SH NAME
 dnrd \- proxy name server
 .SH SYNOPSIS
@@ -6,15 +6,18 @@ dnrd \- proxy name server
 .na
 .TP
 .B dnrd
-.RB "[\|" "\-a \fIlocaladdress\fB" | \-\-address=\fIlocaladdress\fB "\|]" 
-.RB "[\|" \-c \ ( off |[ \fIlow :] \fIhigh )| \-\-cache= ( off |[ \fIlow :] \fIhigh )]
+.RB "[\|" \-a \ \fIlocaladdress\fB | \-\-address=\fIlocaladdress\fB "\|]" 
 .RB "[\|" \-b | \-\-load\-balance "\|]"
+.RB "[\|" \-c \ ( off |[ \fIlow :] \fIhigh )| \-\-cache= ( off |[ \fIlow :] \fIhigh )]
 .RB "[\|" \-d | \-\-debug "\|]"
 .RB "[\|" \-h | \-\-help "\|]"
-.RB "[\|" \-i | \-\-help "\|]"
+.RB "[\|" \-i | \-\-ignore "\|]"
 .RB "[\|" \-k | \-\-kill "\|]"
+.RB "[\|" \-l | \-\-log "\|]"
 .RB "[\|" \-m \ ( off | hosts )| \-\-master= ( off | hosts ")]" 
+.RB "[\|" \-r \ \fIN\fB | \-\-retry=\fIN\fB "\|]"
 .RB "[\|" \-s\ \fIipaddr (: \fIdomain )| \-\-server=\fIipaddr (: \fIdomain )]
+.RB "[\|" \-t \ \fIN\fB | \-\-timeout=\fIN\fB "\|]"
 .RB "[\|" "\-u\ \fIuserid" | \-\-uid=\fIuserid "\|]" 
 .RB "[\|" \-v | \-\-version "\|]"
 .SH DESCRIPTION
@@ -31,15 +34,23 @@ dnrd will act as the primary nameserver for hosts found in
 .B \-a
 .TP
 .B \-\-address
-Bind only to the interface with the specified address.  This is a security
-feature.
+Bind only to the interface with the specified address.
 
 .TP
 .B \-b
 .TP
 .B \-\-load\-balance
-If several forward server is specified with \-s the requests are load
-balanced among the servers in a round robin scheme.
+Turn on load balancing. All forward servers that are specified after
+this option (with
+.B \-s\fR)
+will load balance in a round robin scheme. By default, dnrd will use
+the next server in the list if the first timesout. As soon as the
+first is reactivated, it will be used again. With
+.B \-b
+option, dnrd will use next active server as soon a request is
+served. If a server times out it will be deactivated and will not be
+used until it comes back. As soon it is reactivated it will join the
+list.
 
 .TP
 .BR \-c \ ( off |[ \fIlow :] \fIhigh )
@@ -70,13 +81,22 @@ Prints out usage information
 .B \-i
 .TP
 .B \-\-ignore
-Ignore cache for deactivated servers.
+Ignore cache for deactivated servers. If a forward DNS server times
+out and gets deactivated, all cache entries that this server caused
+will be ignored. This will help to avoid network timeout delays when
+offline.
 
 .TP
 .B \-k
 .TP
 .B \-\-kill
 Kills the currently running dnrd process and immediately returns.
+
+.TP
+.B \-l
+.TP
+.B \-\-log
+Send all messages to syslog.
 
 .TP
 .BR \-m \ ( off | hosts )
@@ -98,24 +118,52 @@ regardless of whether it could find
 .IR /etc/dnrd/master .
 
 .TP
+.BI \-r\  N
+.TP
+.BI \-\-retry= N
+Set the retry interval time. When a server forward DNS server times
+out it is deactivated. (use the
+.B -t
+option to set the timeout value) Dnrd will try to send a request for
+localhost evey
+.I N
+seconds. As soon there are any respose from a deactivated server, it
+will be reactivated. The default value is
+.I 5
+
+.TP
 .BI \-s\  ipaddr \fR(: domain \fR)
 .TP
 .BI \-\-server= ipaddr \fR(: domain \fR)
-This option is used to tell dnrd where to forward DNS queries.  If multiple
+Add a forward DNS server. If multiple
 .B \-s
-options are given with no domain names, then  dnrd
-will treat these as redundant DNS servers, and will switch between them
-whenever the current one stops responding.
+options are given, dnrd will treat the first as primary DNS server and
+the rest as backup servers. If the primary DNS server times out, it
+will get deactivated and the next specified server (that is active)
+will be used until the previous gets reactivated.
 .sp
 The 
 .I domain
-option allows dnrd
-to determine which DNS server should get the query based on the domain name
-in the query.  This is useful when you have an internet connection and a
-vpn connection to work, for instance.  In this case, all the
-.B -s
-options should have a domain defined, except for the last one, which will act
-as the "default" name server.
+option allows dnrd to determine which DNS server should get the query
+based on the domain name in the query. This is useful when you have
+an internet connection and a vpn connection to work, for instance. Several servers with the same 
+.I domain
+might be specified and then will they work as backup servers. If
+.B \-b
+option is specified, then will all servers with the same 
+.I domain\fR,
+specified after the
+.B \-b
+option, be grouped and load balanced.
+
+.TP
+.BI \-t\  N
+.TP
+.BI \-\-timeout= N
+Set the timeout value for forward DNS servers. If a server don't respond to a query within
+.I N
+seconds it will be deactivated. The default value is
+.I 3
 
 .TP
 .BI \-u\  userid
