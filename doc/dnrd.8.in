@@ -1,4 +1,4 @@
-.TH DNRD 8 "Domain Name Relay Daemon" "DNRD v2.16" "Domain Name Relay Daemon"
+.TH DNRD 8 "Domain Name Relay Daemon" "DNRD v2.18" "Domain Name Relay Daemon"
 .SH NAME
 dnrd \- proxy name server
 .SH SYNOPSIS
@@ -127,6 +127,10 @@ causes dnrd to act as the primary server for hosts in
 .I /etc/hosts
 regardless of whether it could find
 .IR @DNRD_ROOT@/master .
+.sp
+Note that future versions of dnrd will not use /etc/hosts at all.
+
+
 
 .TP
 .BI \-M\  N
@@ -212,6 +216,10 @@ Prints out the version number
 .PP
 It is not possible to run more than one dnrd process on the same host.
 
+Sending -SIGHUP will not reread the /etc/hosts file since dnrd is
+chrooted to @DNRD_ROOT@. Use @DNRD_ROOT@/master instead and avoid
+using /etc/hosts at all.
+
 .SH FILES
 .PP
 .B @DNRD_ROOT@/master
@@ -223,7 +231,7 @@ as a primary nameserver.
 .B /etc/hosts
 .PP
 By default, dnrd will act as a primary nameserver for hosts found in
-this file.
+this file. Note that this file will not be used at all in future versions.
 .PP
 .B /var/run/dnrd.pid
 .PP
