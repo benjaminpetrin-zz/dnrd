@@ -66,9 +66,9 @@ static struct option long_options[] =
 #endif /* __GNU_LIBRARY__ */
 
 #ifndef EXCLUDE_MASTER
-const char short_options[] = "a:bc:dhiklm:s:u:v";
+const char short_options[] = "a:bc:dhiklm:s:t:u:v";
 #else
-const char short_options[] = "a:bc:dhikl:s:u:v";
+const char short_options[] = "a:bc:dhikl:s:t:u:v";
 #endif
 
 /*
