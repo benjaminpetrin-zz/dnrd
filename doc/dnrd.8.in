@@ -115,7 +115,7 @@ Send all messages to syslog. dnrd uses the deamon facility.
 .BR \-\-master= ( off | hosts )
 dnrd can act as the primary name server for a number of hosts.  By default, it
 will read in
-.I /etc/dnrd/master
+.I @DNRD_ROOT@/master
 to determine how this is done.  If that file
 doesn't exist, it will act as the primary server for the hosts found in
 .IR /etc/hosts .
@@ -126,7 +126,7 @@ turns off all primary server functionality.  Setting it to
 causes dnrd to act as the primary server for hosts in
 .I /etc/hosts
 regardless of whether it could find
-.IR /etc/dnrd/master .
+.IR @DNRD_ROOT@/master .
 
 .TP
 .BI \-M\  N
@@ -214,7 +214,7 @@ It is not possible to run more than one dnrd process on the same host.
 
 .SH FILES
 .PP
-.B /etc/dnrd/master
+.B @DNRD_ROOT@/master
 .PP
 This file is used to configure
 .B dnrd
