@@ -1,8 +1,10 @@
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include <stdio.h>
+#include <string.h>
 #include "rand.h"
 #include "common.h"
 #include "qid.h"

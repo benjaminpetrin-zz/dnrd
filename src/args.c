@@ -219,6 +219,8 @@ int parse_args(int argc, char **argv)
 		p=add_domain(domain_list, load_balance, s, 200);
 		log_debug("Added domain %s %s load balancing", sep+1, 
 			  load_balance ? "with" : "without");
+	      } else {
+		log_debug("Could not add domain %s ", sep+1);
 	      }
 	    } else p=domain_list;
 	    if (!add_srv(last_srvnode(p->srvlist), optarg)) {
