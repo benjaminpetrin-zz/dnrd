@@ -28,15 +28,25 @@
 #include <syslog.h>
 #include <semaphore.h>
 
-
-#define MAX_SERV           5          /* maximum number of DNS servers */
-#define MAX_DOMAINS        8          /* maximum number of domains */
-
 /* default chroot path. this might be redefined in compile time */ 
 #ifndef CHROOT_PATH
 #define CHROOT_PATH "/etc/dnrd"
 #endif 
 
+/* Set the default timeout value for select in seconds */
+#ifndef SELECT_TIMEOUT
+#define SELECT_TIMEOUT 2
+#endif
+
+/* Set the default timeout value for forward DNS. If we get no
+ * response from a DNS server within forward_timeout, deactivate the
+ * server.  note that if select_timeout is greater than this, the
+ * forward timeout *might* increase to select_timeout. This value
+ * should be >= SELECT_TIMEOUT
+ */
+#ifndef FORWARD_TIMEOUT
+#define FORWARD_TIMEOUT 2
+#endif
 
 struct dnssrv_t {
   int                    sock;      /* for communication with server */
@@ -46,7 +56,7 @@ struct dnssrv_t {
   
 };
 
-
+/*
 typedef struct _dnsdomain {
   int                 sock[MAX_SERV];
   struct sockaddr_in  addr[MAX_SERV];
@@ -54,7 +64,7 @@ typedef struct _dnsdomain {
   int current;
   int count;
 } dnsdomain_t;
-
+*/
 
 extern const char*         version;   /* the version number for this program */
 extern const char*         progname;  /* the name of this program */
@@ -67,6 +77,8 @@ extern int                 tcpsock;   /* same as isock, but for tcp requests */
 //extern int               serv_act; /* index into dns_srv for active server */
 //extern int                 serv_cnt;  /* number of DNS servers */
 
+extern int                 select_timeout; /* select timeout in seconds */
+extern int                 forward_timeout; /* timeout for forward DNS */
 extern struct sockaddr_in  recv_addr; /* address on which we receive queries */
 extern uid_t               daemonuid; /* to switch to once daemonised */
 extern gid_t               daemongid; /* to switch to once daemonised */
@@ -94,6 +106,9 @@ void cleanexit(int status);
    version of it */
 char* make_cname(const char *text, const int maxlen);
 void sprintf_cname(const char *cname, int namesize, char *buf, int bufsize);
+
+char *cname2asc(const char *cname);
+
 
 /* Dumping DNS packets */
 int dump_dnspacket(char *type, unsigned char *packet, int len);
