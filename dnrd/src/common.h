@@ -46,7 +46,7 @@
  * should be >= SELECT_TIMEOUT
  */
 #ifndef FORWARD_TIMEOUT
-#define FORWARD_TIMEOUT 2
+#define FORWARD_TIMEOUT 5
 #endif
 
 /* only check if any server are to be reactivated every
