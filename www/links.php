@@ -23,7 +23,7 @@ page</a></li>
 </ul>
 
 
-<h3><a name="Authorative DNS servers">Authorative DNS servers</a></h3>
+<h3><a name="Authoritative DNS servers">Authoritative DNS servers</a></h3>
 <ul>
 
 <li><a
