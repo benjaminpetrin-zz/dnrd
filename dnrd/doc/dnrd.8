@@ -1,4 +1,4 @@
-.TH DNRD 8 "Domain Name Relay Daemon" "DNRD v2.12.1" "Domain Name Relay Daemon"
+.TH DNRD 8 "Domain Name Relay Daemon" "DNRD v2.13" "Domain Name Relay Daemon"
 .SH NAME
 dnrd \- proxy name server
 .SH SYNOPSIS
@@ -8,6 +8,7 @@ dnrd \- proxy name server
 .B dnrd
 .RB "[\|" "\-a \fIlocaladdress\fB" | \-\-address=\fIlocaladdress\fB "\|]" 
 .RB "[\|" \-c \ ( off |[ \fIlow :] \fIhigh )| \-\-cache= ( off |[ \fIlow :] \fIhigh )]
+.RB "[\|" \-b | \-\-load\-balance "\|]"
 .RB "[\|" \-d | \-\-debug "\|]"
 .RB "[\|" \-h | \-\-help "\|]"
 .RB "[\|" \-k | \-\-kill "\|]"
@@ -16,15 +17,13 @@ dnrd \- proxy name server
 .RB "[\|" "\-u\ \fIuserid" | \-\-uid=\fIuserid "\|]" 
 .RB "[\|" \-v | \-\-version "\|]"
 .SH DESCRIPTION
-This manual page documents version 2.12.1 of dnrd .
-dnrd is a proxying nameserver.  It forwards DNS queries to the appropriate
+.B dnrd\fR is a proxying nameserver. It forwards DNS queries to the appropriate
 nameserver, but can also act as the primary nameserver for a few machines.
 Proxying is configured on the command line using the 
 .B \-s
 option.  By default,
 dnrd will act as the primary nameserver for hosts found in
 .IR /etc/hosts .
-
 
 .SH OPTIONS
 .TP
@@ -33,6 +32,13 @@ dnrd will act as the primary nameserver for hosts found in
 .B \-\-address
 Bind only to the interface with the specified address.  This is a security
 feature.
+
+.TP
+.B \-b
+.TP
+.B \-\-load\-balance
+If several forward server is specified with \-s the requests are load
+balanced among the servers in a round robin scheme.
 
 .TP
 .BR \-c \ ( off |[ \fIlow :] \fIhigh )
@@ -120,6 +126,11 @@ can either be a name or a number.
 .TP
 .B \-\-version
 Prints out the version number
+
+.SH BUGS
+.PP
+Even if it is possible to bind dnrd to one single interface it is not
+possible to run several dnrd processes on the same host.
 
 .SH FILES
 .PP
