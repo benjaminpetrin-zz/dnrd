@@ -35,10 +35,9 @@
 #include "lib.h"
 #include "common.h"
 
-
-static int get_objectname(unsigned char *msg, unsigned char **here,
-			  char *string, int k);
-
+static int get_objectname(unsigned char *msg, unsigned const char *limit, 
+			  unsigned char **here, char *string, int strlen,
+			  int k);
 
 int free_packet(dnsheader_t *x)
 {
@@ -109,43 +108,54 @@ static int raw_dump(dnsheader_t *x)
     return (0);
 }
 
-static int get_objectname(unsigned char *msg, unsigned char **here,
-			  char *string, int k)
+
+static int get_objectname(unsigned char *msg, unsigned const char *limit, 
+			  unsigned char **here, char *string, int strlen,
+			  int k)
 {
     unsigned int len;
     int	i;
 
+    if ((*here>=limit) || (k>=strlen)) return(-1);
     while ((len = **here) != 0) {
-	*here += 1;
 
+	*here += 1;
+	if ( *here >= limit ) return(-1);
+	/* If the name is compressed (see 4.1.4 in rfc1035)  */
 	if (len & 0xC0) {
 	    unsigned offset;
 	    unsigned char *p;
 
 	    offset = ((len & ~0xc0) << 8) + **here;
 	    p = &msg[offset];
-	    k = get_objectname(msg, &p, string, k);
+	    if (p>=limit) return(-1);
 
+	    if ((k = get_objectname(msg, limit, &p, string, RR_NAMESIZE, k))<0)
+	      return(-1); /* if we cross the limit, bail out */
 	    break;
 	}
 	else if (len < 64) {
-	    for (i=0; i < len; i++) {
-		string[k++] = **here;
-		*here += 1;
-	    }
+	  /* check so we dont pass the limits */
+	  if (((*here + len) > limit) || (len+k+2 > strlen)) return(-1);
 
-	    string[k++] = '.';
+	  for (i=0; i < len; i++) {
+	    string[k++] = **here;
+	    *here += 1;
+	  }
+
+	  string[k++] = '.';
 	}
     }
 
     *here += 1;
     string[k] = 0;
-
+    
     return (k);
 }
 
 static unsigned char *read_record(dnsheader_t *x, rr_t *y,
-				  unsigned char *here, int question)
+				  unsigned char *here, int question,
+				  unsigned const char *limit)
 {
     int	k, len;
     unsigned short int conv;
@@ -154,8 +164,12 @@ static unsigned char *read_record(dnsheader_t *x, rr_t *y,
      * Read the name of the resource ...
      */
 
-    k = get_objectname(x->packet, &here, y->name, 0);
+    k = get_objectname(x->packet, limit, &here, y->name, sizeof(y->name), 0);
+    if (k < 0) return(NULL);
     y->name[k] = 0;
+
+    /* safe to read TYPE and CLASS? */
+    if ((here+4) > limit) return (NULL);
 
     /*
      * ... the type of data ...
@@ -179,10 +193,13 @@ static unsigned char *read_record(dnsheader_t *x, rr_t *y,
 
     if (question != 0) return (here);
 
+
     /*
      * ... while answer blocks carry a TTL and the actual data.
      */
 
+    /* safe to read TTL and RDLENGTH? */
+    if ((here+6) > limit) return (NULL);
     memcpy(&y->ttl, here, sizeof(unsigned long int));
     y->ttl = ntohl(y->ttl);
     here += 4;
@@ -194,6 +211,10 @@ static unsigned char *read_record(dnsheader_t *x, rr_t *y,
     memcpy(&y->len, here, sizeof(unsigned short int));
     len = y->len = ntohs(y->len);
     here += 2;
+
+    /* safe to read RDATA? */
+    if ((here + y->len) > limit) return (NULL);
+    
     if (y->len > sizeof(y->data) - 4) {
 	y->len = sizeof(y->data) - 4;
     }
@@ -208,53 +229,75 @@ static unsigned char *read_record(dnsheader_t *x, rr_t *y,
 
 int dump_dnspacket(char *type, unsigned char *packet, int len)
 {
-    int	i;
-    rr_t	y;
-    dnsheader_t *x;
+  int	i;
+  rr_t	y;
+  dnsheader_t *x;
+  unsigned char *limit;
 
-    if (opt_debug < 2) return 0;
-    x = decode_header(packet, len);
+  if (opt_debug < 2) return 0;
 
-    fprintf(stderr, "\n");
-    fprintf(stderr, "- -- %s\n", type);
-    raw_dump(x);
+  if ((x = decode_header(packet, len)) == NULL ) {
+    return (-1);
+  }
+  limit = x->packet + len;
 
-    fprintf(stderr, "\n");
-    fprintf(stderr, "id= %u, q= %d, opc= %d, aa= %d, wr/ra= %d/%d, "
-	     "trunc= %d, rcode= %d [%04X]\n",
-	     x->id, GET_QR(x->u), GET_OPCODE(x->u), GET_AA(x->u),
-	     GET_RD(x->u), GET_RA(x->u), GET_TC(x->u), GET_RCODE(x->u), x->u);
+  if (x->u & (MASK_Z + MASK_RCODE))
+    log_debug("Z or RCODE is set");
 
-    fprintf(stderr, "qd= %u\n", x->qdcount);
-    x->here = read_record(x, &y, x->here, 1);
-    fprintf(stderr, "  name= %s, type= %d, class= %d\n",
-	     y.name, y.type, y.class);
-    
-    fprintf(stderr, "ans= %u\n", x->ancount);
-    for (i = 0; i < x->ancount; i++) {
-	x->here = read_record(x, &y, x->here, 0);
-	fprintf(stderr, "  name= %s, type= %d, class= %d, ttl= %lu\n",
-		 y.name, y.type, y.class, y.ttl);
-    }
-	    
-    fprintf(stderr, "ns= %u\n", x->nscount);
-    for (i = 0; i < x->nscount; i++) {
-	x->here = read_record(x, &y, x->here, 0);
-	fprintf(stderr, "  name= %s, type= %d, class= %d, ttl= %lu\n",
-		 y.name, y.type, y.class, y.ttl);
-    }
-	    
-    fprintf(stderr, "ar= %u\n", x->arcount);
-    for (i = 0; i < x->arcount; i++) {
-	x->here = read_record(x, &y, x->here, 0);
-	fprintf(stderr, "  name= %s, type= %d, class= %d, ttl= %lu\n",
-		 y.name, y.type, y.class, y.ttl);
-    }
-	    
-    fprintf(stderr, "\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "- -- %s\n", type);
+  raw_dump(x);
+  
+  fprintf(stderr, "\n");
+  fprintf(stderr, "id= %u, q= %d, opc= %d, aa= %d, wr/ra= %d/%d, "
+	  "trunc= %d, rcode= %d [%04X]\n",
+	  x->id, GET_QR(x->u), GET_OPCODE(x->u), GET_AA(x->u),
+	  GET_RD(x->u), GET_RA(x->u), GET_TC(x->u), GET_RCODE(x->u), x->u);
+
+  fprintf(stderr, "qd= %u\n", x->qdcount);
+  
+  if ((x->here = read_record(x, &y, x->here, 1, limit)) == NULL) {
     free_packet(x);
+    return(-1);
+  }
 
-    return (0);
+  fprintf(stderr, "  name= %s, type= %d, class= %d\n",
+	  y.name, y.type, y.class);
+  
+  fprintf(stderr, "ans= %u\n", x->ancount);
+  for (i = 0; i < x->ancount; i++) {
+    if ((x->here = read_record(x, &y, x->here, 0, limit)) == NULL) {
+      free_packet(x);
+      return(-1);
+    }
+    fprintf(stderr, "  name= %s, type= %d, class= %d, ttl= %lu\n",
+	    y.name, y.type, y.class, y.ttl);
+  }
+	    
+  fprintf(stderr, "ns= %u\n", x->nscount);
+  for (i = 0; i < x->nscount; i++) {
+    if ((x->here = read_record(x, &y, x->here, 0, limit))==NULL) {
+      free_packet(x);
+      return(-1);
+    }
+    fprintf(stderr, "  name= %s, type= %d, class= %d, ttl= %lu\n",
+	    y.name, y.type, y.class, y.ttl);
+  }
+    
+  fprintf(stderr, "ar= %u\n", x->arcount);
+  for (i = 0; i < x->arcount; i++) {
+    if ((x->here = read_record(x, &y, x->here, 0, limit))==NULL) {
+      free_packet(x);
+      return(-1);
+    }
+    fprintf(stderr, "  name= %s, type= %d, class= %d, ttl= %lu\n",
+	    y.name, y.type, y.class, y.ttl);
+  }
+	    
+  fprintf(stderr, "\n");
+  free_packet(x);
+
+  return (0);
 }
 
 
@@ -267,6 +310,7 @@ dnsheader_t *parse_packet(unsigned char *packet, int len)
     return (x);
 }
 
+/*
 int get_dnsquery(dnsheader_t *x, rr_t *query)
 {
     char	*here;
@@ -280,6 +324,7 @@ int get_dnsquery(dnsheader_t *x, rr_t *query)
 
     return (0);
 }
+*/
 
 /*
  * parse_query()
@@ -294,17 +339,30 @@ unsigned char *parse_query(rr_t *y, unsigned char *msg, int len)
     int	k;
     unsigned char *here;
     unsigned short int conv;
+    unsigned const char *limit = msg+len; 
 
-    if (ntohs(((short int *) msg)[2]) == 0) {		/* C is nice. */
-	return (0);
+    /* If QDCOUNT, the number of entries in the question section,
+     * is zero, we just give up */
+
+    if (ntohs(((dnsheader_t *)msg)->qdcount) == 0 ) {
+      log_debug("QDCOUNT was zero");
+      return(0);
     }
 
+    if (ntohs(((dnsheader_t *)msg)->u) & MASK_QR ) {
+      log_debug("QR bit set. This is a reponse?");
+      return(0);
+    }
+    
     y->flags = ntohs(((short int *) msg)[1]);
 
     here = &msg[PACKET_DATABEGIN];
-    k = get_objectname(msg, &here, y->name, 0);
+    if ((k=get_objectname(msg, limit, &here, y->name, sizeof(y->name),0))< 0) 
+      return(0);
     y->name[k] = 0;
 
+    /* check that there is type and class */
+    if (here + 4 > limit) return(0);
     memcpy(&conv, here, sizeof(unsigned short int));
     y->type = ntohs(conv);
     here += 2;
@@ -313,11 +371,15 @@ unsigned char *parse_query(rr_t *y, unsigned char *msg, int len)
     y->class = ntohs(conv);
     here += 2;
 
+    /* those strings should have been checked in get_objectname */
     k = strlen(y->name);
     if (k > 0  &&  y->name[k-1] == '.') {
 	y->name[k-1] = '\0';
     }
 
+    /* should we really convert the name to lowercase?  
+     * rfc1035 2.3.3
+     */
     strlwr(y->name);
 	    
     return (here);

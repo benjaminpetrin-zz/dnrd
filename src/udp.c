@@ -54,7 +54,6 @@ static int dnssend(int k, void *msg, int len)
     return (rc);
 }
 
-
 /*
  * handle_udprequest()
  *
@@ -74,7 +73,7 @@ void handle_udprequest()
 
     /* Read in the message */
     addr_len = sizeof(struct sockaddr_in);
-    len = recvfrom(isock, msg, sizeof(msg), 0,
+    len = recvfrom(isock, msg, maxsize, 0,
 		   (struct sockaddr *)&from_addr, &addr_len);
     if (len < 0) {
 	log_debug("recvfrom error %s", strerror(errno));
@@ -86,7 +85,8 @@ void handle_udprequest()
     }
 
     /* Determine how query should be handled */
-    fwd = handle_query(&from_addr, msg, &len, &srvr);
+    if ((fwd = handle_query(&from_addr, msg, &len, &srvr)) < 0)
+      return; /* if its bogus, just ignore it */
 
     /* If we already know the answer, send it and we're done */
     if (fwd == 0) {
@@ -172,7 +172,7 @@ static int dnsrecv(int k, void *msg, int len)
 		inet_ntoa(dns_srv[k].addr.sin_addr));
 	return (-1);
     }
-    else if (rc == len) {
+    else if (rc > len) {
 	log_msg(LOG_NOTICE, "packet too large: %s",
 		inet_ntoa(dns_srv[k].addr.sin_addr));
 	return (0);
@@ -202,10 +202,10 @@ void handle_udpreply(int srvidx)
     struct sockaddr_in from_addr;
     unsigned           addr_len;
 
-    len = dnsrecv(srvidx, msg, sizeof(msg));
+    len = dnsrecv(srvidx, msg, maxsize);
     if (opt_debug) {
 	char buf[80];
-	sprintf_cname(&msg[12], buf, 80);
+	sprintf_cname(&msg[12], len-12, buf, 80);
 	log_debug("Received DNS reply for \"%s\"", buf);
     }
     if (len > 0) {

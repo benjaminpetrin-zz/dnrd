@@ -18,6 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <sys/types.h>
 #include "relay.h"
 #include "cache.h"
 #include "common.h"
@@ -26,7 +27,6 @@
 #include "master.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -78,6 +78,16 @@ int main(int argc, char *argv[])
      * to ignore them -- 14OCT99wzk
      */
     signal(SIGCHLD, SIG_IGN);
+
+    /*
+     * Initialization in common.h of recv_addr is broken, causing at
+     * least the '-a' switch not to work.  Instead of assuming
+     * positions of fields in the struct across platforms I thought it
+     * safer to do a standard initialization in main().
+     */
+    memset(&recv_addr, 0, sizeof(recv_addr));
+    recv_addr.sin_family = AF_INET;
+    recv_addr.sin_port = htons(53);
 
     /*
      * Parse the command line.

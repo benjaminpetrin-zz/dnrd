@@ -251,6 +251,12 @@ int cache_lookup(void *packet, int len)
     x = parse_packet(packet, len);
     /* get_dnsquery(x, &query); */
 
+    /* this fixes a memory leak. 
+     * http://groups.yahoo.com/group/dnrd/message/241
+     */
+    free_packet(x);
+    x = NULL;
+
     /*
      * ... and search our cache for this request.
      */

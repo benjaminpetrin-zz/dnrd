@@ -18,6 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include "config.h"
 #include "common.h"
 #include <stdarg.h>
 #include <unistd.h>
@@ -55,7 +56,7 @@ int                 serv_act = 0;
 int                 serv_cnt = 0;
 uid_t               daemonuid = 0;
 gid_t               daemongid = 0;
-const char*         version = "2.10";
+const char*         version = PACKAGE_VERSION;
 int                 gotterminal = 1; /* 1 if attached to a terminal */
 sem_t               dnrd_sem;  /* Used for all thread synchronization */
 
@@ -230,28 +231,52 @@ char* make_cname(const char *text)
     return cname;
 }
 
-void sprintf_cname(const char *cname, char *buf, int bufsize)
+size_t _strnlen(const char *s, size_t maxlen) {
+  size_t len=0;
+  while (*s++ && len<maxlen) len++;
+  return (len);
+}
+
+void sprintf_cname(const char *cname, int namesize, char *buf, int bufsize)
 {
-    const char *cptr = cname;
+  const char *s = cname; /*source pointer */
+  char *d = buf; /* destination pointer */
 
-    if (strlen(cname) > (unsigned)bufsize) {
-        if (bufsize > 10) {
-            sprintf(buf, "(too long)");
-        }
-        else {
-            buf[0] = 0;
-        }
-        return;
+  if (cname == NULL) return;
+    
+  if ((_strnlen(cname, namesize)+1) > (unsigned)bufsize) {
+    if (bufsize > 11) {
+      sprintf(buf, "(too long)");
+    }
+    else {
+      buf[0] = 0;
+    }
+    return;
+  }
+
+  /* extract the pascal style strings */
+  while (*s) {
+    int i;
+    int size = *s;
+
+    /* Let us see if we are bypassing end of buffer.  Also remember
+     * that we need space for an ending \0
+     */
+    if ((s + *s - cname) >= (bufsize)) {
+      if (bufsize > 15 ) {
+	sprintf(buf, "(malformatted)");
+      } else {
+	buf[0] = 0;
+      }
+      return;
     }
 
-    while (*cptr) {
-        int i;
-        int size = *cptr;
-
-        if (cptr++ != cname) sprintf(buf++, ".");
-
-        for(i = 0; i < size; i++, cptr++) {
-            sprintf(buf++, "%c", *cptr);
-        }
+    /* delimit the labels with . */
+    if (s++ != cname) sprintf(d++, ".");
+   
+    for(i = 0; i < size; i++) {
+      *d++ = *s++;
     }
+    *d=0;
+  }
 }
