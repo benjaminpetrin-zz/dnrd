@@ -51,7 +51,7 @@ srvnode_t *alloc_srvnode(void) {
 
 srvnode_t *init_srvlist(void) {
   srvnode_t *p = alloc_srvnode();
-  p->sock=0;
+  /*  p->sock=0; */
   p->next = p;
   return p;
 }
@@ -80,7 +80,7 @@ srvnode_t *del_srvnode_after(srvnode_t *list) {
 srvnode_t *destroy_srvnode(srvnode_t *p) {
   /* close socket */
   assert(p!=NULL);
-  if (p->sock) close(p->sock);
+  /*  if (p->sock) close(p->sock); */
   free(p);
   return NULL;
 }
@@ -138,3 +138,4 @@ int no_srvlist(srvnode_t *head) {
   if (!head) return 1;
   return (head->next == head);
 }
+

@@ -21,12 +21,14 @@
 #ifndef _DNRD_UDP_H_
 #define _DNRD_UDP_H_
 #include "srvnode.h"
+#include "query.h"
 
 /* Function to call when a message is available on isock */
-void udp_handle_request();
+/* returns the new query */
+query_t *udp_handle_request();
 
 /* Call this to handle upd DNS replies */
-void udp_handle_reply(srvnode_t *srv);
+void udp_handle_reply(query_t *q);
 
 /* send a reactivation packet */
 int udp_send_dummy(srvnode_t *s);

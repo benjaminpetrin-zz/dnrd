@@ -42,6 +42,8 @@
 #include "master.h"
 #include "domnode.h"
 #include "lib.h"
+#include "qid.h"
+#include "query.h"
 
 /*
  * main() - startup the program.
@@ -191,6 +193,9 @@ int main(int argc, char *argv[])
     master_init();
 #endif
 
+    /* init query list */
+    query_init();
+
     pwent = getpwnam("nobody");
 
     /*
@@ -310,10 +315,12 @@ int main(int argc, char *argv[])
     do {
       s=p->srvlist;
       while ((s=s->next) != p->srvlist) {
+	/*
 	if ((s->sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 	    log_msg(LOG_ERR, "osock: Couldn't open socket");
 	    cleanexit(-1);
 	}
+	*/
 	s->addr.sin_family = AF_INET;
 	s->addr.sin_port   = htons(53);
       }

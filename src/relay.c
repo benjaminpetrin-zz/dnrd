@@ -29,6 +29,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
 
 #include "query.h"
 #include "relay.h"
@@ -91,7 +92,6 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
 
 {
     int       replylen;
-    short int * flagp = &((short int *)msg)[1]; /* pointer to flags */
     domnode_t *d;
 
     if (opt_debug) {
@@ -185,84 +185,84 @@ static void reactivate_servers(int interval) {
  */
 void run()
 {
-    int                maxsock;
-    struct timeval     tout;
-    fd_set             fdmask;
-    fd_set             fds;
-    int                retn;
+  int                maxsock;
+  struct timeval     tout;
+  fd_set             fdmaster;
+  fd_set             fdread;
+  int                retn;
     /*    int                i, j;*/
-    domnode_t *d = domain_list;
-    srvnode_t *s;
 
-    FD_ZERO(&fdmask);
-    FD_SET(isock,   &fdmask);
+  FD_ZERO(&fdmaster);
+  FD_SET(isock,   &fdmaster);
 #ifdef ENABLE_TCP
-    FD_SET(tcpsock, &fdmask);
-    maxsock = (tcpsock > isock) ? tcpsock : isock;
+  FD_SET(tcpsock, &fdmaster);
+  maxsock = (tcpsock > isock) ? tcpsock : isock;
 #else
-    maxsock = isock;
+  maxsock = isock;
 #endif
+
+  /*
     do {
-      if ((s=d->srvlist)) {
-	while ((s=s->next) != d->srvlist) {
-	  if (maxsock < s->sock) maxsock = s->sock;
+    if ((s=d->srvlist)) {
+    while ((s=s->next) != d->srvlist) {
+    if (maxsock < s->sock) maxsock = s->sock;
 	  FD_SET(s->sock, &fdmask);
 	  s->send_time = 0;
 	  s->send_count = 0;
 	}
       }
     } while ((d=d->next) != domain_list);
-    maxsock++;
+    */
 
-    while(1) {
-	tout.tv_sec  = select_timeout;
-	tout.tv_usec = 0;
 
-	fds = fdmask;
+  while(1) {
+    query_t *q;
+    tout.tv_sec  = select_timeout;
+    tout.tv_usec = 0;
+    fdread = fdmaster;
+    
+    /* Wait for input or timeout */
+    retn = select(maxsock+1, &fdread, 0, 0, &tout);
+    
+    /* reactivate servers */
+    if (reactivate_interval != 0) 
+      reactivate_servers(reactivate_interval);
 
-	/* Wait for input or timeout */
-	retn = select(maxsock, &fds, 0, 0, &tout);
-	
-	/* Expire lookups from the cache */
-	cache_expire();
-
-#ifndef EXCLUDE_MASTER
-	/* Reload the master database if neccessary */
-	master_reinit();
-#endif
-
-	/* Remove old unanswered queries */
-	dnsquery_timeout(60);
-
-	/* reactivate servers */
-	if (reactivate_interval != 0) 
-	  reactivate_servers(reactivate_interval);
-
-	/* Handle errors */
-	if (retn < 0) {
-	    log_msg(LOG_ERR, "select returned %s", strerror(errno));
-	    continue;
-	}
-	else if (retn == 0) {
-	  continue;  /* nothing to do */
-	}
-
-	/* Check for replies to DNS queries */
-	d=domain_list;
-	do {
-	  if ((s=d->srvlist)) {
-	    while ((s=s->next) != d->srvlist)
-	      if (FD_ISSET(s->sock, &fds)) udp_handle_reply(s);
-	  }
-	} while ((d=d->next) != domain_list);
+    /* Handle errors */
+    if (retn < 0) {
+      log_msg(LOG_ERR, "select returned %s", strerror(errno));
+      continue;
+    }
+    else if (retn != 0) {
+      for (q = &qlist; q->next != &qlist; q = q->next) {
+	if (FD_ISSET(q->sock, &fdread)) udp_handle_reply(q);
+      }
 
 #ifdef ENABLE_TCP
-	/* Check for incoming TCP requests */
-	if (FD_ISSET(tcpsock, &fds)) tcp_handle_request();
+      /* Check for incoming TCP requests */
+      if (FD_ISSET(tcpsock, &fdread)) tcp_handle_request();
 #endif
-
-	/* Check for new DNS queries */
-	if (FD_ISSET(isock, &fds)) udp_handle_request();
-
+      /* Check for new DNS queries */
+      if (FD_ISSET(isock, &fdread)) {
+	q = udp_handle_request();
+	if (q != NULL) {
+	  FD_SET(q->sock, &fdmaster);
+	  if (q->sock > maxsock) maxsock = q->sock;
+	}
+      }
+    } else {
+	  log_debug("nothing happens");
     }
+    /* ok, we are done with replies and queries, lets do some
+	   maintenance work */
+    
+    /* Expire lookups from the cache */
+    cache_expire();
+#ifndef EXCLUDE_MASTER
+    /* Reload the master database if neccessary */
+	master_reinit();
+#endif
+	/* Remove old unanswered queries */
+	//	dnsquery_timeout(60);
+  }
 }

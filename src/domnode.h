@@ -33,7 +33,6 @@ typedef struct _domnode {
   srvnode_t       *current;
   int             roundrobin; /* load balance the servers */
   int             retrydelay; /* delay before reactivating the servers */
-  
   struct _domnode *next;    /* ptr to next server */
 } domnode_t;
 
@@ -57,7 +56,6 @@ srvnode_t *deactivate_current(domnode_t *d);
 
 void reactivate_srvlist(domnode_t *d);
 void retry_srvlist(domnode_t *d, const int delay);
-
 
 
 #endif

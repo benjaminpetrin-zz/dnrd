@@ -1,11 +1,14 @@
 /*
- * query.h - Functions used to store & retrieve DNS queries.
+ * query.h
  *
- * Assumptions: Time is measured as a 32-bit number in seconds since Jan 1 1970.
- *              Therefore, it is assumed that this program will be fixed before
- *              the year 2038 or so.
+ * This is a complete rewrite of Brad garcias query.h
  *
- * Copyright (C) 1998 Brad M. Garcia <garsh@home.com>
+ * This file contains the data definitions, function definitions, and
+ * variables used to implement our DNS query list.
+ *
+ * Assumptions: No multithreading.
+ *
+ * Copyright (C) Natanael Copa <ncopa@users.sourceforge.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,31 +25,40 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef _DNSR_QUERY_H_
-#define _DNSR_QUERY_H_
+#ifndef QUERY_H
+#define QUERY_H
 
-#include <sys/types.h>
-#include <time.h>
-#include <netinet/in.h>
+#include "srvnode.h"
 #include "domnode.h"
 
-/*
- * These are function used for manipulating DNS queries.
- * Detailed descriptions of these functions appear in query.c
- */
+typedef struct _query {
+  int sock; /* the communication socket */
+  srvnode_t *srv; /* the upstream server */
+  domnode_t *domain; /* the domain the query belongs to */
 
-/* Add a DNS query to our list */
-int dnsquery_add(const struct sockaddr_in* client, char* msg, unsigned len);
+  unsigned short my_qid; /* the local qid */
+  unsigned short client_qid; /* the qid from the client */
+  struct sockaddr_in client; /* */
 
-/* Find the client to which this DNS reply should be sent */
-int dnsquery_find(char* reply, struct sockaddr_in* client);
+  int send_count; /* number of retries */
+  time_t send_time; /* time of last sent packet */
+  time_t client_time; /* last time we got this query from client */
+  int client_count; /* number of times we got this same request */
 
-/* Remove DNS queries which have timed out */
-int dnsquery_timeout(time_t age);
 
-#ifdef DEBUG
-/* Dump the current queue state */
-void dnsquery_dump();
-#endif /* DEBUG */
+  struct _query     *next; /* ptr to next query */
 
-#endif  /* _DNSR_QUERY_H_ */
+} query_t;
+
+extern query_t qlist;
+
+void query_init(void);
+query_t *query_create(domnode_t *d, srvnode_t *s);
+query_t *query_destroy(query_t *q);
+query_t *query_get_new(domnode_t *dom, srvnode_t *srv);
+
+query_t *query_add(query_t *q, const struct sockaddr_in* client, char* msg, 
+		   unsigned len);
+
+
+#endif
