@@ -46,13 +46,13 @@
  * should be >= SELECT_TIMEOUT
  */
 #ifndef FORWARD_TIMEOUT
-#define FORWARD_TIMEOUT 3
+#define FORWARD_TIMEOUT 5
 #endif
 
 /* only check if any server are to be reactivated every
  * REACTIVATE_INTERVAL seconds
  */
-#define REACTIVATE_INTERVAL 5
+#define REACTIVATE_INTERVAL 7
 
 struct dnssrv_t {
   int                    sock;      /* for communication with server */
