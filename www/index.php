@@ -25,6 +25,10 @@ for minor networks and workstations.
 
 <li>Support for backup DNS servers.</li>
 
+<li>Uses random source port and random query ID's to prevent 
+<a href="http://www.securityfocus.com/guest/17905">cache poisoning</a>.
+</li>
+
 <li>Support for simple routing - specify different forward DNS servers
   for different domains.</li>
 
