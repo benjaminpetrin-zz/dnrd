@@ -159,7 +159,7 @@ srvnode_t *set_current(domnode_t *d, srvnode_t *s) {
 }
 
 
-/* switch to next active server
+/* next active server
    Returns: NULL - if there are no active servers in list
             the next active server otherwise
 */
@@ -173,8 +173,10 @@ srvnode_t *next_active(domnode_t *d) {
   }
   for (s=start->next; s->inactive && s != start; s = s->next);
   if (s->inactive) s=NULL;
-  return set_current(d, s);
+  return (s);
 }
+
+
 
 /* deactivate current server
    Returns: next active server, NULL if there are none 
@@ -220,7 +222,6 @@ srvnode_t *retry_srvlist(domnode_t *d, const int delay) {
       if (d->current == NULL)  set_current(d, s);
       */
     }
-
 }
 
 #ifdef DEBUG
