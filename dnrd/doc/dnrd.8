@@ -22,11 +22,12 @@ dnrd \- proxy name server
 .RB "[\|" \-v | \-\-version "\|]"
 .SH DESCRIPTION
 .B dnrd\fR is a proxying nameserver. It forwards DNS queries to the appropriate
-nameserver, but can also act as the primary nameserver for a few machines.
-Proxying is configured on the command line using the 
+nameserver, but can also act as the primary nameserver for a subnet
+behind a firewall.  Proxying is configured on the command line using
+the
 .B \-s
-option.  By default,
-dnrd will act as the primary nameserver for hosts found in
+option.  By default, dnrd will act as the primary nameserver for hosts
+found in
 .IR /etc/hosts .
 
 .SH OPTIONS
@@ -34,7 +35,8 @@ dnrd will act as the primary nameserver for hosts found in
 .B \-a
 .TP
 .B \-\-address
-Bind only to the interface with the specified address.
+Bind only to the interface with the specified address. [Is the default to bind to everything?
+if so - say so  - NA]
 
 .TP
 .B \-b
@@ -44,7 +46,7 @@ Turn on load balancing. All forward servers that are specified after
 this option (with
 .B \-s\fR)
 will load balance in a round robin scheme. By default, dnrd will use
-the next server in the list if the first timesout. As soon as the
+the next server in the list if the first times out. As soon as the
 first is reactivated, it will be used again. With
 .B \-b
 option, dnrd will use next active server as soon a request is
@@ -57,46 +59,47 @@ list.
 .TP
 .BR \-\-cache= ( off |[ \fIlow :] \fIhigh )
 This option can be used to either turn off caching of DNS responses, or to
-change the high and low watermarks.  The high water mark is the number of
-cached DNS responses that will be kept before we start dropping entries.
-The low water mark is the number of entries to keep around after we've
-started dropping entries.  By default, caching is on, with low and high
-watermarks of 800 and 1000 respectively.
+change the high and low watermarks.  With the high/low water mark option, cached
+entries are purged when the number of responses reaches the high-water mark,
+and they will be purged until the number of cached responses reaches the low-water
+mark. [Are they purged in oldest-first, random, or what order? - NA]  By default,
+caching is on, with low and high water-marks of 800 and 1000 respectively.
 
 .TP
 .B \-d
 .TP
 .B \-\-debug
-This turns on debugging.  The dnrd process will run in the current console
+This turns on debugging.  The dnrd process will run in the current console [I think
+the english way to say this is "will not fork into the background" - NA]
 and print out debugging information.  If the option is given twice, it will
-also dump out the raw packet contents.
+also dumps the raw packet contents.
 
 .TP
 .B \-h
 .TP
 .B \-\-help
-Prints out usage information
+Prints usage information
 
 .TP
 .B \-i
 .TP
 .B \-\-ignore
 Ignore cache for deactivated servers. If a forward DNS server times
-out and gets deactivated, all cache entries that this server caused
-will be ignored. This will help to avoid network timeout delays when
-offline.
+out and gets deactivated, all cache entries for this server are
+ignored. This helps avoid network timeout delays when offline. [when
+what is offline - the DNS server, or the DNRD machine? - NA]
 
 .TP
 .B \-k
 .TP
 .B \-\-kill
-Kills the currently running dnrd process and immediately returns.
+Kills the currently running dnrd process.
 
 .TP
 .B \-l
 .TP
 .B \-\-log
-Send all messages to syslog.
+Send all messages to syslog. [What service/priority? -NA]
 
 .TP
 .BR \-m \ ( off | hosts )
@@ -108,7 +111,7 @@ will read in
 to determine how this is done.  If that file
 doesn't exist, it will act as the primary server for the hosts found in
 .IR /etc/hosts .
-This option allows you to override this default behavior.  Setting it to
+This option allows you to override the default behavior.  Setting it to
 .B off
 turns off all primary server functionality.  Setting it to 
 .B hosts
@@ -121,15 +124,16 @@ regardless of whether it could find
 .BI \-r\  N
 .TP
 .BI \-\-retry= N
-Set the retry interval time. When a server forward DNS server times
+Set the retry interval time. When a forward DNS server times
 out it is deactivated. (use the
 .B -t
 option to set the timeout value) Dnrd will try to send a request for
-localhost evey
+localhost every
 .I N
-seconds. As soon there are any respose from a deactivated server, it
-will be reactivated. The default value is
+seconds. As soon there are a respose from a deactivated server, it
+is reactivated. The default value is
 .I 5
+seconds.
 
 .TP
 .BI \-s\  ipaddr \fR(: domain \fR)
@@ -137,10 +141,12 @@ will be reactivated. The default value is
 .BI \-\-server= ipaddr \fR(: domain \fR)
 Add a forward DNS server. If multiple
 .B \-s
-options are given, dnrd will treat the first as primary DNS server and
+options are given, dnrd treats the first as a primary DNS server and
 the rest as backup servers. If the primary DNS server times out, it
-will get deactivated and the next specified server (that is active)
-will be used until the previous gets reactivated.
+is deactivated and the next specified server (that is active)
+is used until the previous gets reactivated. [ Does the load balancing
+option affect this ? NA]
+
 .sp
 The 
 .I domain
@@ -155,6 +161,10 @@ option is specified, then will all servers with the same
 specified after the
 .B \-b
 option, be grouped and load balanced.
+[Natanael, I think this is called "split horizon", you might want to check out if
+that's the way you want to describe it.   Split horizon basically means that the public
+dns entry for www.foo.com is 1.2.3.4, but you want the internal users to go to 192.168.1.1]
+
 
 .TP
 .BI \-t\  N
@@ -162,7 +172,7 @@ option, be grouped and load balanced.
 .BI \-\-timeout= N
 Set the timeout value for forward DNS servers. If a server don't respond to a query within
 .I N
-seconds it will be deactivated. The default value is
+seconds it is deactivated. The default value is
 .I 3
 
 .TP
@@ -170,8 +180,7 @@ seconds it will be deactivated. The default value is
 .TP
 .BI \-\-userid= userid
 By default, dnrd switches to uid 65535 after starting up.  This is a
-security feature. If dnrd is ever compromised by a buffer-overflow attack,
-the attacker will have gained no useful privileges.  The default uid can
+security feature.  The default uid can
 be overridden using this option.
 .I userid
 can either be a name or a number.
@@ -185,7 +194,9 @@ Prints out the version number
 .SH BUGS
 .PP
 Even if it is possible to bind dnrd to one single interface it is not
-possible to run several dnrd processes on the same host.
+possible to run several dnrd processes on the same host. [I don't understand
+this.. are you saying that "you cannot run more than one dnrd process, even
+if each is listening on a separated interface"?]
 
 .SH FILES
 .PP
