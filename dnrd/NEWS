@@ -1,0 +1,6 @@
+Release 2.12.1
+==============
+
+Fixed bugs:
+* restarting dnrd fails with "Could not bind local address"
+* cache disabled in 2.12
