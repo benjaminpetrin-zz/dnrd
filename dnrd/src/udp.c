@@ -84,7 +84,9 @@ void handle_udprequest()
 	log_msg(LOG_WARNING, "Received message is too big to process");
 	return;
     }
-
+    if (len < 12) {
+      return; /* too small */
+    }
     /* Determine how query should be handled */
     if ((fwd = handle_query(&from_addr, msg, &len, &dptr)) < 0)
       return; /* if its bogus, just ignore it */
