@@ -6,8 +6,8 @@ function menu($entry) {
 		"Download"      => "download.php",
 		"Manual Page" => "docs.php",
 		"Project Page"  => "http://sourceforge.net/projects/dnrd",
-		"Links" => "links.php",
-		"Contact Info"  => "contact.php"
+		"Contact Info"  => "contact.php",
+		"Links" => "links.php"
 		);
 
 
@@ -17,7 +17,7 @@ function menu($entry) {
   foreach ($urls as $i => $u) {
     print ( "<dt>");
     print( ($entry == $i) ?
-	   "<h3>$i</h3>" : "<a href=\"$u\">$i</a>");
+	   "<h4>$i</h4>" : "<a href=\"$u\">$i</a>");
     print("</dt>\n");
   }
   print ("</dl>\n");

@@ -8,16 +8,19 @@ body
   border-width: 1px; 
   border-color: #fefefe;
   color : #000000;
+  font-family: "Bitstream Vera Sans", verdana, sans-serif, arial, helvetiva;
+  }
+
   }
 
 p, ul, ol, li 
 {
-  font : "Bitstream Vera Sans", sans-serif, Arial, geneva, helvetica;
+  font-family: "Bitstream Vera Sans", verdana, sans-serif, Arial, geneva, helvetica;
   }
 
 h1 
 {
-  font : "Bitstream Vera Sans", sans-serif, Arial, Helvetica, geneva;
+  font-family: "Bitstream Vera Sans", verdana, sans-serif, Arial, Helvetica, geneva;
   font-size: 200%;
   background-color: #666699;
   padding: 0.35em 0.35em 0.35em 10%;
@@ -26,9 +29,12 @@ h1
 
 h2 
 {
-  font : "Bitstream Vera Sans", sans-serif, Arial, Helvetica, geneva;
+  font-family: "Bitstream Vera Sans", verdana, sans-serif, Arial, Helvetica, geneva;
   font-size: 161%;
   }
+
+h4
+{ font-size: 110%; }
 
 #content 
 { 
