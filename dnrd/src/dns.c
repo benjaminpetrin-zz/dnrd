@@ -377,7 +377,7 @@ unsigned char *parse_query(rr_t *y, unsigned char *msg, int len)
     }
 
     if (ntohs(((dnsheader_t *)msg)->u) & MASK_QR ) {
-      log_debug("QR bit set. This is a reponse?");
+      /*      log_debug("QR bit set. This is a response?"); */
       return(0);
     }
     
