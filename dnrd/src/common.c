@@ -72,6 +72,8 @@ int                 reactivate_interval = REACTIVATE_INTERVAL;
 /* The path where we chroot. All config files are relative this path */
 char chroot_path[512] = CHROOT_PATH;
 
+char config_file[] = CHROOT_PATH "/" CONFIG_FILE;
+
 domnode_t *domain_list;
 /* turn this on to skip cache hits from responses of inactive dns servers */
 int                 ignore_inactive_cache_hits = 0; 
@@ -283,7 +285,7 @@ char* make_cname(const char *text, const int maxlen)
 	size_t diff;
 	end = strchr(tptr, '.');
 	if (end == NULL) end = text + strnlen(text, maxlen);
-	if (end < tptr + 2) {
+	if (end <= tptr) {
 	    free(cname);
 	    return NULL;
 	}
