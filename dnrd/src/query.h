@@ -25,6 +25,7 @@
 #ifndef _DNSR_QUERY_H_
 #define _DNSR_QUERY_H_
 
+#include <sys/types.h>
 #include <time.h>
 #include <netinet/in.h>
 

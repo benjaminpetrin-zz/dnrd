@@ -21,8 +21,8 @@ AC_CHECK_HEADER(pthread.h)
    case $host_os in
      dnl BSD/OS and NetBSD require no special libraries or flags
      netbsd*|bsdi*) ;;
-     freebsd4*) THREAD_CFLAGS="-pthread" ;;
-     freebsd*) THREAD_LIBS="-lc_r" ;;
+     freebsd*) THREAD_CFLAGS="${PTHREAD_CFLAGS}" THREAD_LIBS="${PTHREAD_LIBS}"
+	       ;;
      linux*|openbsd*) THREAD_LIBS="-lpthread" ;;	
 dnl other operating systems might fail because they have pthread.h but need
 dnl special libs we don't know about yet.
