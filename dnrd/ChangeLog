@@ -1,3 +1,10 @@
+version 2.16
+------------
+Natanael Copa <n@tanael.org>
+ - Use ISAAC random ID's to prevent cache poisoning
+ - misc bugfixes
+
+
 version 2.15
 ------------
 Natanael Copa <n@tanael.org>
