@@ -93,7 +93,7 @@ extern gid_t               daemongid; /* to switch to once daemonised */
 #endif
 extern int                 gotterminal;
 #ifndef EXCLUDE_MASTER
-extern char		   master_param[200];
+extern int		   master_onoff;
 extern unsigned char       master_reload;
 #endif
 extern sem_t               dnrd_sem;  /* Used for all thread synchronization */

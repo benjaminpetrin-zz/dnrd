@@ -66,19 +66,17 @@ int main(int argc, char *argv[])
 #ifdef ENABLE_PIDFILE
     FILE              *filep;
 #endif
-    struct servent    *servent;   /* Let's be good and find the port numbers
-				     the right way */
 #ifndef __CYGWIN__
     struct passwd     *pwent;
 #endif
     DIR               *dirp;
+    struct servent    *servent;   /* Let's be good and find the port numbers
+				     the right way */
     struct dirent     *direntry;
     struct stat        st;
     int                rslt;
     domnode_t *p;
     srvnode_t *s;
-
-
 
     /*
      * Initialization in common.h of recv_addr is broken, causing at
@@ -98,6 +96,9 @@ int main(int argc, char *argv[])
      */
     parse_args(argc, argv);
 
+	/* we change to the dnrd-root dir */
+	chdir(dnrd_root);
+
     openlog(progname, LOG_PID, LOG_DAEMON);
 
 #ifdef ENABLE_PIDFILE
@@ -105,17 +106,6 @@ int main(int argc, char *argv[])
      * Kill any currently running copies of the program.
      */
     kill_current();
-#endif
-
-    /*
-     * Setup the thread synchronization semaphore
-     */
-    if (sem_init(&dnrd_sem, 0, 1) == -1) {
-	log_msg(LOG_ERR, "Couldn't initialize semaphore");
-	cleanexit(-1);
-    }
-
-#ifdef ENABLE_PIDFILE
     /*
      * Write our pid to the appropriate file.
      * Just open the file here.  We'll write to it after we fork.
@@ -127,6 +117,16 @@ int main(int argc, char *argv[])
 	exit(-1);
     }
 #endif
+
+
+    /*
+     * Setup the thread synchronization semaphore
+     */
+    if (sem_init(&dnrd_sem, 0, 1) == -1) {
+	log_msg(LOG_ERR, "Couldn't initialize semaphore");
+	cleanexit(-1);
+    }
+
 
     /*
      * Pretend we don't know that we want port 53
