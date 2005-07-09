@@ -90,13 +90,12 @@ typedef struct _dnsrec {
     } u;
 } dnsrec_t;
 
-char master_param[200]		= "";
 unsigned char master_reload	= 0;
+int master_onoff		= 1;
 
-static int master_onoff		= 1;
 static int master_initialised	= 0;
-static char config[]		= DNRD_ROOT "/" MASTER_CONFIG;
-static char blacklist[]         = DNRD_ROOT "/" MASTER_BLACKLIST;
+static char config[]		= MASTER_CONFIG;
+static char blacklist[]         = MASTER_BLACKLIST;
 
 static int auto_authority	= 1;
 
@@ -317,48 +316,6 @@ char *get_hostname(char **from, char *domain, char *name, int size)
     }
 
     return (name);
-}
-
-int read_hosts(char *filename, char *domain)
-{
-    int		count;
-    char	*p, word[100], ipnum[100], line[300];
-    FILE	*fp;
-    
-    if ((fp = fopen(filename, "r")) == NULL) {
-	log_msg(LOG_NOTICE, "can't open file: %s", filename);
-	return (1);
-    }
-
-    log_msg(LOG_WARNING,
-	    "Using /etc/hosts will be removed in a future version."
-	    " Please use only the %s/master file or use -m off.", 
-	    dnrd_root);
-    log_debug(1, "initialising from /etc/hosts, domain= %s",
-	      *domain == 0? "<none>": domain);
-
-    count = dbc;
-    while (fgets(line, sizeof(line), fp) != NULL) {
-	p = skip_ws((char *)noctrln(line, sizeof(line)));
-	if (*p == 0  ||  *p == '#') continue;
-
-	if (isdigit((int)(*p))) {
-	    /*
-	     * Usual hosts records start with an IP number.  This
-	     * might be followed by one or more names.  Every
-	     * name makes one DNS record.
-	     */
-	    get_word(&p, ipnum, sizeof(ipnum));
-	    while (*get_hostname(&p, domain, word, sizeof(word)) != 0) {
-		add_nameip(word, sizeof(word), ipnum);
-	    }
-	}
-    }
-	    
-    fclose (fp);
-    log_debug(1, "%s: %d records", filename, dbc - count);
-
-    return (0);
 }
 	
 int read_configuration(char *filename)
@@ -730,10 +687,12 @@ int read_blacklist(const char *filename) {
  * Create the DNS database with the data from the configuration
  * file.
  */
-static int _master_init(void)
+int master_init(void)
 {
-    if (master_onoff == 0) return (0);
-
+    if (master_onoff == 0) {
+	log_msg(LOG_NOTICE, "local DNS master turned off");
+	return (0);
+    }
     log_debug(1, "initialising master DNS database");
 
     add_nameip("localhost", sizeof("localhost"), "127.0.0.1");
@@ -741,62 +700,30 @@ static int _master_init(void)
 	    "localhost", sizeof("localhost"));
     
     read_blacklist(blacklist);
-		       
-    if ((strcmp(master_param, "hosts") == 0) ||
-	(read_configuration(config) != 0)) {
-	char	domain[80];
-	FILE	*fp;
-
-	/*
-	 * Hmm, no dnrd.conf - let's try to initialize with the
-	 * /etc/hosts only.
-	 */
-
-	*domain = 0;
-	if ((fp = fopen("/etc/resolv.conf", "r")) != NULL) {
-	    char	*p, word[80], line[300];
-
-	    /*
-	     * We try to get the default domain name from here.
-	     */
-
-	    while (fgets(line, sizeof(line), fp) != NULL) {
-		p = skip_ws(noctrln(line,sizeof(line)));
-		if (*p == 0  ||  *p == '#') continue;
-
-		get_word(&p, word, sizeof(word));
-		if (strcmp(word, "domain") == 0) {
-		    get_word(&p, domain, sizeof(domain));
-		    break;
-		}
-	    }
-
-	    fclose (fp);
-	    read_hosts("/etc/hosts", domain);
-	}
+	if (read_configuration(config) != 0) {
+		/* falied to read coifg */
     }
 
     if (auto_authority != 0) {
-	int	i;
-	char	*domain, arpaname[200];
+		int	i;
+		char	*domain, arpaname[200];
 	
-	
-	for (i = 0; i < dbc; i++) {
-	    if (dbv[i]->type == DNS_NAMEIP) {
-		snprintf (arpaname, sizeof(arpaname) - 2, "%s%s",
-			  dbv[i]->u.nameip.arpa.string, ARPADOMAIN);
-		if ((domain = strchr(arpaname, '.')) == NULL) continue;
-		domain++;
-		if (authority_lookup(domain) == 0) {
-		    add_authority(domain,sizeof(arpaname)-(arpaname-domain));
+		for (i = 0; i < dbc; i++) {
+			if (dbv[i]->type == DNS_NAMEIP) {
+				snprintf (arpaname, sizeof(arpaname) - 2, "%s%s",
+						  dbv[i]->u.nameip.arpa.string, ARPADOMAIN);
+				if ((domain = strchr(arpaname, '.')) == NULL) continue;
+				domain++;
+				if (authority_lookup(domain) == 0) {
+					add_authority(domain,sizeof(arpaname)-(arpaname-domain));
+				}
+			}
 		}
-	    }
-	}
     }
-
+	
     log_debug(1, "%d records in master DNS database", dbc);
     master_initialised = 1;
-
+	
     return (0);
 }
 
@@ -827,7 +754,7 @@ int master_lookup(unsigned char *msg, int len)
 
 
     if (master_initialised == 0) {
-	_master_init();
+	master_init();
     }
 
     if ((parse_query(&query, msg, len) == NULL) ||
@@ -988,7 +915,7 @@ int master_dontknow(unsigned char *msg, int len, unsigned char *answer)
 
 
     if (master_initialised == 0) {
-	_master_init();
+	master_init();
     }
 
     if (parse_query(&query, msg, len) == NULL) {
@@ -1028,40 +955,12 @@ int master_reinit(void)
 
     if (master_reload != 0) {
         reset_master();
-        _master_init();
+        master_init();
     }
 
     master_reload = 0;
     return (0);
 }
 
-
-/*
- * master_init()
- *
- * Should be called once from main() to initialise the master
- * database.
- */ 
-int master_init(void)
-{
-    if (strcmp(master_param, "off") == 0) master_onoff = 0;
-
-    if (master_onoff == 0) {
-	log_msg(LOG_NOTICE, "local DNS master turned off");
-    }
-    else {
-	_master_init();
-    }
-
-    /*
-     * Since our root dir will have changed to /etc/dnrd, we need to change
-     * the path of our config file so that future re-reads will continue to
-     * work.
-     */
-    strcpy(config, MASTER_CONFIG);
-    strcpy(blacklist, MASTER_BLACKLIST);
-
-    return (0);
-}
 
 #endif

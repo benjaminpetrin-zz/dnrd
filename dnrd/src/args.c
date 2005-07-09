@@ -56,7 +56,7 @@ static struct option long_options[] =
     {"log",          0, 0, 'l'},
     {"max-sock",     1, 0, 'M'},
 #ifndef EXCLUDE_MASTER
-    {"master",       1, 0, 'm'},
+    {"nomaster",     0, 0, 'm'},
 #endif
     {"retry",        1, 0, 'r'},
     {"server",       1, 0, 's'},
@@ -71,7 +71,7 @@ static struct option long_options[] =
 #endif /* __GNU_LIBRARY__ */
 
 #ifndef EXCLUDE_MASTER
-#define MASTERPARM "m:"
+#define MASTERPARM "m"
 #else
 #define MASTERPARM
 #endif
@@ -111,7 +111,6 @@ static void give_help()
 "                            Turn off cache or tune the low/high water marks\n"
 "    -d, --debug=LEVEL       Set the debugging level and run in foreground.\n"
 "                            Level 0 means no debugging at all.\n"
-"    -d, --debug             Turn on debugging - run in foreground.\n"
 "    -h, --help              Print this message, then exit.\n"
 "    -i, --ignore            Ignore cache for disabled servers\n"
 #ifdef ENABLE_PIDFILE
@@ -119,7 +118,7 @@ static void give_help()
 #endif
 "    -l, --log               Send all messages to syslog.\n"
 #ifndef EXCLUDE_MASTER
-"    -m, --master=off|hosts  Turn off master or use /etc/hosts file\n"
+"    -m, --no-master         Disable the master file. (proxy only mode)\n"
 #endif
 "    -M, --max-sock=N        Set maximum number of open sockets to N\n"
 "    -r, --retry=N           Set retry interval to N seconds\n"
@@ -154,8 +153,7 @@ static void give_help()
 #endif
 "    -l        Send all messages to syslog.\n"
 #ifndef EXCLUDE_MASTER
-"    -m off|hosts\n"
-"              Turn off master or use /etc/hosts file\n"
+"    -m        Disable the master file. (proxy only mode)\n"
 #endif
 "    -M N      Set maximum number of open sockets to N\n"
 "    -r N      Set retry interval to N seconds\n"
@@ -259,7 +257,7 @@ int parse_args(int argc, char **argv)
 	  }
 #ifndef EXCLUDE_MASTER
 	  case 'm': {
-	      copy_string(master_param, optarg, sizeof(master_param));
+		  master_onoff = 0;
 	      break;
 	  }
 #endif
@@ -339,9 +337,9 @@ int parse_args(int argc, char **argv)
 	      break;
 	  }
 
-	  case 'p': {
+	  case 'R': {
 	    strncpy(dnrd_root, optarg, sizeof(dnrd_root));
-	    log_debug(1, "Using %s as chroot");
+	    log_debug(1, "Using %s as chroot", dnrd_root);
 	    break;
 	  }
 	  case ':': {
