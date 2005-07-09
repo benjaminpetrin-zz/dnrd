@@ -317,6 +317,44 @@ char *get_hostname(char **from, char *domain, char *name, int size)
 
     return (name);
 }
+
+int read_hosts(char *filename, char *domain)
+{
+    int		count;
+    char	*p, word[100], ipnum[100], line[300];
+    FILE	*fp;
+    
+    if ((fp = fopen(filename, "r")) == NULL) {
+	log_msg(LOG_ERR, "can't open file: %s", filename);
+	return (1);
+    }
+
+    log_debug(1, "Reading hosts from %s/%s, domain= %s", dnrd_root,
+	      filename, *domain == 0? "<none>": domain);
+
+    count = dbc;
+    while (fgets(line, sizeof(line), fp) != NULL) {
+	p = skip_ws((char *)noctrln(line, sizeof(line)));
+	if (*p == 0  ||  *p == '#') continue;
+
+	if (isdigit((int)(*p))) {
+	    /*
+	     * Usual hosts records start with an IP number.  This
+	     * might be followed by one or more names.  Every
+	     * name makes one DNS record.
+	     */
+	    get_word(&p, ipnum, sizeof(ipnum));
+	    while (*get_hostname(&p, domain, word, sizeof(word)) != 0) {
+		add_nameip(word, sizeof(word), ipnum);
+	    }
+	}
+    }
+	    
+    fclose (fp);
+    log_debug(1, "%s: %d records", filename, dbc - count);
+
+    return (0);
+}
 	
 int read_configuration(char *filename)
 {
