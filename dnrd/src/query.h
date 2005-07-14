@@ -53,6 +53,9 @@ typedef struct _query {
 } query_t;
 
 extern query_t qlist;
+extern unsigned long total_queries;
+extern unsigned long total_timeouts;
+
 
 void query_init(void);
 query_t *query_create(domnode_t *d, srvnode_t *s);

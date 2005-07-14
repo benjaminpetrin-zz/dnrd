@@ -228,6 +228,23 @@ void srv_stats(time_t interval) {
 }
 
 
+/* print statics about the query list and open sockets */
+void query_stats(time_t interval) {
+  time_t now = time(NULL);
+  int count;
+  static time_t last=0;
+	if (interval == 0) return;
+  if (last + interval < now) {
+    last = now;
+    log_msg(LOG_INFO, "Queries: %i, Hits: %i, Misses: %i, Timeouts: %i", 
+						total_queries, cache_hits, cache_misses, total_timeouts);
+		if (stats_reset)
+			total_queries = cache_hits = cache_misses = total_timeouts = 0;
+  }  
+}
+
+
+
 /*
  * run()
  *
@@ -322,7 +339,7 @@ void run()
     */
 
     /* print som query statestics */
-    query_stats(10);
+    query_stats(stats_interval);
     srv_stats(10);
   }
 }

@@ -92,10 +92,10 @@ typedef struct _dnsrec {
 
 unsigned char master_reload	= 0;
 int master_onoff		= 1;
+char master_config[256]		= MASTER_CONFIG;
+char blacklist[256]             = MASTER_BLACKLIST;
 
 static int master_initialised	= 0;
-static char config[]		= MASTER_CONFIG;
-static char blacklist[]         = MASTER_BLACKLIST;
 
 static int auto_authority	= 1;
 
@@ -738,7 +738,7 @@ int master_init(void)
 	    "localhost", sizeof("localhost"));
     
     read_blacklist(blacklist);
-	if (read_configuration(config) != 0) {
+    if (read_configuration(master_config) != 0) {
 		/* falied to read coifg */
     }
 
