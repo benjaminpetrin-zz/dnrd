@@ -380,10 +380,7 @@ int cache_expire(void)
     }
 
 
-    log_debug(2, "cache stats: %d entries, %d missed, %d hits",
-    	      total, cache_misses, cache_hits);
-    cache_misses = 0;
-    cache_hits   = 0;
+    log_debug(2, "cache stats: %d entries", total);
 
     if (expired > 0) {
 	log_debug(2, "cache: %d of %d expired, %d remaining\n",
