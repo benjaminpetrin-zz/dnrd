@@ -24,6 +24,8 @@
 #define	_DNRD_CACHE_H_
 
 extern char cache_param[256];
+extern int cache_hits;
+extern int cache_misses;
 
 /* Interface for DNS cache */
 int cache_dnspacket(void *packet, int len, srvnode_t *server);

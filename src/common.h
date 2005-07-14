@@ -90,11 +90,15 @@ extern struct sockaddr_in  recv_addr; /* address on which we receive queries */
 #ifndef __CYGWIN__
 extern uid_t               daemonuid; /* to switch to once daemonised */
 extern gid_t               daemongid; /* to switch to once daemonised */
+extern char                dnrd_user[256];
+extern char                dnrd_group[256];
 #endif
 extern int                 gotterminal;
 #ifndef EXCLUDE_MASTER
 extern int		   master_onoff;
 extern unsigned char       master_reload;
+extern char                master_config[256];
+extern char                blacklist[256];
 #endif
 extern sem_t               dnrd_sem;  /* Used for all thread synchronization */
 
@@ -103,6 +107,8 @@ extern char                config_file[];
 extern domnode_t           *domain_list;
 
 extern int                 reactivate_interval;
+extern int                 stats_interval;
+extern int                 stats_reset;
 extern int                 ignore_inactive_cache_hits; 
 
 extern int max_sockets;
@@ -117,6 +123,9 @@ void log_msg(int type, const char *fmt, ...);
 
 /* same, but only if debugging is turned on */
 void log_debug(int level, const char *fmt, ...);
+
+/* send to log_msg (LOG_ERR) and exit with exitcode */
+void log_err_exit(int exitcode, const char *fmt, ...);
 
 /* cleanup everything and exit */
 void cleanexit(int status);

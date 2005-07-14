@@ -95,8 +95,8 @@ long	cache_lowwater		= CACHE_LOWWATER;
 static cache_t *cachelist	= NULL;
 static cache_t *lastcache	= NULL;
 
-static int cache_hits		= 0;
-static int cache_misses		= 0;
+int cache_hits		  = 0;
+int cache_misses		= 0;
 
 
 static int free_cx(cache_t *cx)

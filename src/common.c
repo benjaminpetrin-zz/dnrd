@@ -69,12 +69,16 @@ int                 forward_timeout = FORWARD_TIMEOUT;
 #ifndef __CYGWIN__
 uid_t               daemonuid = 0;
 gid_t               daemongid = 0;
+char                dnrd_user[256] = "dnrd";
+char                dnrd_group[256] = "dnrd";
 #endif
 const char*         version = PACKAGE_VERSION;
 int                 gotterminal = 1; /* 1 if attached to a terminal */
 sem_t               dnrd_sem;  /* Used for all thread synchronization */
 
 int                 reactivate_interval = REACTIVATE_INTERVAL;
+int                 stats_interval = 0;
+int                 stats_reset = 1;
 
 /* The path where we chroot. All config files are relative this path */
 char                dnrd_root[512] = DNRD_ROOT;
@@ -182,6 +186,31 @@ int kill_current()
 }
 #endif /* ENABLE_PIDFILE*/
 
+const char *get_typestr(int type) {
+	static const char *EMERG = "EMERG: "; 
+	static const char *ALERT = "ALERT: "; 
+	static const char *CRIT = "CRIT:  "; 
+	static const char *ERR = "ERROR: "; 
+	static const char *WARNING = "Warning: "; 
+	static const char *NOTICE = "Notice: "; 
+	static const char *INFO = "Info:  "; 
+	static const char *DEBUG = "Debug: "; 
+	static const char *EMPTY = "";
+
+	switch (type) {
+	  case LOG_EMERG:   return EMERG;
+	  case LOG_ALERT:   return ALERT;
+	  case LOG_CRIT:    return CRIT;
+	  case LOG_ERR:     return ERR;
+	  case LOG_WARNING: return WARNING;
+	  case LOG_NOTICE:  return NOTICE;
+	  case LOG_INFO:    return INFO;
+	  case LOG_DEBUG:   return DEBUG;
+	default:          return EMPTY;
+	}
+}
+
+
 /*
  * log_msg()
  *
@@ -199,24 +228,12 @@ void log_msg(int type, const char *fmt, ...)
     va_start(ap, fmt);
 
     if (gotterminal) {
-	const char *typestr;
-	switch (type) {
-	  case LOG_EMERG:   typestr = "EMERG: "; break;
-	  case LOG_ALERT:   typestr = "ALERT: "; break;
-	  case LOG_CRIT:    typestr = "CRIT:  "; break;
-	  case LOG_ERR:     typestr = "ERROR: "; break;
-	  case LOG_WARNING: typestr = "Warning: "; break;
-	  case LOG_NOTICE:  typestr = "Notice: "; break;
-	  case LOG_INFO:    typestr = "Info:  "; break;
-	  case LOG_DEBUG:   typestr = "Debug: "; break;
-	  default:          typestr = ""; break;
-	}
-	fprintf(stderr, typestr);
-	vfprintf(stderr, fmt, ap);
-	if (fmt[strlen(fmt) - 1] != '\n') fprintf(stderr, "\n");
+			fprintf(stderr, get_typestr(type));
+			vfprintf(stderr, fmt, ap);
+			if (fmt[strlen(fmt) - 1] != '\n') fprintf(stderr, "\n");
     }
     else {
-	vsyslog(type, fmt, ap);
+			vsyslog(type, fmt, ap);
     }
     va_end(ap);
 }
@@ -276,6 +293,35 @@ void cleanexit(int status)
     destroy_domlist(domain_list);
     exit(status);
 }
+
+
+/*
+ * log_err_exit()
+ *
+ * In:      exitcode - the exitcode returned
+ *          fmt  - a formatting string, ala printf.
+ *          ...  - other printf-style arguments.
+ *
+ * Sends a message to log_msg, LOG_ERR and exit clean
+ */
+void log_err_exit(int exitcode, const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+
+    if (gotterminal) {
+			fprintf(stderr, get_typestr(LOG_ERR));
+			vfprintf(stderr, fmt, ap);
+			if (fmt[strlen(fmt) - 1] != '\n') fprintf(stderr, "\n");
+    }
+    else {
+			vsyslog(LOG_ERR, fmt, ap);
+    }
+    va_end(ap);
+		cleanexit(exitcode);
+}
+
+
 
 /*
  * make_cname()

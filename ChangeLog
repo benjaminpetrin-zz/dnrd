@@ -1,3 +1,14 @@
+version 2.20
+------------
+ - removed support for using /etc/hosts
+ - use the environment variable DNRD_ROOT if set
+ - fixed the --dnrd-root option
+ - added --blacklist / -B option
+ - --master now takes the master filename as parameter
+ - default uid is now "dnrd"
+ - added --stats / -S option
+ - fixed -u option
+
 version 2.19
 ------------
 Nathan Angelacos <nangel@users.sourceforge.net>

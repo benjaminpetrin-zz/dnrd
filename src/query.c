@@ -43,8 +43,8 @@
 
 query_t qlist; /* the active query list */
 static query_t *qlist_tail;
-static unsigned long total_queries=0;
-static unsigned long total_timeouts=0;
+unsigned long total_queries=0;
+unsigned long total_timeouts=0;
 
 int upstream_sockets = 0; /* number of upstream sockets */
 
@@ -247,19 +247,4 @@ void query_dump_list(void) {
 	      inet_ntoa(p->next->srv->addr.sin_addr), p->next->my_qid, 
 	      p->next->client_qid);
   }
-}
-
-/* print statics about the query list and open sockets */
-void query_stats(time_t interval) {
-  time_t now = time(NULL);
-  int count;
-  static time_t last=0;
-  if (last + interval < now) {
-    last = now;
-    log_debug(1, "Open sockets: %i, active: %i, count: %i, timeouts: %i", 
-	      upstream_sockets, count=query_count(), total_queries, 
-	      total_timeouts);
-    if (count) query_dump_list();
-  }
-  
 }

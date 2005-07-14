@@ -1,4 +1,4 @@
-.TH "DNRD" "8" "Domain Name Relay Daemon" "DNRD v2.19" "Domain Name Relay Daemon"
+.TH "DNRD" "8" "Domain Name Relay Daemon" "DNRD v2.20" "Domain Name Relay Daemon"
 .SH "NAME"
 dnrd \- proxy name server
 .SH "SYNOPSIS"
@@ -6,15 +6,16 @@ dnrd \- proxy name server
 .na
 .TP 
 .B dnrd
-.RB [ \-a \ \fRlocaladdress\fR\ | \ \-\-address=\fIlocaladdress\fR] 
+.RB [ \-a \ \fIlocaladdress\fR\ | \ \-\-address=\fIlocaladdress\fR] 
 .RB [ \-b \ \fR| \ \-\-load\-balance\fR]
+.RB [ \-B \ \fIBLACKLIST\fR\ | \ \-\-blacklist=\fIBLACKLIST\fR] 
 .RB [ \-c \ \fR( \fIoff\fR|[\fIlow:\fR]\fIhigh\fR)\ | \ \-\-cache=\fR(\fIoff\fR|[\fIlow:\fR]\fIhigh \fR)]
 .RB [ \-d \ \fILEVEL\ \fR| \ \-\-debug=\fILEVEL\fR]
 .RB [ \-h \ \fR| \ \-\-help \fR]
 .RB [ \-i \ \fR| \ \-\-ignore \fR]
 .RB [ \-k \ \fR| \ \-\-kill \fR]
 .RB [ \-l \ \fR| \ \-\-log \fR]
-.RB [ \-m \ \fR(\fIoff\fR|\fIhosts\fR)\ | \ \-\-master=\fR(\fIoff\fR|\fIhosts\fR)] 
+.RB [ \-m \ \fR(\fIoff\fR|\fIFILE\fR)\ | \ \-\-master=\fR(\fIoff\fR|\fIFILE\fR)] 
 .RB [ \-M \ \fIN\fR\ | \ \-\-max\-sock=\fIN\fR]
 .RB [ \-r \ \fIN\fR\ | \ \-\-retry=\fIN\fR]
 .RB [ \-s \ \fIipaddr\fR(\fI:domain\fR)\ | \ \-\-server=\fIipaddr\fR(\fI:domain\fR)]
@@ -29,7 +30,10 @@ the
 .B \-s
 option.  By default, dnrd will act as the primary nameserver for hosts
 found in
-.I /etc/hosts\fR.
+.I @DNRD_ROOT@/master\fR
+and queries to hostnames listed in
+.I@DNRD_ROOT/blacklist \fR
+will be answered with a "host not found".
 
 .SH "OPTIONS"
 .TP 
@@ -58,6 +62,15 @@ Note that if there are no
 .B \-s
 after the
 .B \-b\fR, this will do nothing at all.
+
+.TP
+.B \-B \fIBLACKLIST
+.TP
+.B \-\-blacklist=\fIBLACKLIST
+Blacklist all hostnames listed in the file BLACKLIST. Queries to hosts listed
+in this file will be answered with "host not found". The file BLACKLIST is
+specified relative to the DNRD chroot directory (defaults to @DNRD_ROOT@). By 
+default dnrd will look for a file named "blacklist" in the @DNRD_ROOT@ dir.
 
 .TP 
 .BR \-c \ ( \fIoff |[ \fIlow: ] \fIhigh )
@@ -136,11 +149,17 @@ flag, this option will cause
 to fork and run in the background, logging all debugging messages to
 syslog.
 
-
 .TP 
-.BR \-m \ ( \fIoff | \fIhosts )
+.BR \-m \ ( \fIoff | \fIFILE )
 .TP 
-.BR \-\-master= ( \fIoff | \fIhosts )
+.BR \-\-master= ( \fIoff | \fIFILE )
+.B dnrd
+can act as the primary name server for a number of hosts. By default,
+it will read in
+.I @DNRD_ROOT@/master
+to determine how this is done.
+This option turns off all primary server functionality and sending signal -HUP
+will not make dnrd try to read the master file.
 .B dnrd
 can act as the primary name server for a number of hosts. By default,
 it will read in
@@ -174,6 +193,8 @@ at all. Future versions of
 .B dnrd
 will not support any use of
 .I /etc/hosts\fR.
+
+
 
 .TP 
 .BI \-M\  N

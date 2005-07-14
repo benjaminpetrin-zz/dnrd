@@ -46,6 +46,9 @@ static struct option long_options[] =
 {
     {"address",      1, 0, 'a'},
     {"load-balance", 0, 0, 'b'},
+#ifndef EXCLUDE_MASTER
+    {"blacklist",    1, 0, 'B'},
+#endif
     {"cache",        1, 0, 'c'},
     {"debug",        1, 0, 'd'},
     {"help",         0, 0, 'h'},
@@ -56,13 +59,17 @@ static struct option long_options[] =
     {"log",          0, 0, 'l'},
     {"max-sock",     1, 0, 'M'},
 #ifndef EXCLUDE_MASTER
-    {"nomaster",     0, 0, 'm'},
+    {"master",       1, 0, 'm'},
 #endif
     {"retry",        1, 0, 'r'},
     {"server",       1, 0, 's'},
+		{"stats",        1, 0, 'S'},
     {"timeout",      1, 0, 't'},
 #ifndef __CYGWIN__
     {"uid",          1, 0, 'u'},
+		/*
+		{"gid",          1, 0, 'g'},
+		*/
 #endif
     {"version",      0, 0, 'v'},
     {"dnrd-root",    1, 0, 'R'},
@@ -71,7 +78,7 @@ static struct option long_options[] =
 #endif /* __GNU_LIBRARY__ */
 
 #ifndef EXCLUDE_MASTER
-#define MASTERPARM "m"
+#define MASTERPARM "B:m:"
 #else
 #define MASTERPARM
 #endif
@@ -82,12 +89,14 @@ static struct option long_options[] =
 #define PIDPARM 
 #endif
 
-#ifdef __CYGWIN__
-#define UIDPARM "u:"
+#ifndef __CYGWIN__
+#define UIDPARM "u:" /* "g:" */
 #else
 #define UIDPARM
 #endif
- 
+
+#define file_exists(f) (access(f, R_OK) == 0)
+
 const char short_options[] = 
     "a:bc:d:hi" PIDPARM "l" MASTERPARM "M:r:R:s:t:" UIDPARM "v";
 
@@ -105,33 +114,47 @@ static void give_help()
 #ifdef __GNU_LIBRARY__
 "    -a, --address=LOCALADDRESS\n"
 "                            Only bind to the port on the given address,\n"
-"                            rather than all local addresses\n"
-"    -b, --load-balance      Round-Robin load balance forwarding servers\n"
+"                            rather than all local addresses.\n"
+"    -b, --load-balance      Round-Robin load balance forwarding servers.\n"
+#ifndef EXCLUDE_MASTER
+"    -B, --blacklist=FILE    Blacklist all hosts in FILE. Path to FILE is\n"
+"                            relative $DNRD_ROOT (--dnrd-root). Default is\n"
+"                            \"blacklist\"\n"
+#endif
 "    -c, --cache=off|[LOW:]HIGH\n"
 "                            Turn off cache or tune the low/high water marks\n"
 "    -d, --debug=LEVEL       Set the debugging level and run in foreground.\n"
 "                            Level 0 means no debugging at all.\n"
+/*
+#ifndef __CYGWIN__
+"    -g, --gid=GID           Group name numeric gid to switch to.\n"
+#endif
+*/
 "    -h, --help              Print this message, then exit.\n"
-"    -i, --ignore            Ignore cache for disabled servers\n"
+"    -i, --ignore            Ignore cache for disabled servers.\n"
 #ifdef ENABLE_PIDFILE
 "    -k, --kill              Kill a running daemon.\n"
 #endif
 "    -l, --log               Send all messages to syslog.\n"
 #ifndef EXCLUDE_MASTER
-"    -m, --no-master         Disable the master file. (proxy only mode)\n"
+"    -m, --master=FILE|off   Use FILE as master file or turn it off. Path to\n"
+"                            FILE is relative $DNRD_ROOT (--dnrd-root).\n"
 #endif
-"    -M, --max-sock=N        Set maximum number of open sockets to N\n"
-"    -r, --retry=N           Set retry interval to N seconds\n"
-"    -s, --server=IPADDR(:domain)\n"
+"    -M, --max-sock=N        Set maximum number of open sockets to N.\n"
+"    -r, --retry=N           Set retry interval to N seconds.\n"
+"    -s, --server=IPADDR[:domain]\n"
 "                            Set the DNS server.  You can specify an\n"
 "                            optional domain name, in which case a DNS\n"
 "                            request will only be sent to that server for\n"
 "                            names in that domain.\n"
 "                            (Can be used more than once for multiple or\n"
-"                            backup servers)\n"
-"    -t, --timeout=N         Set forward DNS server timeout to N\n"
+"                            backup servers).\n"
+"    -S, --stats=N[+]        Send cache/query stats to syslog (LOG_INFO)\n"
+"                            every N seconds. Stats will not be resetted if\n"
+"                            the '+' is added\n"
+"    -t, --timeout=N         Set forward DNS server timeout to N.\n"
 #ifndef __CYGWIN__
-"    -u, --uid=ID            Username or numeric id to switch to\n"
+"    -u, --uid=UID           Username or numeric id to switch to.\n"
 #endif
 "    -R, --dnrd-root=DIR     The dnrd root directory. dnrd will chroot to\n"
 "                            this dir.\n"
@@ -142,10 +165,17 @@ static void give_help()
 "    -a IPADDR Only bind to the port on the given address, rather than all\n"
 "              local addresses\n"
 "    -b        Round-Robin load balance forwarding servers\n"
+#ifndef EXCLUDE_MASTER
+"    -B        Blacklist all hosts in FILE. FILE is relative\n"
+"              $DNRD_ROOT (--dnrd-root). Default is \"blacklist\"\n"
+#endif
 "    -c off|[LOW:]HIGH\n"
 "              Turn off caching or tune the low/high water marks"
 "    -d LEVEL  Set the debugging level and run in foreground. Level 0 means\n"
 "              debugging at all.\n"
+#ifndef __CYGWIN__
+"    -g        Group name numeric gid to switch to.\n"
+#endif
 "    -h        Print this message, then exit.\n"
 "    -i        Ignore cache for disabled servers\n"
 #ifdef ENABLE_PIDFILE
@@ -153,7 +183,9 @@ static void give_help()
 #endif
 "    -l        Send all messages to syslog.\n"
 #ifndef EXCLUDE_MASTER
-"    -m        Disable the master file. (proxy only mode)\n"
+"    -m FILE|off\n"
+"              Use FILE as master file or turn it off. Path to FILE is\n"
+"              relative $DNRD_ROOT (--dnrd-root)\n"
 #endif
 "    -M N      Set maximum number of open sockets to N\n"
 "    -r N      Set retry interval to N seconds\n"
@@ -162,9 +194,11 @@ static void give_help()
 "              in which case a DNS request will only be sent to that server\n"
 "              for names in that domain. (Can be used more than once for\n"
 "              multiple or backup servers)\n"
+"    -S N[+]   Send cache/query stats to syslog (LOG_INFO) every N seconds.\n"
+"              Stats will not be resetted if the '+' is added\n";
 "    -t N      Set forward DNS server timeout to N\n"
 #ifndef __CYGWIN__
-"    -u ID     Username or numeric id to switch to\n"
+"    -u UID    Username or numeric id to switch to\n"
 #endif
 "    -R DIR    The dnrd root directory. dnrd will chroot to this dir.\n"
 "    -v        Print out the version number and exit.\n"
@@ -177,7 +211,6 @@ static void give_help()
 
 
 }
-
 
 
 /*
@@ -256,9 +289,15 @@ int parse_args(int argc, char **argv)
 	      break;
 	  }
 #ifndef EXCLUDE_MASTER
+	  case 'B': {
+		  strncpy(blacklist, optarg, sizeof(blacklist));
+		  break;
+	  }
+		  
 	  case 'm': {
-		  master_onoff = 0;
-	      break;
+		  if (strcmp(optarg, "off") == 0) master_onoff = 0;
+		  else strncpy(master_config, optarg, sizeof(master_config));
+		  break;
 	  }
 #endif
 	  case 'M': {
@@ -306,6 +345,15 @@ int parse_args(int argc, char **argv)
 	    if (sep) *sep = ':';
 	    break;
 	  }
+	case 'S': {
+		char *p = strrchr(optarg, '+');
+		if (p) {
+			stats_reset = 0;
+			*p = '\0';
+		}
+		stats_interval = atoi(optarg);
+		break;
+	}
 	  case 't': {
 	    if ((forward_timeout = atoi(optarg)))
 	      log_debug(1, "Setting timeout value to %i seconds.", 
@@ -316,20 +364,14 @@ int parse_args(int argc, char **argv)
 	  }
 #ifndef __CYGWIN__ /** { **/
 	  case 'u': {
-	      char *ep;
-	      struct passwd *pwent;
-	      daemonuid = (uid_t)strtoul(optarg, &ep, 10);
-
-	      pwent = *ep ? getpwnam(optarg) : getpwuid(daemonuid);
-	      if (!pwent) {
-		  log_msg(LOG_ERR, "%s: Bad uid \"%s\"\n", progname, optarg);
-		  exit(-1);
-	      }
-
-	      daemonuid = pwent->pw_uid;
-	      daemongid = pwent->pw_gid;
-	      break;
+		  strncpy(dnrd_user, optarg, sizeof(dnrd_user));
+			break;
 	  }
+			/*
+	  case 'g': {
+		  strncpy(dnrd_group, optarg, sizeof(dnrd_group));
+			break;
+			} */
 #endif /** } __CYGWIN__ **/
 	  case 'v': {
 	      printf("dnrd version %s\n\n", version);
