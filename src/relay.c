@@ -236,10 +236,11 @@ void query_stats(time_t interval) {
 	if (interval == 0) return;
   if (last + interval < now) {
     last = now;
-    log_msg(LOG_INFO, "Queries: %i, Hits: %i, Misses: %i, Timeouts: %i", 
-						total_queries, cache_hits, cache_misses, total_timeouts);
+    log_msg(LOG_INFO, "Hits: %i, Misses: %i, Total: %i, Timeouts: %i", 
+						cache_hits, cache_misses, cache_hits + cache_misses, 
+						total_timeouts);
 		if (stats_reset)
-			total_queries = cache_hits = cache_misses = total_timeouts = 0;
+			cache_hits = cache_misses = total_timeouts = 0;
   }  
 }
 
