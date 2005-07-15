@@ -3,7 +3,7 @@ AC_INIT(dnrd, [2.20_pre1], [dnrd-user@lists.sourceforge.net])
 AC_CANONICAL_SYSTEM
 
 AM_CONFIG_HEADER(src/config.h)
-AM_INIT_AUTOMAKE(dnrd,2.19)
+AM_INIT_AUTOMAKE(dnrd,2.20_pre1)
 
 dnl Fix "prefix" variable if it hasn't been specified...
 if test "$prefix" = "NONE"; then
