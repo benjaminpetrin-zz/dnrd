@@ -195,7 +195,7 @@ static void give_help()
 "              for names in that domain. (Can be used more than once for\n"
 "              multiple or backup servers)\n"
 "    -S N[+]   Send cache/query stats to syslog (LOG_INFO) every N seconds.\n"
-"              Stats will not be resetted if the '+' is added\n";
+"              Stats will not be resetted if the '+' is added\n"
 "    -t N      Set forward DNS server timeout to N\n"
 #ifndef __CYGWIN__
 "    -u UID    Username or numeric id to switch to\n"
