@@ -82,7 +82,7 @@ static struct option long_options[] =
 #define PIDPARM 
 #endif
 
-#ifdef __CYGWIN__
+#ifndef __CYGWIN__
 #define UIDPARM "u:"
 #else
 #define UIDPARM
