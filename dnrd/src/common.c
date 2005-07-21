@@ -321,49 +321,49 @@ char* make_cname(const char *text, const int maxlen)
 
 
 
-void sprintf_cname(const char *cname, int namesize, char *buf, int bufsize)
-{
-  const char *s = cname; /*source pointer */
-  char *d = buf; /* destination pointer */
-
-  if (cname == NULL) return;
-    
-  if ((strnlen(cname, namesize)+1) > (unsigned)bufsize) {
-    if (bufsize > 11) {
-      sprintf(buf, "(too long)");
-    }
-    else {
-      buf[0] = 0;
-    }
-    return;
-  }
-
-  /* extract the pascal style strings */
-  while (*s) {
-    int i;
-    int size = *s;
-
-    /* Let us see if we are bypassing end of buffer.  Also remember
-     * that we need space for an ending \0
-     */
-    if ((s + *s - cname) >= (bufsize)) {
-      if (bufsize > 15 ) {
-	sprintf(buf, "(malformatted)");
-      } else {
-	buf[0] = 0;
-      }
-      return;
-    }
-
-    /* delimit the labels with . */
-    if (s++ != cname) sprintf(d++, ".");
-   
-    for(i = 0; i < size; i++) {
-      *d++ = *s++;
-    }
-    *d=0;
-  }
-}
+//void sprintf_cname(const char *cname, int namesize, char *buf, int bufsize)
+//{
+//  const char *s = cname; /*source pointer */
+//  char *d = buf; /* destination pointer */
+//
+//  if (cname == NULL) return;
+//    
+//  if ((strnlen(cname, namesize)+1) > (unsigned)bufsize) {
+//    if (bufsize > 11) {
+//      sprintf(buf, "(too long)");
+//    }
+//    else {
+//      buf[0] = 0;
+//    }
+//    return;
+//  }
+//
+//  /* extract the pascal style strings */
+//  while (*s) {
+//    int i;
+//    int size = *s;
+//
+//    /* Let us see if we are bypassing end of buffer.  Also remember
+//     * that we need space for an ending \0
+//     */
+//    if ((s + *s - cname) >= (bufsize)) {
+//      if (bufsize > 15 ) {
+//	sprintf(buf, "(malformatted)");
+//      } else {
+//	buf[0] = 0;
+//      }
+//      return;
+//    }
+//
+//    /* delimit the labels with . */
+//    if (s++ != cname) sprintf(d++, ".");
+//   
+//    for(i = 0; i < size; i++) {
+//      *d++ = *s++;
+//    }
+//    *d=0;
+//  }
+//}
 
 /* convert cname to ascii and return a static buffer */
 char *cname2asc(const char *cname) {
@@ -372,7 +372,7 @@ char *cname2asc(const char *cname) {
      according to RFC 1035 a name must not be bigger than 255 octets.
    */
   if (cname) 
-    sprintf_cname(cname, sizeof(buf), buf, sizeof(buf));
+		snprintf_cname(cname, strlen(cname), 0, buf, sizeof(buf));
   else
     strncpy(buf, "(default)", sizeof(buf));
   return buf;
