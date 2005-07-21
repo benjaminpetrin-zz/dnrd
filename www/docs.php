@@ -7,6 +7,7 @@ require("menu.php");
 <? menu("Manual Page"); ?>
 
 <div id="content">
+
 <A NAME="lbAB">&nbsp;</A>
 <H2>DNRD Manual Page</H2>
 
@@ -350,7 +351,7 @@ respond to a query within
 <I>N</I>
 
 seconds it is deactivated. The default value is
-<I>20</I>
+<I>12</I>
 
 <P>
 Setting this to zero will make
@@ -455,8 +456,6 @@ The original version of dnrd was written by Brad Garcia
 Other contributors are listed in the HISTORY file included with the
 source code.
 <P>
-
-
 
 </div>
 
