@@ -35,6 +35,7 @@
 #include "dns.h"
 #include "lib.h"
 #include "common.h"
+#include "check.h"
 
 /*
 static int get_objectname(unsigned char *msg, unsigned const char *limit, 
@@ -118,67 +119,70 @@ static int raw_dump(dnsheader_t *x)
     return (0);
 }
 
-/*
-static int get_objname(unsigned char buf[], const int bufsize, int *here,
-		      char name[], const int namelen) {
-  int i,p=*here, count=1000;
-  unsigned int len, offs;
-  if (p > bufsize) return 0;
-  while (len = buf[p]) {
-    
-    while (len & 0x0c) {
-      if (++p > bufsize) return 0;
-      offs = lenbuf[p] 
 
-}
-*/
-
-
-static int get_objectname(unsigned char *msg, unsigned const char *limit, 
-			  unsigned char **here, char *string, int strlen,
-			  int k)
+static int get_objectname(unsigned char *msg, const unsigned int msgsize,
+													unsigned char **here, char *string, int stringsize)
 {
     unsigned int len;
     int	i;
+		unsigned char *limit;
 
-    if ((*here>=limit) || (k>=strlen)) return(-1);
-    while ((len = **here) != 0) {
+		static int recurse_decompress(k, depth) {
 
-	*here += 1;
-	if ( *here >= limit ) return(-1);
-	/* If the name is compressed (see 4.1.4 in rfc1035)  */
-	if (len & 0xC0) {
-	    unsigned offset;
-	    unsigned char *p;
+			if ((*here>=limit) || (k>=stringsize) || (depth >= msgsize)
+					|| (depth > UDP_MAXSIZE) ) return(-1);
+			while ((len = **here) != 0) {
 
-	    offset = ((len & ~0xc0) << 8) + **here;
-	    if ((p = &msg[offset]) >= limit) return(-1);
-	    if (p == *here-1) {
-	      log_msg(LOG_WARNING, "looping ptr");
-	      return(-2);
-	    }
+				*here += 1;
+				if ( *here >= limit ) return(-1);
+				/* If the name is compressed (see 4.1.4 in rfc1035)  */
+				if ((len & 0xc0) == 0xc0) {
+					unsigned offset;
+					unsigned char *p;
 
-	    if ((k = get_objectname(msg, limit, &p, string, RR_NAMESIZE, k))<0)
-	      return(-1); /* if we cross the limit, bail out */
-	    break;
+					offset = ((len & ~0xc0) << 8) + **here;
+					if ((p = &msg[offset]) >= limit) return(-1);
+					if (p == *here-1) {
+						log_msg(LOG_WARNING, "looping ptr");
+						return(-2);
+					}
+
+					if ((k = recurse_decompress(k, depth+1))<0)
+						return(-1); /* if we cross the limit, bail out */
+					break;
+				}
+				else if (len < 64) {
+					/* check so we dont pass the limits */
+					if (((*here + len) > limit) || (len+k+2 >= stringsize)) return(-1);
+					
+					for (i=0; i < len; i++) {
+						string[k++] = **here;
+						*here += 1;
+					}
+					
+					string[k++] = '.';
+				}
+			}
+			
+			*here += 1;
+			string[k] = 0;
+			
+			return (k);
+		}
+
+		limit = msg + msgsize;
+		return recurse_decompress(0, 0);
+}
+
+
+void snprintf_cname(char *msg, const int msgsize, /* the dns packet */
+										int index, /* where in the DNS packet the name is */
+										char *dest, int destsize) { /* where to store the cname */
+	unsigned char *p = &msg[index];
+	const char malformatted[] = "(malformatted)";
+	if (get_objectname(msg, msgsize, &p, dest, destsize) <0) {
+		strncpy(dest, malformatted, destsize);
 	}
-	else if (len < 64) {
-	  /* check so we dont pass the limits */
-	  if (((*here + len) > limit) || (len+k+2 > strlen)) return(-1);
-
-	  for (i=0; i < len; i++) {
-	    string[k++] = **here;
-	    *here += 1;
-	  }
-
-	  string[k++] = '.';
-	}
-    }
-
-    *here += 1;
-    string[k] = 0;
-    
-    return (k);
 }
 
 
@@ -193,7 +197,7 @@ static unsigned char *read_record(dnsheader_t *x, rr_t *y,
      * Read the name of the resource ...
      */
 
-    k = get_objectname(x->packet, limit, &here, y->name, sizeof(y->name), 0);
+    k = get_objectname(x->packet, limit-here, &here, y->name, sizeof(y->name));
     if (k < 0) return(NULL);
     y->name[k] = 0;
 
@@ -373,7 +377,7 @@ unsigned char *parse_query(rr_t *y, unsigned char *msg, int len)
      * is zero, we just give up */
 
     if (ntohs(((dnsheader_t *)msg)->qdcount) == 0 ) {
-      log_debug(1, "QDCOUNT was zero");
+			/*      log_debug(1, "QDCOUNT was zero"); */
       return(0);
     }
 
@@ -386,7 +390,7 @@ unsigned char *parse_query(rr_t *y, unsigned char *msg, int len)
     y->flags = ntohs(((short int *) msg)[1]);
 
     here = &msg[PACKET_DATABEGIN];
-    if ((k=get_objectname(msg, limit, &here, y->name, sizeof(y->name),0))< 0) 
+    if ((k=get_objectname(msg, len, &here, y->name, sizeof(y->name)))< 0) 
       return(0);
     y->name[k] = 0;
 
