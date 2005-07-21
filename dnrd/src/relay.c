@@ -98,7 +98,7 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
 
     if (opt_debug) {
 	char      cname_buf[256];
-	sprintf_cname(&msg[12], *len-12, cname_buf, 256);
+	snprintf_cname(msg, *len, 12, cname_buf, sizeof(cname_buf));
 	log_debug(3, "Received DNS query for \"%s\"", cname_buf);
 	if (dump_dnspacket("query", msg, *len) < 0)
 	  log_debug(3, "Format error");
