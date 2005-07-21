@@ -1,4 +1,4 @@
-.TH "DNRD" "8" "Domain Name Relay Daemon" "DNRD v2.19" "Domain Name Relay Daemon"
+.TH "DNRD" "8" "Domain Name Relay Daemon" "DNRD v2.19.1" "Domain Name Relay Daemon"
 .SH "NAME"
 dnrd \- proxy name server
 .SH "SYNOPSIS"
@@ -237,7 +237,7 @@ Set the timeout value for forward DNS servers. If a server don't
 respond to a query within
 .I N
 seconds it is deactivated. The default value is
-.I 20
+.I 12
 .
 .sp
 Setting this to zero will make
