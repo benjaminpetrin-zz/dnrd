@@ -251,7 +251,7 @@ void udp_handle_reply(query_t *prev)
 
     if (opt_debug) {
 	char buf[256];
-	sprintf_cname(&msg[12], len-12, buf, 256);
+	snprintf_cname(msg, len, 12, buf, sizeof(buf));
 	log_debug(3, "Received DNS reply for \"%s\"", buf);
     }
 
