@@ -8,6 +8,15 @@ version 2.20
  - default uid is now "dnrd"
  - added --stats / -S option
  - fixed -u option
+ - reimplemeted packet parser
+
+version 2.19.1
+--------------
+Natanael Copa <n@tanael.org>
+ - Fixed the -u option
+ - Fixed typos in manpage
+ - Fixes CAN-2005-2315
+ - Fixes CAN-2005-2316
 
 version 2.19
 ------------
