@@ -98,7 +98,8 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
 
     if (opt_debug) {
 	char      cname_buf[256];
-	sprintf_cname(&msg[12], *len-12, cname_buf, 256);
+
+	snprintf_cname(msg, *len, 12, cname_buf, sizeof(cname_buf));
 	log_debug(3, "Received DNS query for \"%s\"", cname_buf);
 	if (dump_dnspacket("query", msg, *len) < 0)
 	  log_debug(3, "Format error");
@@ -110,7 +111,7 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
 	log_debug(2, "Replying to query as master");
 	*len = replylen;
 	return 0;
-    }
+    } else if (replylen < 0) return -1;
 #endif
 
     /* Next, see if we have the answer cached */
@@ -118,7 +119,7 @@ int handle_query(const struct sockaddr_in *fromaddrp, char *msg, int *len,
 	log_debug(3, "Replying to query with cached answer.");
 	*len = replylen;
 	return 0;
-    }
+    }  else if (replylen < 0) return -1;
 
     /* get the server list for this domain */
     d=search_subdomnode(domain_list, &msg[12], *len);
