@@ -63,7 +63,10 @@
                              (((y) << 11) & MASK_OPCODE))
 #define SET_QR(x, y)        ((x) = ((x) & ~MASK_QR) | (((y) << 15) & MASK_QR))
 
-#define RR_NAMESIZE 300
+#define RR_LABELMAXLEN 63
+#define RR_LABELSIZE (RR_LABELMAXLEN + 1)
+#define RR_NAMEMAXLEN 255
+#define RR_NAMESIZE (RR_NAMEMAXLEN + 1)
 
 typedef struct _rr {
     unsigned short      flags;
@@ -100,8 +103,13 @@ int free_packet(dnsheader_t *x);
 
 /* static dnsheader_t *decode_header(void *packet, int len); */
 
+void init_dns(void);
 dnsheader_t *parse_packet(unsigned char *packet, int len);
-unsigned char *parse_query(rr_t *query, unsigned char *msg, int len);
+int parse_query(rr_t *query, unsigned char *msg, int len);
+int snprintf_cname(char *msg, const int msgsize, /* the dns packet */
+									 int index, /* where in the DNS packet the name is */
+									 char *dest, int destsize); /* where to store the cname */
+
 
 #endif /* _DNRD_DNS_H_ */
 
