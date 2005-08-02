@@ -264,6 +264,9 @@ int main(int argc, char *argv[])
 	/* init query list */
 	query_init();
 
+	/* init dns validation table */
+	init_dns();
+
 #ifndef __CYGWIN__	
 	/* we need to find the uid and gid from /etc/passwd before we chroot. */
 	init_dnrd_uid();

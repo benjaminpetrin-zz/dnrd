@@ -32,22 +32,26 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <assert.h>
+
 #include "dns.h"
 #include "lib.h"
 #include "common.h"
+#include "check.h"
 
-/*
-static int get_objectname(unsigned char *msg, unsigned const char *limit, 
-			  unsigned char **here, char *string, int strlen,
-			  int k);
-*/
 
-/*
-static int get_objname(unsigned char buf[], const int bufsize, int *here,
-		      char name[], const int namelen) {
-  if (*here > bufsize) return 0;
+static unsigned char valid_char[256];
+
+
+/* init the table for valig chars */
+void init_dns(void) {
+	int i = 0;
+	memset(valid_char, 1, sizeof(valid_char));
+	for (i = '0'; i<='9'; i++) valid_char[i] = 1;
+	for (i = 'A'; i<='Z'; i++) valid_char[i] = 1;
+	for (i = 'a'; i<='z'; i++) valid_char[i] = 1;
+	valid_char['-'] = 1;
 }
-*/
 
 int free_packet(dnsheader_t *x)
 {
@@ -85,16 +89,15 @@ static dnsheader_t *decode_header(void *packet, int len)
     x->nscount = ntohs(p[4]);
     x->arcount = ntohs(p[5]);
 
-    x->here    = (char *) &x->packet[12];
+		x->here    = (char *) &x->packet[12];
     return (x);
 }
 
 static int raw_dump(dnsheader_t *x)
 {
     unsigned int c;
-    int	start, i, j;
+    int	i, j;
 
-    start = x->here - x->packet;
     for (i = 0; i < x->len; i += 16) {
 	fprintf(stderr, "%03X -", i);
 
@@ -118,109 +121,111 @@ static int raw_dump(dnsheader_t *x)
     return (0);
 }
 
-/*
-static int get_objname(unsigned char buf[], const int bufsize, int *here,
-		      char name[], const int namelen) {
-  int i,p=*here, count=1000;
-  unsigned int len, offs;
-  if (p > bufsize) return 0;
-  while (len = buf[p]) {
-    
-    while (len & 0x0c) {
-      if (++p > bufsize) return 0;
-      offs = lenbuf[p] 
 
+static int get_objname(const unsigned char *msg, const int msgsize, int index,
+											 char *dest, const int destsize) {
+	unsigned int i=index;
+	int j = 0;
+	int depth = 0;
+	int compressed = 0;
+	unsigned int c;
+
+	/* we refuse to try to decode anything in the header or after the packet */
+	if (index < PACKET_DATABEGIN || i >= msgsize) return(-1);
+
+	while ((c = msg[i++]) != '\0') {
+		if (i >= msgsize) return (-1);
+		
+		/* check if it is a pointer */
+		if ((c & 0xc0) == 0xc0) {
+			/* check that next byte is readable */
+			if (i >= msgsize) return (-1); 
+
+			/* Avoid circular pointers. */
+			depth++;
+			if ((depth >= msgsize) || (depth > UDP_MAXSIZE) ) return(-1);
+
+			/* we store the first location */
+			if (!compressed) compressed = i+1;
+
+			/* check that the pointer points within limits */
+			if ((i = ((c & 0x3f) << 8)) + msg[i] >= msgsize) return(-1);
+			continue;
+		} else if (c < 64) {
+			/* check that label length don't cross any borders */
+			if ( ((c+j+2) >= destsize)	|| ((i + c) >= msgsize)) return(-1);
+
+			while (c--) {
+				if (valid_char[msg[i]])	
+					dest[j++] = msg[i++];
+				else return(-1);
+			}
+			dest[j++] = '.';
+		} else return(-1); /* a label cannot be longer than 63 */
+	}
+
+	if (j >= (destsize) ) return(-1); /* we need space for '\0' */
+	dest[j] = '\0';
+	/* if we used compression, return the location from the first ptr */
+	return (compressed ? compressed : i);
 }
-*/
 
-
-static int get_objectname(unsigned char *msg, unsigned const char *limit, 
-			  unsigned char **here, char *string, int strlen,
-			  int k)
-{
-    unsigned int len;
-    int	i;
-
-    if ((*here>=limit) || (k>=strlen)) return(-1);
-    while ((len = **here) != 0) {
-
-	*here += 1;
-	if ( *here >= limit ) return(-1);
-	/* If the name is compressed (see 4.1.4 in rfc1035)  */
-	if (len & 0xC0) {
-	    unsigned offset;
-	    unsigned char *p;
-
-	    offset = ((len & ~0xc0) << 8) + **here;
-	    if ((p = &msg[offset]) >= limit) return(-1);
-	    if (p == *here-1) {
-	      log_msg(LOG_WARNING, "looping ptr");
-	      return(-2);
-	    }
-
-	    if ((k = get_objectname(msg, limit, &p, string, RR_NAMESIZE, k))<0)
-	      return(-1); /* if we cross the limit, bail out */
-	    break;
+int snprintf_cname(char *msg, const int msgsize, /* the dns packet */
+										int index, /* where in the DNS packet the name is */
+										char *dest, int destsize) { /* where to store the cname */
+	unsigned char *p = &msg[index];
+	static const char malformatted[] = "(malformatted)";
+	if (get_objname(msg, msgsize, index, dest, destsize) <0) {
+		strncpy(dest, malformatted, destsize);
+		return -1;
 	}
-	else if (len < 64) {
-	  /* check so we dont pass the limits */
-	  if (((*here + len) > limit) || (len+k+2 > strlen)) return(-1);
-
-	  for (i=0; i < len; i++) {
-	    string[k++] = **here;
-	    *here += 1;
-	  }
-
-	  string[k++] = '.';
-	}
-    }
-
-    *here += 1;
-    string[k] = 0;
-    
-    return (k);
+	return 0;
 }
 
 
-static unsigned char *read_record(dnsheader_t *x, rr_t *y,
-				  unsigned char *here, int question,
-				  unsigned const char *limit)
+static int read_record(dnsheader_t *x, rr_t *y,
+											 int index, int question,
+											 const int packetsize)
 {
-    int	k, len;
+    int	i, len;
     unsigned short int conv;
 
     /*
      * Read the name of the resource ...
      */
 
-    k = get_objectname(x->packet, limit, &here, y->name, sizeof(y->name), 0);
-    if (k < 0) return(NULL);
-    y->name[k] = 0;
+		i = get_objname(x->packet, packetsize, index, y->name, sizeof(y->name));
+
 
     /* safe to read TYPE and CLASS? */
-    if ((here+4) > limit) return (NULL);
+    if ( (i < 0) || (i+4 > packetsize) ) return(-1);
+		//    if ((here+4) > limit) return (NULL);
 
     /*
      * ... the type of data ...
      */
 
-    memcpy(&conv, here, sizeof(unsigned short int));
-    y->type = ntohs(conv);
-    here += 2;
+		y->type = ntohs(*(unsigned short *)(&x->packet[i]));
+		//    memcpy(&conv, here, sizeof(unsigned short int));
+		//    y->type = ntohs(conv);
+		//    here += 2;
+		i += 2;
 
     /*
      * ... and the class type.
      */
 
-    memcpy(&conv, here, sizeof(unsigned short int));
-    y->class = ntohs(conv);
-    here += 2;
+		y->class = ntohs( *(unsigned short *)(&x->packet[i]));
+		//    memcpy(&conv, here, sizeof(unsigned short int));
+		//    y->class = ntohs(conv);
+		//    here += 2;
+		i += 2;
 
     /*
      * Question blocks stop here ...
      */
 
-    if (question != 0) return (here);
+    if (question != 0) return (i);
 
 
     /*
@@ -228,47 +233,57 @@ static unsigned char *read_record(dnsheader_t *x, rr_t *y,
      */
 
     /* safe to read TTL and RDLENGTH? */
-    if ((here+6) > limit) return (NULL);
-    memcpy(&y->ttl, here, sizeof(unsigned long int));
-    y->ttl = ntohl(y->ttl);
-    here += 4;
+		//    if ((here+6) > limit) return (NULL);
+		if (i+6 > packetsize) return (-1);
+
+		y->ttl = ntohl( *(unsigned long int *)(&x->packet[i]) );
+		i += 4;
+    //memcpy(&y->ttl, here, sizeof(unsigned long int));
+    //y->ttl = ntohl(y->ttl);
+    //here += 4;
 
     /*
      * Fetch the resource data.
      */
-
-    memcpy(&conv, here, sizeof(unsigned short int));
-    len = y->len = ntohs(conv);
-    here += 2;
+		len = y->len = ntohs( *(unsigned short int *)(&x->packet[i])  );
+		i += 2;
+		//    memcpy(&conv, here, sizeof(unsigned short int));
+		//    len = y->len = ntohs(conv);
+		//    here += 2;
 
     /* safe to read RDATA? */
-    if ((here + y->len) > limit) return (NULL);
+		if (i + y->len > packetsize)  return (-1); 
+		//    if ((here + y->len) > limit) return (NULL);
     
     if (y->len > sizeof(y->data) - 4) {
+	/* we are actually losing data here. we should give up */
+	/* return -1; */
 	y->len = sizeof(y->data) - 4;
     }
 
-    memcpy(y->data, here, y->len);
-    here += len;
+		//memcpy(y->data, here, y->len);
+    //here += len;
+		memcpy(y->data, &x->packet[i], y->len);
+		i += y->len;
     y->data[y->len] = 0;
 
-    return (here);
+    return (i);
 }
 
 
 int dump_dnspacket(char *type, unsigned char *packet, int len)
 {
-  int	i;
+  int	i, index;
   rr_t	y;
   dnsheader_t *x;
-  unsigned char *limit;
+	//  unsigned char *limit;
 
   if (opt_debug < 4) return 0;
 
   if ((x = decode_header(packet, len)) == NULL ) {
     return (-1);
   }
-  limit = x->packet + len;
+	//  limit = x->packet + len;
 
   if (x->u & MASK_Z) log_debug(2, "Z is set");
 
@@ -284,7 +299,8 @@ int dump_dnspacket(char *type, unsigned char *packet, int len)
 
   fprintf(stderr, "qd= %u\n", x->qdcount);
   
-  if ((x->here = read_record(x, &y, x->here, 1, limit)) == NULL) {
+	if ((index = read_record(x, &y, PACKET_DATABEGIN, 1, len)) <0) {
+	//  if ((x->here = read_record(x, &y, x->here, 1, limit)) == NULL) {
     free_packet(x);
     return(-1);
   }
@@ -294,7 +310,8 @@ int dump_dnspacket(char *type, unsigned char *packet, int len)
   
   fprintf(stderr, "ans= %u\n", x->ancount);
   for (i = 0; i < x->ancount; i++) {
-    if ((x->here = read_record(x, &y, x->here, 0, limit)) == NULL) {
+		if ((index = read_record(x, &y, index, 0, len)) <0) {
+			//if ((x->here = read_record(x, &y, x->here, 0, limit)) == NULL) {
       free_packet(x);
       return(-1);
     }
@@ -304,7 +321,8 @@ int dump_dnspacket(char *type, unsigned char *packet, int len)
 	    
   fprintf(stderr, "ns= %u\n", x->nscount);
   for (i = 0; i < x->nscount; i++) {
-    if ((x->here = read_record(x, &y, x->here, 0, limit))==NULL) {
+		if ((index = read_record(x, &y, index, 0, len)) <0) {
+			//if ((x->here = read_record(x, &y, x->here, 0, limit))==NULL) {
       free_packet(x);
       return(-1);
     }
@@ -314,7 +332,8 @@ int dump_dnspacket(char *type, unsigned char *packet, int len)
     
   fprintf(stderr, "ar= %u\n", x->arcount);
   for (i = 0; i < x->arcount; i++) {
-    if ((x->here = read_record(x, &y, x->here, 0, limit))==NULL) {
+		if ((index = read_record(x, &y, index, 0, len)) <0) {
+    //if ((x->here = read_record(x, &y, x->here, 0, limit))==NULL) {
       free_packet(x);
       return(-1);
     }
@@ -339,42 +358,30 @@ dnsheader_t *parse_packet(unsigned char *packet, int len)
 }
 
 /*
-int get_dnsquery(dnsheader_t *x, rr_t *query)
-{
-    char	*here;
-
-    if (x->qdcount == 0) {
-	return (1);
-    }
-
-    here = &x->packet[12];
-    read_record(x, query, here, 1);
-
-    return (0);
-}
-*/
-
-/*
  * parse_query()
  *
  * The function get_dnsquery() returns us the query part of an
  * DNS packet.  For this we must already have a dnsheader_t
  * packet which is additional work.  To speed things a little
  * bit up (we use it often) parse_query() gets the query direct.
+ *
+ * returns non-zero on error and zero on success.
  */
-unsigned char *parse_query(rr_t *y, unsigned char *msg, int len)
+int parse_query(rr_t *y, unsigned char *msg, int len)
 {
     int	k;
-    unsigned char *here;
-    unsigned short int conv;
-    unsigned const char *limit = msg+len; 
+		//    unsigned char *here;
+		int i;
+		//    unsigned short int conv;
+		//    unsigned const char *limit = msg+len; 
 
     /* If QDCOUNT, the number of entries in the question section,
      * is zero, we just give up */
 
     if (ntohs(((dnsheader_t *)msg)->qdcount) == 0 ) {
-      log_debug(1, "QDCOUNT was zero");
-      return(0);
+			/*      QDCOUNT will always be zero on responses.
+							log_debug(1, "QDCOUNT was zero"); */
+      return(-1);
     }
 
     /*
@@ -385,33 +392,44 @@ unsigned char *parse_query(rr_t *y, unsigned char *msg, int len)
     
     y->flags = ntohs(((short int *) msg)[1]);
 
-    here = &msg[PACKET_DATABEGIN];
-    if ((k=get_objectname(msg, limit, &here, y->name, sizeof(y->name),0))< 0) 
-      return(0);
-    y->name[k] = 0;
+		//    here = &msg[PACKET_DATABEGIN];
+    if ((i = get_objname(msg, len, PACKET_DATABEGIN, y->name, 
+														 sizeof(y->name)))< 0) 
+      return(-1);
+		//    y->name[k] = 0;
 
     /* check that there is type and class */
-    if (here + 4 > limit) return(0);
-    memcpy(&conv, here, sizeof(unsigned short int));
-    y->type = ntohs(conv);
-    here += 2;
+		if (i + 4 > len) return(-1);
+		//    if (here + 4 > limit) return(0);
 
-    memcpy(&conv, here, sizeof(unsigned short int));
-    y->class = ntohs(conv);
-    here += 2;
+		y->type = ntohs(*(unsigned short *)(&msg[i]));
+		i += 2;
+
+		y->class = ntohs( *(unsigned short *)(&msg[i]));
+		i += 2;
+		
+		//    memcpy(&conv, here, sizeof(unsigned short int));
+		//    y->type = ntohs(conv);
+		//    here += 2;
+
+		//    memcpy(&conv, here, sizeof(unsigned short int));
+		//    y->class = ntohs(conv);
+		//    here += 2;
 
     /* those strings should have been checked in get_objectname */
-    k = strlen(y->name);
-    if (k > 0  &&  y->name[k-1] == '.') {
-	y->name[k-1] = '\0';
-    }
+    if (k = strlen(y->name)) {
+			if (y->name[--k] == '.') y->name[k] = '\0';
+		}
+		//    if (k > 0  &&  y->name[k-1] == '.') {
+		//	y->name[k-1] = '\0';
+		//    }
 
     /* should we really convert the name to lowercase?  
      * rfc1035 2.3.3
      */
     strnlwr(y->name, sizeof(y->name));
 	    
-    return (here);
+    return (0);
 }
 
 
