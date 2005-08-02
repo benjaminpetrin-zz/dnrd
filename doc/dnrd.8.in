@@ -9,7 +9,7 @@ dnrd \- proxy name server
 .RB [ \-a \ \fIlocaladdress\fR\ | \ \-\-address=\fIlocaladdress\fR] 
 .RB [ \-b \ \fR| \ \-\-load\-balance\fR]
 .RB [ \-B \ \fIBLACKLIST\fR\ | \ \-\-blacklist=\fIBLACKLIST\fR] 
-.RB [ \-c \ \fR( \fIoff\fR|[\fIlow:\fR]\fIhigh\fR)\ | \ \-\-cache=\fR(\fIoff\fR|[\fIlow:\fR]\fIhigh \fR)]
+.RB [ \-c \ \fR(\fIoff\fR|[\fIlow:\fR]\fIhigh\fR)\ | \ \-\-cache=\fR(\fIoff\fR|[\fIlow:\fR]\fIhigh \fR)]
 .RB [ \-d \ \fILEVEL\ \fR| \ \-\-debug=\fILEVEL\fR]
 .RB [ \-h \ \fR| \ \-\-help \fR]
 .RB [ \-i \ \fR| \ \-\-ignore \fR]
@@ -18,7 +18,9 @@ dnrd \- proxy name server
 .RB [ \-m \ \fR(\fIoff\fR|\fIFILE\fR)\ | \ \-\-master=\fR(\fIoff\fR|\fIFILE\fR)] 
 .RB [ \-M \ \fIN\fR\ | \ \-\-max\-sock=\fIN\fR]
 .RB [ \-r \ \fIN\fR\ | \ \-\-retry=\fIN\fR]
+.RB [ \-R \ \fIDIR\fR\ | \ \-\-dnrd\-root=\fIDIR\fR]
 .RB [ \-s \ \fIipaddr\fR(\fI:domain\fR)\ | \ \-\-server=\fIipaddr\fR(\fI:domain\fR)]
+.RB [ \-S \ \fIN\fR[\fI+\fR]\ | \ \-\-stats=\fIN\fR[\fI+\fR]]
 .RB [ \-t \ \fIN\fR\ | \ \-\-timeout=\fIN\fR]
 .RB [ \-u \ \fIuserid\fR\ | \ \-\-uid=\fIuserid\fR] 
 .RB [ \-v \ \fR| \ \-\-version \fR]
@@ -32,7 +34,7 @@ option.  By default, dnrd will act as the primary nameserver for hosts
 found in
 .I @DNRD_ROOT@/master\fR
 and queries to hostnames listed in
-.I@DNRD_ROOT/blacklist \fR
+.I @DNRD_ROOT@/blacklist \fR
 will be answered with a "host not found".
 
 .SH "OPTIONS"
@@ -47,9 +49,8 @@ Bind only to the interface with the specified address. By default
 .B \-b
 .TP 
 .B \-\-load\-balance
-Turn on load balancing. All forward servers that are specified after
-this option (with
-.B \-s\fR) will load balance in a round robin scheme. By default,
+Turn on load balancing. All forward servers (specified with
+.B \-s\fR) after this option will load balance in a round robin scheme. By default,
 .B dnrd\fR will use the next server in the list if the first times out. As soon
 as the first is reactivated, it will be used again. With
 .B \-b
@@ -58,7 +59,7 @@ served. If a server times out it will be deactivated and will not be
 used until it comes back. As soon it is reactivated it will join the
 list.
 .sp
-Note that if there are no
+Note that if there are no servers specified with
 .B \-s
 after the
 .B \-b\fR, this will do nothing at all.
@@ -70,7 +71,7 @@ after the
 Blacklist all hostnames listed in the file BLACKLIST. Queries to hosts listed
 in this file will be answered with "host not found". The file BLACKLIST is
 specified relative to the DNRD chroot directory (defaults to @DNRD_ROOT@). By 
-default dnrd will look for a file named "blacklist" in the @DNRD_ROOT@ dir.
+default dnrd will look for a file named "blacklist".
 
 .TP 
 .BR \-c \ ( \fIoff |[ \fIlow: ] \fIhigh )
@@ -158,42 +159,13 @@ can act as the primary name server for a number of hosts. By default,
 it will read in
 .I @DNRD_ROOT@/master
 to determine how this is done.
-This option turns off all primary server functionality and sending signal -HUP
-will not make dnrd try to read the master file.
+This option specifies another file than @DNRD_ROOT@/master or turns off 
+all primary server functionality.
+Sending 
 .B dnrd
-can act as the primary name server for a number of hosts. By default,
-it will read in
-.I @DNRD_ROOT@/master
-to determine how this is done.  If that file
-doesn't exist, it will act as the primary server for the hosts found in
-.I /etc/hosts\fR.
-This option allows you to override the default behavior. Setting it to
-.I off
-turns off all primary server functionality. Setting it to
-.I hosts
-causes
-.B dnrd
-to act as the primary server for hosts in
-.I /etc/hosts
-regardless of whether it could find
-.I @DNRD_ROOT@/master\fR.
-.sp
-Sending the signal HUP to the
-.B dnrd
-process will cause the
-.I @DNRD_ROOT@/master
-file to be re\-read. Since
-.I /etc/hosts
-is outside the chrooted envronment,
-.B dnrd
-will not be able to reread this file. Therefore it is not recommended
-to use
-.I /etc/hosts
-at all. Future versions of
-.B dnrd
-will not support any use of
-.I /etc/hosts\fR.
-
+signal -HUP will make dnrd try to re-read the master file unless this is
+option is set to "off". Therefore, the master file have to be within the
+dnrd-root. the file is specified relative to dnrd-root.
 
 
 .TP 
@@ -201,6 +173,7 @@ will not support any use of
 .TP 
 .BI \-\-max\-sock= N
 Set the maximum allowed open sockets. Default is \fI200\fR.
+
 
 .TP 
 .BI \-r\  N
@@ -220,16 +193,28 @@ seconds. Setting this to zero will make
 .B dnrd
 to never deactivate a server.
 
+
+.TP
+.B \-R \fIDIR
+.TP
+.B \-\-dnrd\-root=\fIDIR
+Set the dnrd-root to
+.I DIR\fR.
+.B dnrd
+will chroot to this directory at startup so all files, masterfile and
+blacklist, must be here. This option overrides the environment variable 
+DNRD_ROOT. Default dnrd-root is 
+.I @DNRD_ROOT@\fR.
+
+
 .TP 
 .BI \-s\  ipaddr \fR( :domain \fR)
 .TP 
 .BI \-\-server= ipaddr \fR( :domain \fR)
-Add a forward DNS server. If multiple
+Add a forward DNS server. If
 .B \-s
-options are given,
-.B dnrd
-treats the first as a primary DNS server and the rest as backup
-servers. If the primary DNS server times out, it is deactivated and
+is used multiple times, the first is the primary DNS server and the rest are
+backup servers.  If the primary DNS server times out, it is deactivated and
 the next specified server (that is active) is used until the previous
 gets reactivated.
 .sp
@@ -242,13 +227,24 @@ instance. Several servers with the same
 .I domain
 might be specified and then will they work as backup servers.
 .sp
-If
+If the
 .B \-b
-option is specified, then will all servers specified after the
+option is specified, then all servers specified after the
 .B \-b
-option, be grouped by
-.I domain\fR,
-and load balanced.
+option are load balanced per
+.I domain\fR.
+
+
+.TP
+.BI \-S\  N\fR[\fI+\fR]
+.TP
+.BI \-\-stats= N\fR[\fI+\fR]
+Print statistics about cache hits, cache misses and timeouts to syslog every
+.I N
+seconds.
+If 
+.I +
+is specified, the counters will not be reset after the print.
 
 .TP 
 .BI \-t\  N
@@ -258,7 +254,7 @@ Set the timeout value for forward DNS servers. If a server don't
 respond to a query within
 .I N
 seconds it is deactivated. The default value is
-.I 20
+.I 12
 .
 .sp
 Setting this to zero will make
@@ -266,18 +262,19 @@ Setting this to zero will make
 to never deactivate a server because of timeouts. However, a server
 might be deactivated if sendto fails.
 
+
 .TP 
 .BI \-u\  userid
 .TP 
 .BI \-\-userid= userid
-By default,
+Set the UID that
 .B dnrd
-switches to uid
-.I 65535
-after starting up. This is a security feature.  The default uid can be
-overridden using this option.
-.I userid
-can either be a name or a number.
+will run as. By default,
+.B dnrd
+tries to switches to uid
+.I dnrd
+after starting up.
+
 
 .TP 
 .B \-v
@@ -287,17 +284,7 @@ Prints out the version number.
 
 .SH "BUGS"
 .PP 
-Sending \-SIGHUP will not reread the
-.I /etc/hosts
-file since
-.B dnrd
-is chrooted to
-.I @DNRD_ROOT@\fR.
-Use
-.I @DNRD_ROOT@/master
-instead and avoid using
-.I /etc/hosts
-at all.
+The TTL's are not respected for the cache.
 
 .SH "FILES"
 .PP 
@@ -307,12 +294,9 @@ This file is used to configure
 .B dnrd
 as a primary nameserver.
 .PP 
-.B /etc/hosts
+.B @DNRD_ROOT@/blacklist
 .PP 
-By default,
-.B dnrd
-will act as a primary nameserver for hosts found in this file. Note
-that this file will not be used at all in future versions.
+Hosts listed in this file are blacklisted.
 .PP 
 .B /var/run/dnrd.pid
 .PP 
