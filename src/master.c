@@ -795,7 +795,7 @@ int master_lookup(unsigned char *msg, int len)
 	master_init();
     }
 
-    if ((parse_query(&query, msg, len) == NULL) ||
+    if (parse_query(&query, msg, len) ||
 	(query.class != DNS_CLASS_INET  ||  GET_OPCODE(query.flags) != 0)) {
 	return (0);
     }
@@ -956,7 +956,7 @@ int master_dontknow(unsigned char *msg, int len, unsigned char *answer)
 	master_init();
     }
 
-    if (parse_query(&query, msg, len) == NULL) {
+    if (parse_query(&query, msg, len)) {
 	return (0);
     }
     else if (query.class != DNS_CLASS_INET  ||  GET_OPCODE(query.flags) != 0) {

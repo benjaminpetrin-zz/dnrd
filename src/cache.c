@@ -186,14 +186,13 @@ int cache_dnspacket(void *packet, int len, srvnode_t *server)
     cache_t	*cx = NULL;
 
     if ((cache_onoff == 0) ||
-	(parse_query(&query, packet, len) == NULL) ||
+	parse_query(&query, packet, len) ||
 	(GET_QR(query.flags) == 0) ||
 	(*query.name == 0)) {
 	return (0);
     }
-	
+
     x = parse_packet(packet, len);
-    /* get_dnsquery(x, &query); */
 
     /*
      * Ok, the packet is interesting for us.  Let's put it into our
@@ -239,7 +238,7 @@ int cache_lookup(void *packet, int len)
     cache_t	*cx = NULL;
 
     if ((cache_onoff == 0) ||
-	(parse_query(&query, packet, len) == NULL) ||
+	parse_query(&query, packet, len) ||
 	(GET_QR(query.flags) == 1) ||
 	(*query.name == 0) ||
 	(query.class != DNS_CLASS_INET)) {
