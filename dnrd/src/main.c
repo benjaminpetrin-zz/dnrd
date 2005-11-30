@@ -140,14 +140,6 @@ static void dnrd_root_sanity_check(void) {
 void init_socket(void) {
     struct servent    *servent;   /* Let's be good and find the port numbers
 				     the right way */
-    /*
-     * Initialization in common.h of recv_addr is broken, causing at
-     * least the '-a' switch not to work.  Instead of assuming
-     * positions of fields in the struct across platforms I thought it
-     * safer to do a standard initialization in main().
-     */
-    memset(&recv_addr, 0, sizeof(recv_addr));
-    recv_addr.sin_family = AF_INET;
 
     /*
      * Pretend we don't know that we want port 53
@@ -212,6 +204,15 @@ int main(int argc, char *argv[])
 	domnode_t *p;
 	srvnode_t *s;
 	char *tmpstr;
+
+	/*
+	 * Initialization in common.h of recv_addr is broken, causing at
+	 * least the '-a' switch not to work.  Instead of assuming
+	 * positions of fields in the struct across platforms I thought it
+	 * safer to do a standard initialization in main().
+	 */
+	memset(&recv_addr, 0, sizeof(recv_addr));
+	recv_addr.sin_family = AF_INET;
 	
 	openlog(progname, LOG_PID, LOG_DAEMON);
 	
