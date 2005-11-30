@@ -1,5 +1,6 @@
 version 2.20
 ------------
+Natanael Copa <n@tanael.org>
  - removed support for using /etc/hosts
  - use the environment variable DNRD_ROOT if set
  - fixed the --dnrd-root option

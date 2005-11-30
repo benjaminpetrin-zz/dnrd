@@ -42,11 +42,13 @@
 
 static unsigned char valid_char[256];
 
+/* currently we accept everything... */
+unsigned char tolerant_mode = 1;
 
-/* init the table for valig chars */
+/* init the table for valid chars */
 void init_dns(void) {
 	int i = 0;
-	memset(valid_char, 1, sizeof(valid_char));
+	memset(valid_char, tolerant_mode, sizeof(valid_char));
 	for (i = '0'; i<='9'; i++) valid_char[i] = 1;
 	for (i = 'A'; i<='Z'; i++) valid_char[i] = 1;
 	for (i = 'a'; i<='z'; i++) valid_char[i] = 1;
@@ -149,11 +151,11 @@ static int get_objname(const unsigned char *msg, const int msgsize, int index,
 			if (!compressed) compressed = i+1;
 
 			/* check that the pointer points within limits */
-			if ((i = ((c & 0x3f) << 8)) + msg[i] >= msgsize) return(-1);
+			if ((i = ((c & 0x3f) << 8) + msg[i]) >= msgsize) return(-1);
 			continue;
 		} else if (c < 64) {
 			/* check that label length don't cross any borders */
-			if ( ((c+j+2) >= destsize)	|| ((i + c) >= msgsize)) return(-1);
+			if ( ((j + c + 1) >= destsize)	|| ((i + c) >= msgsize)) return(-1);
 
 			while (c--) {
 				if (valid_char[msg[i]])	
@@ -164,7 +166,7 @@ static int get_objname(const unsigned char *msg, const int msgsize, int index,
 		} else return(-1); /* a label cannot be longer than 63 */
 	}
 
-	if (j >= (destsize) ) return(-1); /* we need space for '\0' */
+	if (--j >= (destsize) ) return(-1); /* we need space for '\0' */
 	dest[j] = '\0';
 	/* if we used compression, return the location from the first ptr */
 	return (compressed ? compressed : i);
