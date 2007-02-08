@@ -37,7 +37,7 @@
 
 /* Macros for manipulating the flags field */
 #define MASK_RCODE  0x000f
-#define MASK_Z      0x0070
+#define MASK_Z      0x0040
 #define MASK_RA     0x0080
 #define MASK_RD     0x0100
 #define MASK_TC     0x0200
