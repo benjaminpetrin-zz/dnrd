@@ -34,7 +34,7 @@
 #include <errno.h>
 #include "common.h"
 #include "lib.h"
-
+#include "dns.h"
 
 #ifdef DEBUG
 #define OPT_DEBUG 1
@@ -374,7 +374,7 @@ char *cname2asc(const char *cname) {
      according to RFC 1035 a name must not be bigger than 255 octets.
    */
   if (cname) 
-    snprintf_cname(cname, strlen(cname), 0, buf, sizeof(buf));
+    snprintf_cname((char *)cname, strlen(cname), 0, buf, sizeof(buf));
   else
     strncpy(buf, "(default)", sizeof(buf));
   return buf;
