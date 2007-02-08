@@ -175,7 +175,7 @@ static int get_objname(const unsigned char *msg, const int msgsize, int index,
 int snprintf_cname(char *msg, const int msgsize, /* the dns packet */
 										int index, /* where in the DNS packet the name is */
 										char *dest, int destsize) { /* where to store the cname */
-	unsigned char *p = &msg[index];
+/*	unsigned char *p = &msg[index];*/ /* UNUSED */
 	static const char malformatted[] = "(malformatted)";
 	if (get_objname(msg, msgsize, index, dest, destsize) <0) {
 		strncpy(dest, malformatted, destsize);
@@ -190,7 +190,7 @@ static int read_record(dnsheader_t *x, rr_t *y,
 											 const int packetsize)
 {
     int	i, len;
-    unsigned short int conv;
+/*    unsigned short int conv;*/ /* UNUSED */
 
     /*
      * Read the name of the resource ...
@@ -419,7 +419,7 @@ int parse_query(rr_t *y, unsigned char *msg, int len)
 		//    here += 2;
 
     /* those strings should have been checked in get_objectname */
-    if (k = strlen(y->name)) {
+    if ((k = strlen(y->name))) {
 			if (y->name[--k] == '.') y->name[k] = '\0';
 		}
 		//    if (k > 0  &&  y->name[k-1] == '.') {

@@ -44,6 +44,7 @@
 #include "lib.h"
 #include "qid.h"
 #include "query.h"
+#include "dns.h"
 
 static int is_writeable (const struct stat* st);
 static int user_groups_contain (gid_t file_gid);
@@ -220,7 +221,7 @@ int main(int argc, char *argv[])
 	domain_list = alloc_domnode();
 	
 	/* get the dnrd_root from environment */
-	if (tmpstr = getenv("DNRD_ROOT"))
+	if ((tmpstr = getenv("DNRD_ROOT")))
 		strncpy(dnrd_root, tmpstr, sizeof(dnrd_root));
 	
 	/*
@@ -350,7 +351,7 @@ int main(int argc, char *argv[])
 }
 
 /***************************************************************************/
-static is_writeable (const struct stat* st)
+static int is_writeable (const struct stat* st)
 {
     if (st->st_uid == getuid ())
         return 1;

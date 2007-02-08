@@ -177,7 +177,7 @@ static void *tcp_handler(tcp_handle_t *dummy)
 	    while ((s=s->next) != d->srvlist) {
 	      if (s->tcp == -1) continue;
 	      if (FD_ISSET(s->tcp, &available)) {
-		log_debug("[%d] Received tcp reply.  Forwarding...", getpid());
+		log_debug(1, "[%d] Received tcp reply.  Forwarding...", getpid());
 		if ((bytes = read(s->tcp, buffer, sizeof(buffer))) <= 0) {
 		  child_die = 1;
 		  break;
@@ -204,10 +204,10 @@ static void *tcp_handler(tcp_handle_t *dummy)
 	    bytes = read(connect, &tcpsize, sizeof(tcpsize));
 	    /* check for connection close */
 	    if (bytes == 0) break;
-	    log_debug("[%d] Received tcp DNS query...", getpid());
+	    log_debug(1, "[%d] Received tcp DNS query...", getpid());
 
 	    if (bytes < 0) {
-		log_debug("[%d] tcp read error %s", getpid(), strerror(errno));
+		log_debug(1, "[%d] tcp read error %s", getpid(), strerror(errno));
 		break;
 	    }
 	    memcpy(buffer, &tcpsize, sizeof(tcpsize));
@@ -224,7 +224,7 @@ static void *tcp_handler(tcp_handle_t *dummy)
 		break;
 	    }
 	    if (bytes < 0) {
-		log_debug("[%d] tcp read error %s", getpid(), strerror(errno));
+		log_debug(1, "[%d] tcp read error %s", getpid(), strerror(errno));
 		break;
 	    }
 	    if ((retn = handle_query(&client, buffer + 2, &bytes, &dptr))<0) {
@@ -264,7 +264,7 @@ static void *tcp_handler(tcp_handle_t *dummy)
 	
     }
     /* The child process is done.  It can now die */
-    log_debug("[%d] Closing tcp connection", getpid());
+    log_debug(1, "[%d] Closing tcp connection", getpid());
     /*    for(i = 0; i < MAX_SERV; i++) {
 	if (server[i] != -1) close(server[i]);
     }
@@ -277,7 +277,7 @@ static void *tcp_handler(tcp_handle_t *dummy)
     } while ((d=d->next) != domain_list);
 
     close(connect);
-    log_debug("[%d] Exiting child", getpid());
+    log_debug(1, "[%d] Exiting child", getpid());
     TCP_EXIT(0);
     /* NOTREACHED */
     return (void *)0;

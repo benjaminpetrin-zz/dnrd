@@ -716,6 +716,7 @@ int read_blacklist(const char *filename) {
     if ((p = strchr(buf, '\n')) != NULL) *p='\0';
     if (buf[0]) add_authority(buf, sizeof(buf));
   } 
+  return (0);
 }
 
 

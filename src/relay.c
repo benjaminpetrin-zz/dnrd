@@ -232,7 +232,7 @@ void srv_stats(time_t interval) {
 /* print statics about the query list and open sockets */
 void query_stats(time_t interval) {
   time_t now = time(NULL);
-  int count;
+/*  int count; */ /* UNUSED */
   static time_t last=0;
 	if (interval == 0) return;
   if (last + interval < now) {

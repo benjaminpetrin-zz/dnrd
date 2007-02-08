@@ -36,6 +36,7 @@
 #include "query.h"
 #include "domnode.h"
 #include "check.h"
+#include "dns.h"
 
 #ifndef EXCLUDE_MASTER
 #include "master.h"
@@ -304,9 +305,9 @@ int udp_send_dummy(srvnode_t *s) {
     0x00,0x01   /* QCLASS: IN */
 
     /* in case you want to lookup root servers instead, use this: */
-    /*    0x00,       /* QNAME:  empty */
-    /*    0x00, 0x02, /* QTYPE:  a authorative name server */
-    /*    0x00, 0x01  /* QCLASS: IN */
+    /*    0x00,       */ /* QNAME:  empty */
+    /*    0x00, 0x02, */ /* QTYPE:  a authorative name server */
+    /*    0x00, 0x01  */ /* QCLASS: IN */
   };
   query_t *q;
   struct sockaddr_in srcaddr;
