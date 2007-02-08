@@ -138,10 +138,13 @@ static int create_nameip(nameip_t *nameip, const int maxnamelen, char *ip)
 
     nameip->ipnum = ntohl(ipnum.s_addr);
     // Swap the bytes.  Don't assume 32-bit integers.
-    ipnum.s_addr = ((nameip->ipnum & 0xff000000 >> 24) |
-		    (nameip->ipnum & 0x00ff0000 >> 8) |
-		    (nameip->ipnum & 0x0000ff00 << 8) |
-		    (nameip->ipnum & 0x000000ff << 24));
+    if (nameip->ipnum == ipnum.s_addr)
+        ipnum.s_addr = (((nameip->ipnum & 0xff000000) >> 24) |
+		        ((nameip->ipnum & 0x00ff0000) >> 8 ) |
+		        ((nameip->ipnum & 0x0000ff00) << 8 ) |
+		        ((nameip->ipnum & 0x000000ff) << 24));
+    else
+        ipnum.s_addr = nameip->ipnum;
 
     mkstring(&nameip->arpa, inet_ntoa(ipnum), maxnamelen);
     
