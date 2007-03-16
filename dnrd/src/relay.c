@@ -186,7 +186,6 @@ static void reactivate_servers(int interval) {
 static void deactivate_servers(int interval) {
   time_t now=time(NULL);
   static int last_try = 0;
-  int current_disabled;
   domnode_t *d = domain_list;
   srvnode_t *s;
 
@@ -196,9 +195,9 @@ static void deactivate_servers(int interval) {
   last_try = now;
 
   do {
-    current_disabled=0;
     if ((s=d->srvlist)) 
       while ((s=s->next) != d->srvlist) {
+        int current_disabled=0;
 	if (s->inactive) continue;
 	if (s->send_time
 	    && (difftime(now, s->send_time) > forward_timeout)) {
