@@ -1,3 +1,16 @@
+version 2.20.3
+Natanael Copa <ncopa@users.sourceforge.net>
+ - fixed bug that caused all servers for a domain to be disabled upon a
+   timeout.
+
+version 2.20.2
+--------------
+Natanael Copa <ncopa@users.sourceforge.net>
+ - fixed compiler warnings
+ (http://sourceforge.net/tracker/index.php?func=detail&aid=1598847&group_id=72&atid=300072)
+ - Fixed reverse lookups on big-endian systems. (Jeremy Puhlman)
+ - Fixed Z-flag bug for bind9. (Oliver Geisen)
+
 version 2.20.1
 --------------
 Natanael Copa <n@tanael.org>
