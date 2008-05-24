@@ -101,10 +101,18 @@ query_t *query_create(domnode_t *d, srvnode_t *s) {
   memset(&my_addr, 0, sizeof(my_addr));
   my_addr.sin_family = AF_INET;
   my_addr.sin_addr.s_addr = INADDR_ANY;
-  my_addr.sin_port = htons( myrand(65536-1026)+1025 );
-  if (bind(q->sock, (struct sockaddr *)&my_addr, 
-	   sizeof(struct sockaddr)) == -1) {
-    log_msg(LOG_WARNING, "bind: %s", strerror(errno));
+
+  my_addr.sin_port = htons(myrand(65536-1026) + 1025);
+  while ((bind(q->sock, (struct sockaddr *)&my_addr, 
+      sizeof(struct sockaddr))) == -1) {
+
+    if (errno != EADDRINUSE) {
+      log_msg(LOG_WARNING, "bind: %s", strerror(errno));
+      break;
+    }
+
+    /* try another port */
+    my_addr.sin_port = htons(myrand(65535-1026) + 1025);
   }
 #endif
 
@@ -160,12 +168,24 @@ query_t *query_add(domnode_t *dom, srvnode_t *srv,
      if it is, don't add it again. 
   */
   for (p=&qlist; p->next != &qlist; p = p->next) {
-    if (p->next->client_qid == client_qid) {
+    if ((p->next->client_qid == client_qid) &&
+        ((p->next->client.sin_addr.s_addr == client->sin_addr.s_addr) &&
+         (p->next->client.sin_port == client->sin_port))) {
+
+      char client_ip[INET_ADDRSTRLEN];
+
+      inet_ntop(AF_INET, &(client->sin_addr), client_ip, sizeof(*client));
+
+      log_debug(2, "Query ID %hu from client %s:%hu already in list. "
+        "Count=%hu", 
+               ntohs(client_qid), client_ip, ntohs(client->sin_port),
+        p->next->client_count++);
+
+      dump_dnspacket("duplicate query", (unsigned char *)msg, len);
+
       /* we found the qid in the list */
       *((unsigned short *)msg) = p->next->my_qid;
       p->next->client_time = now;
-      log_debug(2, "Query %i from client already in list. Count=%i", 
-		client_qid, p->next->client_count++);
       return p;
     }
   }

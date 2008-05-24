@@ -333,6 +333,15 @@ int main(int argc, char *argv[])
 		fclose(stderr);
 	}
 #endif /** } __CYGWIN__ */
+
+    /*
+     * Setting debug to 255 produces no logging yet keep dnrd in the foreground
+     * so it can be simply monitored by a parent task.
+     */
+    if (opt_debug == 255) {
+        log_debug(1, "running in foreground without debug logging");
+        opt_debug = 0;
+    }
 	
 #ifdef ENABLE_PIDFILE
 	/*
