@@ -39,15 +39,14 @@
 #ifdef DEBUG
 #define OPT_DEBUG 1
 #else
-#define OPT_DEBUG 0
+#define OPT_DEBUG -1
 #endif /* DEBUG */
 
 
 /*
  * These are all the global variables.
  */
-unsigned char
-       opt_debug = OPT_DEBUG;
+int                 opt_debug = OPT_DEBUG;
 int                 opt_serv = 0;
 const char*         progname = 0;
 
