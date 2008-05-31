@@ -1,9 +1,9 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(dnrd, [2.20.4], [dnrd-user@lists.sourceforge.net])
+AC_INIT(dnrd, [2.21_beta1], [dnrd-user@lists.sourceforge.net])
 AC_CANONICAL_SYSTEM
 
 AM_CONFIG_HEADER(src/config.h)
-AM_INIT_AUTOMAKE(dnrd,2.20.4)
+AM_INIT_AUTOMAKE(dnrd,2.21_beta1)
 
 dnl Fix "prefix" variable if it hasn't been specified...
 if test "$prefix" = "NONE"; then
