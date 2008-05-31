@@ -184,6 +184,7 @@ int cache_dnspacket(void *packet, int len, srvnode_t *server)
     dnsheader_t *x;
     rr_t	query;
     cache_t	*cx = NULL;
+    unsigned long dns_ttl;
 
     if ((cache_onoff == 0) ||
 	parse_query(&query, packet, len) ||
@@ -206,12 +207,99 @@ int cache_dnspacket(void *packet, int len, srvnode_t *server)
      * Set the expire time of the cached object.
      */
     cx->lastused = time(NULL);
-    cx->expires  = cx->lastused +
+    dns_ttl = cache_dns_ttl(packet, len, x);
+    if(dns_ttl == 0) {
+      cx->expires  = cx->lastused +
 	           ((cx->p->ancount > 0) ? CACHE_TIME : CACHE_NEGTIME);
+      log_debug(5, "Using static cache timeouts -> %lu seconds\n",
+	           ((cx->p->ancount > 0) ? (unsigned long)CACHE_TIME : (unsigned long)CACHE_NEGTIME));
+    }else{
+      cx->expires = cx->lastused + dns_ttl;
+      log_debug(5, "Using dynamic cache timeouts -> %lu seconds\n", dns_ttl);
+    }
     sem_post(&dnrd_sem);
     return (0);
 }
 
+/*
+ * skip_labels()
+ *
+ * In: packet - pointer to the current position within the packet
+ *     term   - beyond the end of the packet. Passing this is bad
+ *
+ * Returns:
+ *     a pointer to the byte immediately beyond the name
+ *     OR null, if we walk off the end of the packet
+ */
+unsigned char *skip_labels(unsigned char *packet, unsigned char *term) {
+  while(1) {
+    if(*packet > 63) return packet+2;
+    if(*packet == 0) return packet+1;
+    packet += *packet + 1;
+    if(packet >= term) return NULL;
+  }
+}
+
+/*
+ * cache_dns_ttl()
+ *
+ * In: packet   - a pointer to the packet data
+ *     len      - the size of the packet
+ *     hdr      - Preprocessed header data
+ *
+ * Returns: the minimum TTL within the packet
+ *    OR 0 if we can't work it out
+ */
+unsigned long cache_dns_ttl(void *packet, int len, dnsheader_t *hdr) {
+  unsigned char *p = packet;
+  unsigned char *term = p + len;
+  unsigned long ttl = -1;
+  unsigned long t;
+  unsigned short i;
+  unsigned long buf[1];
+  unsigned short sbuf[1];
+
+  // skip header
+  p += PACKET_DATABEGIN;
+
+  // skip questions
+  i = hdr->qdcount;
+  while(i) {
+    p = skip_labels(p, term);
+    if(p==NULL) return 0;
+    p += 4;
+    i--;
+    if(p>=term) return 0; //walked off the end
+    log_debug(8, "Walking Questions. %hu to go.\n", i);
+  }
+
+  i = hdr->ancount + hdr->nscount + hdr->arcount;
+  while(i) {
+    if(p>=term || p<(unsigned char *)packet) return 0; //walked off the end
+    p = skip_labels(p, term);
+    if(p==NULL) return 0;
+    p += 4;
+    if(p>=term) return 0; //walked off the end
+
+    memcpy(buf, p, sizeof(buf));
+    t = ntohl(buf[0]);
+    log_debug(8, "ttl = %lu", t);
+    if(t < ttl) ttl = t;
+    p += 4;
+    if(p>=term) return 0; //walked off the end
+
+    memcpy(sbuf, p, sizeof(sbuf));
+    log_debug(8, "Jumping rdata of %hu bytes", ntohs(sbuf[0]));
+    p += ntohs(sbuf[0]);
+    p += 2;
+
+    log_debug(8, "Walking Answers/Nameservers/Additional Information. %hu to go from %p.\n", i, p);
+    i--;
+  }
+
+  if(ttl == -1) return 0;
+  return ttl;
+}
 
 /*
  * cache_lookup()
@@ -256,13 +344,21 @@ int cache_lookup(void *packet, int len)
 	  cx->class == query.class  &&
 	  strcasecmp(cx->name, query.name) == 0) {
 	
-	log_debug(3, "cache: found %s, type= %d, class: %d, ans= %d\n",
-		  cx->name, cx->type, cx->class, cx->p->ancount);
+	log_debug(3, "cache: found %s, type= %d, class: %d, ans= %d, ttl= %d\n",
+		  cx->name, cx->type, cx->class, cx->p->ancount, cx->expires-time(NULL)); //XXX remove expiry
 
 	if (cx->positive > 0) {
 	  cx->lastused = time(NULL);
-	  cx->expires  = cx->lastused + CACHE_TIME;
+	  //cx->expires  = cx->lastused + CACHE_TIME;
 	}
+
+        if(cx->expires <= cx->lastused) {
+          // this packet has expired, get rid of it!
+	  remove_cx(cx);
+	  free_cx(cx);
+          log_debug(3, "found cached entry is expired, deleting");
+          return (0);
+        }
 
 	memcpy(packet + 2, cx->p->packet + 2, cx->p->len - 2);
 	cache_hits++;

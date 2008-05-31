@@ -23,6 +23,8 @@
 #ifndef _DNRD_CACHE_H_
 #define	_DNRD_CACHE_H_
 
+#include "dns.h"
+
 extern char cache_param[256];
 extern int cache_hits;
 extern int cache_misses;
@@ -33,5 +35,7 @@ int cache_lookup(void *packet, int len);
 int cache_expire(void);
 int cache_init(void);
 
+unsigned char *skip_labels(unsigned char *packet, unsigned char *term);
+unsigned long cache_dns_ttl(void *packet, int len, dnsheader_t *hdr);
 #endif /* _DNRD_CACHE_H_ */
 
