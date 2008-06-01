@@ -93,7 +93,7 @@ extern gid_t               daemongid; /* to switch to once daemonised */
 extern char                dnrd_user[256];
 extern char                dnrd_group[256];
 #endif
-extern int                 gotterminal;
+extern int                 foreground;
 #ifndef EXCLUDE_MASTER
 extern int		   master_onoff;
 extern unsigned char       master_reload;

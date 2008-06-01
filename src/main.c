@@ -320,11 +320,10 @@ int main(int argc, char *argv[])
 	/*
 	 * Now it's time to become a daemon.
 	 */
-	if ((opt_debug < 0) || (!gotterminal)) {
+	if (!foreground) {
 		pid_t pid = fork();
 		if (pid < 0) log_err_exit(-1, "%s: Couldn't fork\n", progname);
 		if (pid != 0) exit(0);
-		gotterminal = 0;
 		setsid();
 		chdir("/");
 		umask(077);

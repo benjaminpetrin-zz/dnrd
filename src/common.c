@@ -72,7 +72,7 @@ char                dnrd_user[256] = "dnrd";
 char                dnrd_group[256] = "dnrd";
 #endif
 const char*         version = PACKAGE_VERSION;
-int                 gotterminal = 1; /* 1 if attached to a terminal */
+int                 foreground = 0; /* 1 if attached to a terminal */
 sem_t               dnrd_sem;  /* Used for all thread synchronization */
 
 int                 reactivate_interval = REACTIVATE_INTERVAL;
@@ -226,7 +226,7 @@ void log_msg(int type, const char *fmt, ...)
 
     va_start(ap, fmt);
 
-    if (gotterminal) {
+    if (foreground) {
 			fprintf(stderr, get_typestr(type));
 			vfprintf(stderr, fmt, ap);
 			if (fmt[strlen(fmt) - 1] != '\n') fprintf(stderr, "\n");
@@ -253,7 +253,7 @@ void log_debug(int level, const char *fmt, ...)
     if (opt_debug < level) return;
 
     va_start(ap, fmt);
-    if (gotterminal) {
+    if (foreground) {
 	fprintf(stderr, "Debug: ");
 	vfprintf(stderr, fmt, ap);
 	if (fmt[strlen(fmt) - 1] != '\n') fprintf(stderr, "\n");
@@ -308,7 +308,7 @@ void log_err_exit(int exitcode, const char *fmt, ...)
     va_list ap;
     va_start(ap, fmt);
 
-    if (gotterminal) {
+    if (foreground) {
 			fprintf(stderr, get_typestr(LOG_ERR));
 			vfprintf(stderr, fmt, ap);
 			if (fmt[strlen(fmt) - 1] != '\n') fprintf(stderr, "\n");

@@ -2,6 +2,7 @@
  * args.c - data and functions dealing with command-line argument processing.
  *
  * Copyright (C) 1998 Brad M. Garcia <garsh@home.com>
+ * Copyright (C) 2008 Natanael Copa <natanael.copa@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,12 +52,12 @@ static struct option long_options[] =
 #endif
     {"cache",        1, 0, 'c'},
     {"debug",        1, 0, 'd'},
+    {"foreground",   0, 0, 'f'},
     {"help",         0, 0, 'h'},
     {"ignore",       0, 0, 'i'},
 #ifdef ENABLE_PIDFILE
     {"kill",         0, 0, 'k'},
 #endif
-    {"log",          0, 0, 'l'},
     {"max-sock",     1, 0, 'M'},
 #ifndef EXCLUDE_MASTER
     {"master",       1, 0, 'm'},
@@ -98,7 +99,7 @@ static struct option long_options[] =
 #define file_exists(f) (access(f, R_OK) == 0)
 
 const char short_options[] = 
-    "a:bc:d:hi" PIDPARM "l" MASTERPARM "M:r:R:s:t:" UIDPARM "v";
+    "a:bc:d:fhi" PIDPARM MASTERPARM "M:r:R:s:t:" UIDPARM "v";
 
 /*
  * give_help()
@@ -123,8 +124,9 @@ static void give_help()
 #endif
 "    -c, --cache=off|[LOW:]HIGH\n"
 "                            Turn off cache or tune the low/high water marks\n"
-"    -d, --debug=LEVEL       Set the debugging level and run in foreground.\n"
-"                            Level 0 means no debugging at all.\n"
+"    -d, --debug=LEVEL       Set the debugging level. Level 0 (default)\n"
+"                            means no debugging at all.\n"
+"    -f, --foreground        Run program in foreground rather than fork.\n"
 /*
 #ifndef __CYGWIN__
 "    -g, --gid=GID           Group name numeric gid to switch to.\n"
@@ -135,7 +137,6 @@ static void give_help()
 #ifdef ENABLE_PIDFILE
 "    -k, --kill              Kill a running daemon.\n"
 #endif
-"    -l, --log               Send all messages to syslog.\n"
 #ifndef EXCLUDE_MASTER
 "    -m, --master=FILE|off   Use FILE as master file or turn it off. Path to\n"
 "                            FILE is relative $DNRD_ROOT (--dnrd-root).\n"
@@ -171,17 +172,19 @@ static void give_help()
 #endif
 "    -c off|[LOW:]HIGH\n"
 "              Turn off caching or tune the low/high water marks"
-"    -d LEVEL  Set the debugging level and run in foreground. Level 0 means\n"
-"              debugging at all.\n"
+"    -d LEVEL  Set the debugging level. Level 0 (default) means no debugging\n"
+"              at all.\n"
+"    -f        Run program in foreground rather than fork.\n"
+/*
 #ifndef __CYGWIN__
 "    -g        Group name numeric gid to switch to.\n"
 #endif
+*/
 "    -h        Print this message, then exit.\n"
 "    -i        Ignore cache for disabled servers\n"
 #ifdef ENABLE_PIDFILE
 "    -k        Kill a running daemon.\n"
 #endif
-"    -l        Send all messages to syslog.\n"
 #ifndef EXCLUDE_MASTER
 "    -m FILE|off\n"
 "              Use FILE as master file or turn it off. Path to FILE is\n"
@@ -266,6 +269,10 @@ int parse_args(int argc, char **argv)
 	    opt_debug = atoi(optarg);
 	    break;
 	  }
+	  case 'f': {
+	      foreground = 1;
+	      break;
+	  }
 	  case 'h': {
 	      give_help();
 	      exit(0);
@@ -284,10 +291,6 @@ int parse_args(int argc, char **argv)
 	      break;
 	  }
 #endif
-	  case 'l': {
-	      gotterminal = 0;
-	      break;
-	  }
 #ifndef EXCLUDE_MASTER
 	  case 'B': {
 		  strncpy(blacklist, optarg, sizeof(blacklist));

@@ -11,10 +11,10 @@ dnrd \- proxy name server
 .RB [ \-B \ \fIBLACKLIST\fR\ | \ \-\-blacklist=\fIBLACKLIST\fR] 
 .RB [ \-c \ \fR(\fIoff\fR|[\fIlow:\fR]\fIhigh\fR)\ | \ \-\-cache=\fR(\fIoff\fR|[\fIlow:\fR]\fIhigh \fR)]
 .RB [ \-d \ \fILEVEL\ \fR| \ \-\-debug=\fILEVEL\fR]
+.RB [ \-f \ \fR| \ \-\-foreground \fR]
 .RB [ \-h \ \fR| \ \-\-help \fR]
 .RB [ \-i \ \fR| \ \-\-ignore \fR]
 .RB [ \-k \ \fR| \ \-\-kill \fR]
-.RB [ \-l \ \fR| \ \-\-log \fR]
 .RB [ \-m \ \fR(\fIoff\fR|\fIFILE\fR)\ | \ \-\-master=\fR(\fIoff\fR|\fIFILE\fR)] 
 .RB [ \-M \ \fIN\fR\ | \ \-\-max\-sock=\fIN\fR]
 .RB [ \-r \ \fIN\fR\ | \ \-\-retry=\fIN\fR]
@@ -99,19 +99,18 @@ water\-marks of 800 and 1000 respectively.
 .B \-\-debug=\fILEVEL
 This turns on debugging level
 .I LEVEL\fR.
-The
-.B dnrd 
-process will not fork into the background and print out debugging
-information in the current console. Supported debug levels are 1-4
-The higher level, the more debug info is printed.
-.sp
-The
-.B \-l
-option can be used to force dnrd to run in the background and log
-debug info to syslog.
+Supported debug levels are 0-4, where 0 mean no debugging and 4 maximum
+verbosity.
 .sp
 Sending signal SIGUSR1 will toggle the debug level between level
 0 (no debugging) and level 3.
+
+.TP
+.B \-f
+.TP 
+.B \-\-foreground
+Run process in foreground rather than fork to background. Messages will
+be sent to stderr rather than syslog.
 
 .TP 
 .B \-h
@@ -136,19 +135,6 @@ serves a offline/dialup network.
 Kills the currently running
 .B dnrd
 process.
-
-.TP 
-.B \-l
-.TP 
-.B \-\-log
-Send all messages to syslog.
-.B dnrd
-uses the deamon facility. If used with the
-.B \-d
-flag, this option will cause
-.B dnrd
-to fork and run in the background, logging all debugging messages to
-syslog.
 
 .TP 
 .BR \-m \ ( \fIoff | \fIFILE )
