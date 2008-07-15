@@ -1,8 +1,10 @@
 /* qid.h
-
-   Copyright (c) Natanael Copa
-   This is distributed under GPL2
-*/
+ *
+ * Copyright (c) 2004 Natanael Copa
+ *
+ * Licensed under GPLv2 or later, see file LICENSE in this tarball for details.
+ *
+ */
 
 #ifndef qid_h
 #define qid_h
