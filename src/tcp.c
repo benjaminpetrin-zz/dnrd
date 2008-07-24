@@ -327,6 +327,7 @@ void tcp_handle_request()
     } else if (pid < 0) {
       log_msg(LOG_ERR, "fork for TCP connection failed");
     }
+    close(arg->connect);
     free(arg);
 #endif
     
