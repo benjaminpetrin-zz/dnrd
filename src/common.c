@@ -290,6 +290,10 @@ void cleanexit(int status)
     }
     */
     destroy_domlist(domain_list);
+
+    /* do not forget to unlink the named semaphore */
+    sem_unlink(NAMED_SEMAPHORE_NAME);
+
     exit(status);
 }
 
