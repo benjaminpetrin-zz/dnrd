@@ -41,6 +41,8 @@ void sig_handler(int signo)
     break;
 #endif
   default:
+    /* do not forget to unlink the named semaphore */
+    sem_unlink(NAMED_SEMAPHORE_NAME);
     cleanexit(0);
   }
   signal(signo, sig_handler);

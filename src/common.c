@@ -73,7 +73,7 @@ char                dnrd_group[256] = "dnrd";
 #endif
 const char*         version = PACKAGE_VERSION;
 int                 foreground = 0; /* 1 if attached to a terminal */
-sem_t               dnrd_sem;  /* Used for all thread synchronization */
+sem_t*              dnrd_sem = NULL; /* Used for all thread synchronization */
 
 int                 reactivate_interval = REACTIVATE_INTERVAL;
 int                 stats_interval = 0;
@@ -277,7 +277,7 @@ void cleanexit(int status)
   /*    int i;*/
 
     /* Only let one process run this code) */
-    sem_wait(&dnrd_sem);
+    sem_wait(dnrd_sem);
 
     log_debug(1, "Shutting down...\n");
     if (isock >= 0) close(isock);

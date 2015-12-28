@@ -141,15 +141,18 @@ static void dnrd_root_sanity_check(void) {
 void init_socket(void) {
     struct servent    *servent;   /* Let's be good and find the port numbers
 				     the right way */
+    struct servent    *servent_udp;
+    struct servent    *servent_tcp;
 
     /*
      * Pretend we don't know that we want port 53
      */
-    servent = getservbyname("domain", "udp");
-    if (servent != getservbyname("domain", "tcp"))
+    servent_udp = getservbyname("domain", "udp");
+    servent_tcp = getservbyname("domain", "tcp");
+    if (servent_udp->s_port != servent_tcp->s_port)
 			log_err_exit(-1, "domain ports for udp & tcp differ. "
 									 "Check /etc/services");
-    recv_addr.sin_port = servent ? servent->s_port : htons(53);
+    recv_addr.sin_port = servent_udp ? servent_udp->s_port : htons(53);
 
     /*
      * Setup our DNS query reception socket.
@@ -247,8 +250,10 @@ int main(int argc, char *argv[])
 	/*
 	 * Setup the thread synchronization semaphore
 	 */
-	if (sem_init(&dnrd_sem, 0, 1) == -1)
+	if ((dnrd_sem = sem_open(NAMED_SEMAPHORE_NAME, (O_CREAT|O_EXCL), S_IRWXU, 1)) == SEM_FAILED) {
+		int err = errno;
 		log_err_exit(-1, "Couldn't initialize semaphore");
+	}
 
 	init_socket();
 	

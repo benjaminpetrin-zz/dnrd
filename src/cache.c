@@ -199,7 +199,7 @@ int cache_dnspacket(void *packet, int len, srvnode_t *server)
      * Ok, the packet is interesting for us.  Let's put it into our
      * cache list.
      */
-    sem_wait(&dnrd_sem);
+    sem_wait(dnrd_sem);
     cx = create_cx(x, &query, server);
     append_cx(cx);
 
@@ -217,7 +217,7 @@ int cache_dnspacket(void *packet, int len, srvnode_t *server)
       cx->expires = cx->lastused + dns_ttl;
       log_debug(5, "Using dynamic cache timeouts -> %lu seconds\n", dns_ttl);
     }
-    sem_post(&dnrd_sem);
+    sem_post(dnrd_sem);
     return (0);
 }
 

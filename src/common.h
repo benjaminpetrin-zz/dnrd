@@ -48,6 +48,11 @@
 #define SELECT_TIMEOUT 1
 #endif
 
+/* Set the named semphore name */
+#ifndef NAMED_SEMAPHORE_NAME
+#define NAMED_SEMAPHORE_NAME "net.sourceforge.dnrd"
+#endif
+
 /* Set the default timeout value for forward DNS. If we get no
  * response from a DNS server within forward_timeout, deactivate the
  * server.  note that if select_timeout is greater than this, the
@@ -100,7 +105,7 @@ extern unsigned char       master_reload;
 extern char                master_config[256];
 extern char                blacklist[256];
 #endif
-extern sem_t               dnrd_sem;  /* Used for all thread synchronization */
+extern sem_t*              dnrd_sem;  /* Used for all thread synchronization */
 
 extern char                dnrd_root[512];
 extern char                config_file[];

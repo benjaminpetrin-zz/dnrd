@@ -201,7 +201,7 @@ static int reset_master(void)
 
     log_msg(LOG_NOTICE, "resetting master DNS");
 
-    sem_wait(&dnrd_sem);
+    sem_wait(dnrd_sem);
 
     for (i = 0; i < dbc; i++) { 
 	free_dnsrec(dbv[i]);
@@ -217,7 +217,7 @@ static int reset_master(void)
     dbc = 0;    
     dbmax = 0;  
 
-    sem_post(&dnrd_sem);
+    sem_post(dnrd_sem);
 
     return (0);
 }
