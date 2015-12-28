@@ -1,4 +1,13 @@
+version 2.20.4
+--------------
+Chris Kruger
+ - fixed bugs preventing execution on Apple OSX 10.9 and above
+
+Benjamin Petrin <github.com@petrin.me>
+ - Migrate project to github, remove www files from sourceforge project
+
 version 2.20.3
+--------------
 Natanael Copa <ncopa@users.sourceforge.net>
  - fixed bug that caused all servers for a domain to be disabled upon a
    timeout.
