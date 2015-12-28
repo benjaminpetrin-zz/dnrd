@@ -1,3 +1,17 @@
+Domain Name Relay Daemon
+========================
+
+Features
+ * Caching of DNS requests.
+ * Support for backup DNS servers.
+ * Uses random source port and random query ID's to prevent cache poisoning.
+ * Support for simple routing - specify different forward DNS servers for different domains.
+ * Force authorative or unauthorative answers for specified domains.
+ * Share the /etc/hosts over the network.
+ * Support for openbsd, freebsd and linux.
+ * TCP support
+ * DNS blacklist support
+
 About DNRD
 ----------
 The Domain Name Relay Daemon (DNRD) is a simple "proxy" nameserver.
@@ -25,7 +39,6 @@ as in other non-dialup environments.
 
 Please read the INSTALL file for information on how to build & run dnrd.
 
-
 Whats new in release 2.17
 -------------------------
 This release uses random source ports for every DNS query. This will
@@ -40,3 +53,19 @@ instead of the earlier hardcoded /etc/dnrd. To use the old default,
 It is now possible to disable the pid file in dnrd compile time. This
 is useful do run several DNRD processes on the same host for a split
 DNS setup.
+
+Alternatives
+------------
+ * If you don't want any caching: dnsproxy
+ * If you dont need domain "routing": dproxy
+ * If you want integrated DHCP support: dnsmasq
+ * If you need to store the DNS cache to disk: pdnsd
+
+Otherwise, use DNRD :)
+
+Author
+------
+The original version of dnrd was written by Brad Garcia garsh@home.com. Other
+contributors are listed in the HISTORY file included with the source code. This
+project is in need of a maintainer. It's current maintainer (benjaminpetrin)
+isn't active in this project.
