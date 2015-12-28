@@ -39,20 +39,13 @@ as in other non-dialup environments.
 
 Please read the INSTALL file for information on how to build & run dnrd.
 
-Whats new in release 2.17
+Download
 -------------------------
-This release uses random source ports for every DNS query. This will
-make DNRD more secure and will work better when DNRD is run from
-behind a NAT'ing IPSec gateway.
+Latest release of dnrd is [2.20.4](https://github.com/benjaminpetrin/dnrd/releases/download/2.20.4/dnrd-2.20.4.tar.gz).
 
-This release of DNRD has a new default root location, /usr/local/etc
-instead of the earlier hardcoded /etc/dnrd. To use the old default,
-/etc/dnrd use the sysconfdir parameter to the configure script:
-./configure --sysconfdir=/etc
-
-It is now possible to disable the pid file in dnrd compile time. This
-is useful do run several DNRD processes on the same host for a split
-DNS setup.
+Use Github's release system to get [other versions](https://github.com/benjaminpetrin/dnrd/releases).
+The last few version's tarbals have been migrated from the original
+SourceForge project.
 
 Alternatives
 ------------
