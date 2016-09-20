@@ -34,6 +34,7 @@
 #include <pwd.h>
 #include <dirent.h>
 #include <limits.h>
+#include <fcntl.h>
 
 #include "relay.h"
 #include "cache.h"
