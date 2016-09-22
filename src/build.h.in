@@ -1,0 +1,5 @@
+
+
+#pragma once 
+/* this is set if the platform has usleep */
+#cmakedefine HAVE_USLEEP

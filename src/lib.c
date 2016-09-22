@@ -37,7 +37,6 @@
 
 
 #include "lib.h"
-#include "common.h"
 
 /*
 #define	DEBUG(x)		

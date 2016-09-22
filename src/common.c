@@ -35,6 +35,8 @@
 #include "common.h"
 #include "lib.h"
 #include "dns.h"
+#include <generated/build.h>
+#include <generated/version.h>
 
 #ifdef DEBUG
 #define OPT_DEBUG 1
