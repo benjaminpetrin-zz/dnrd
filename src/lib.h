@@ -30,7 +30,7 @@
 #include <time.h>
 #include <signal.h>
 #include <unistd.h>
-
+#include "common.h"
 
 extern char *program;
 extern int verbose;
