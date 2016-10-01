@@ -14,7 +14,7 @@ project (dnrd C)
 
 include_directories(${CMAKE_BINARY_DIR}/gen)
 set(CMAKE_C_FLAGS "-g -Os")
-
+set(CMAKE_LD_FLAGS "-M")
 
 
 find_library(CONFIG_LIBRARIES NAMES pthread)
@@ -44,6 +44,7 @@ src/tcp.c
 src/udp.c
 )
 
+add_dependencies(dnrd version)
 target_link_libraries(dnrd ${CONFIG_LIBRARIES})
 #target_link_libraries(dnrd ${CONFIG_LIBRARIES})
 
